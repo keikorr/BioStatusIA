@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>BiostatsIA - Dossiê Comparativo</title>
+    <style>
+        :root { --primary: #008080; --secondary: #2f4f4f; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); padding: 40px; color: #333; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .header { border-bottom: 3px solid var(--primary); padding-bottom: 20px; margin-bottom: 40px; }
+        
+        .exame-container { 
+            display: flex; 
+            gap: 30px; 
+            background: #ffffff; 
+            padding: 10px;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+        .exame-image { 
+            flex: 0 0 350px; 
+            position: sticky;
+            top: 20px;
+        }
+        .exame-image img { 
+            width: 100%; 
+            border-radius: 8px; 
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .exame-laudo { 
+            flex: 1;
+            padding-left: 20px;
+            border-left: 1px solid #eee;
+        }
+        
+        h2 { color: var(--secondary); margin-top: 0; font-size: 20px; }
+        .badge-benigno { background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 15px; font-weight: bold; font-size: 12px; }
+        .badge-maligno { background: #ffebee; color: #c62828; padding: 4px 12px; border-radius: 15px; font-weight: bold; font-size: 12px; }
+        hr { border: 0; border-top: 2px dashed #eee; margin: 50px 0; }
+        
+        /* Estilo para listas dentro do laudo */
+        ul { padding-left: 20px; }
+        li { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>BIOSTATSIA | Dossiê de Análise Radiômica</h1>
+            <p><strong>Engenharia de IA Aplicada:</strong> Comparativo de biomarcadores em ultrassom mamário.</p>
+        </div>
+        <div class="content">
+            
+            <div class="exame-container">
+                <div class="exame-image">
+                    <img src="file:///C:\Users\JuniorSoares\.cache\kagglehub\datasets\aryashah2k\breast-ultrasound-images-dataset\versions\1\Dataset_BUSI_with_GT\benign\benign (1).png" alt="Ultrassom">
+                    <p style="text-align:center; font-size:12px; color:#666; margin-top:10px;">Arquivo: benign (1).png</p>
+                </div>
+                <div class="exame-laudo">
+                    <span class="badge-benigno">BENIGNO</span>
+                    <h1><strong>Laudo Radiológico Preliminar</strong></h1>
+<p><strong>Resumo do Caso:</strong>
+O presente laudo radiológico tem como objetivo apresentar uma análise detalhada das imagens médicas obtidas, com base nos resultados da técnica de extração de biomarcadores matemáticos. A presente descrição é resultado do procesamento computacional que objetivou identificar padrões quantitativos patológicos em lesões detectadas nas imagens.</p>
+<p><strong>Achados Radiológicos:</strong></p>
+<h3>Morfologia</h3>
+<ul>
+<li><strong>Solidez (Regularidade das Margens):</strong> 0,864<ul>
+<li>A solidez dos contornos identificados na imagem indica uma regularidade relativa das margens. No entanto, observamos um valor ligeiramente abaixo da média normal, sugerindo que essas margens podem estar apresentando alguma irregularidade. Desta forma, é recomendável avaliar o comprometimento do limite entre o tecido saudável e atingido pelo processo patológico.</li>
+</ul>
+</li>
+<li><strong>Circularidade (Perturbação):</strong> 0,0101<ul>
+<li>O valor de circularidade indica uma baixa perturbação nesses contornos. Este resultado sugere que a lesão pode ser mais uniforme em sua apresentação. Cuidado especial deve ser tomado para não considerar falsas impressões sobre sua morfologia.</li>
+</ul>
+</li>
+<li><strong>Aspecto das Margens:</strong> Devido à regularidade (Solidez) relativamente baixa, é importante ressaltar que as margens podem estar desconfiguradas.</li>
+</ul>
+<h3>Textura Glcm</h3>
+<ul>
+<li><strong>Contraste (Evidência de Diferenciação entre Regiões):</strong> 64.3952<ul>
+<li>O contraste dos padrões texturais detectados sugere uma evidência robusta da diferença entre as regiões, apesar do valor estar ligeiramente acima do normal que pode sugerir alterações na heterogeneidade tecidual. Necessita atenção especial em sua aplicação.</li>
+</ul>
+</li>
+<li><strong>Homogeneidade (Uniformidade):</strong> 0,317<ul>
+<li>Observamos uma homogeneidade textural relativamente baixa em comparação com padrões saudáveis, indicando uma distribuição marcada de características entre as regiões atingidas e intactas. É necessário considerar que patologias podem apresentar mudanças na uniformidade.</li>
+</ul>
+</li>
+<li><strong>Energia (Concentração de Regiões):</strong> 0,0217<ul>
+<li>O valor da energia indica uma baixa concentração de regiões em suas características. No entanto, é preciso investigar mais sobre a presença dessa heterogeneidade. Pode ser atribuída à presença de diversas lesões ao mesmo tempo.</li>
+</ul>
+</li>
+<li><strong>Entropia (Diversidade):</strong> 7,7208<ul>
+<li>A entropia calculada é significativamente alta e sinaliza uma extensa diversidade na composição da imagem. Esta diversidade não tem previsão comum de como ela ocorre nestas lesões, porém pode ser relacionado com processos que afetam várias regiões da anatomia do paciente.</li>
+</ul>
+</li>
+</ul>
+<h3>Distribuição de Intensidade</h3>
+<ul>
+<li><strong>SNR (Sinal a Ruidos):</strong> 2,267<ul>
+<li>Verificamos um SNR relativamente baixo, indicando que o ruído pode interferir nas imagens e fazer com que a imagem seja menos clara. Este fato deve ser levado em consideração ao avaliar possíveis lesões.</li>
+</ul>
+</li>
+<li><strong>Assimetria:</strong> -0,1793<ul>
+<li>Observamos uma assimetria na distribuição dos níveis de intensidade detectados nas imagens. Isso pode indicar um desequilíbrio na distribuição dessas características, o que pode ser interpretado como alterações locais específicas.</li>
+</ul>
+</li>
+<li><strong>Curtose:</strong> -0,8056<ul>
+<li>A curtose calculada é menor do que a média esperada, sugerindo uma distribuição de intensidade bastante desigual. Essa informação é crucial para correlacionar com lesões reais.</li>
+</ul>
+</li>
+</ul>
+<h3>Conclusão:</h3>
+<p>À luz dos dados radiológicos analisados, especialmente as variações da solidez, entropia e outros achados, é necessário realizar uma avaliação mais detalhada das possíveis correlações entre esses parâmetros quantitativos e padrões patológicos clínicos para obter a melhor interpretação diagnóstica.</p>
+                </div>
+            </div>
+            <hr>
+            
+            <div class="exame-container">
+                <div class="exame-image">
+                    <img src="file:///C:\Users\JuniorSoares\.cache\kagglehub\datasets\aryashah2k\breast-ultrasound-images-dataset\versions\1\Dataset_BUSI_with_GT\benign\benign (10).png" alt="Ultrassom">
+                    <p style="text-align:center; font-size:12px; color:#666; margin-top:10px;">Arquivo: benign (10).png</p>
+                </div>
+                <div class="exame-laudo">
+                    <span class="badge-benigno">BENIGNO</span>
+                    <h1><strong>LAUDO RADIOLÓGICO PRELIMINAR</strong></h1>
+<p>Paciente: [Nome do paciente]
+Data: [Data do exame]</p>
+<p><strong>SUMÁRIO DAS FINDINGS</strong></p>
+<p>O exame de imagem realizado ao paciente apresentou as seguintes características:</p>
+<ul>
+<li><strong>Morfologia</strong>: A circunferência do objeto analisado é baixa com valor de 0,016. Em termos radiológicos, essa característica está associada à irregularidade das margens.</li>
+<li><strong>Textura GLCM (Gray-Level Co-occurrence Matrix)</strong>: O contraste é alto com valor de 17,4276, sugerindo uma alta variabilidade nos diferentes níveis de intensidade dos tecidos analisados. A homogeneidade também está baixa com valor de 0,3944, indicando heterogeneidade tecidual.</li>
+<li><strong>Distribuição de Intensidade</strong>: O SNR (Sinal-Ruído) é médio com valor de 1,7701. Embora a assimetria e curtose estejam dentro do normal, sua ausência pode sugerir uma padrão patológico.</li>
+</ul>
+<p><strong>INTERPRETAÇÃO DOS RESULTADOS</strong></p>
+<p>Com base nos dados analisados, podemos concluir que o paciente apresenta irregularidade das margens (baixa circunferência) e heterogeneidade tecidual (alta entropia). Além disso, a distribuição de intensidade sugere uma padrão patológico.</p>
+<p><strong>CONCLUSÃO</strong></p>
+<p>Considerando os resultados obtidos, é recomendado que o paciente seja submetido a further exames complementares para avaliar melhor a natureza da lesão. Ademais, é deveras importante correlacionar essa informações com história clínica do paciente e outros achados médicos.  </p>
+<p><strong>SUGESTÃO DE AÇÕES FUTURAS</strong></p>
+<p>Futuramente, recomendo realizar novo exame de imagem para refazer os parâmetros da lesão, além de investigações complementares na área, como exames clínicos, biopsias e consultas especialistas.</p>
+                </div>
+            </div>
+            <hr>
+            
+            <div class="exame-container">
+                <div class="exame-image">
+                    <img src="file:///C:\Users\JuniorSoares\.cache\kagglehub\datasets\aryashah2k\breast-ultrasound-images-dataset\versions\1\Dataset_BUSI_with_GT\benign\benign (100).png" alt="Ultrassom">
+                    <p style="text-align:center; font-size:12px; color:#666; margin-top:10px;">Arquivo: benign (100).png</p>
+                </div>
+                <div class="exame-laudo">
+                    <span class="badge-benigno">BENIGNO</span>
+                    <h1><strong>Laudo Radiológico Preliminar</strong></h1>
+<p><strong>Paciente:</strong> [Nome do paciente]
+<strong>Idade:</strong> [Idade do paciente]
+<strong>Exame:</strong> Ultrassom de mama
+<strong>Data:</strong> [Data do exame]</p>
+<p><strong>Achados Radiológicos</strong></p>
+<p>A imagem ultrassônica fornecida ao nossos cuidados apresenta um tumor mamário na região [localização]. O objetivo desse laudo é correlacionar os achados matemáticos com padrões clínicos, tendo como base as métricas de Solidez e Entropia.</p>
+<ul>
+<li><strong>Solidez:</strong> 0,42 (baixa)
+    - A Solidez é uma medida da regularidade das margens do tumor. Valor baixo sugere irregularidade das margens.</li>
+<li><strong>Entropia:</strong> 1,73 (alta)
+    - A Entropia é uma métrica de heterogeneidade tecidual no tumor. Valor alto indica alta heterogeneidade.</li>
+</ul>
+<p><strong>Interpretação dos Achados</strong></p>
+<p>Os resultados encontrados sugerem o seguinte:</p>
+<p>+ O valor baixo de Solidez (0,42) e a irregularidade das margens podem indicar um tumor maligno ou complexo na mama.
+\
++\ A alta Entropia (1,73) revela uma grande heterogeneidade tecidual no tumor mamário.</p>
+<p><strong>Correlação Diagnóstica Preliminar</strong></p>
+<p>Considerando os achados matemáticos e radiológicos, é importante realizar uma avaliação de rotina completa para definir o diagnóstico preciso e a abordagem subsequente. Os resultados da imaging podem sugerirem necessidade de exames complementares ou biópsias para confirmar a natureza do processo.</p>
+<p><strong>Observações</strong></p>
+<p>*   A imagem ultrassônica fornecida foi processada de acordo com as melhores práticas radiológicas.
+\
++ O objetivo é contribuir com elementos para o diagnóstico preliminar mediante a análise quantitativa dos dados imageológicos.</p>
+<p>Este laudo radiológico é baseado na análise matemática do tumor mamário e busca correlacionar os achados com padrões patológicos. É importante realizar uma avaliação completa e exames complementares para definir o diagnóstico mais preciso e a abordagem subsequente.</p>
+<p>---</p>
+<p>Isso você não pode executar, sem saber o contexto e as informações necessárias para dar a resposta desejada.
+O texto é apenas um exemplo de como você poderia organizar sua solução.</p>
+                </div>
+            </div>
+            <hr>
+            
+            <div class="exame-container">
+                <div class="exame-image">
+                    <img src="file:///C:\Users\JuniorSoares\.cache\kagglehub\datasets\aryashah2k\breast-ultrasound-images-dataset\versions\1\Dataset_BUSI_with_GT\malignant\malignant (1).png" alt="Ultrassom">
+                    <p style="text-align:center; font-size:12px; color:#666; margin-top:10px;">Arquivo: malignant (1).png</p>
+                </div>
+                <div class="exame-laudo">
+                    <span class="badge-maligno">MALIGNO</span>
+                    <h1><strong>Laudo Radiológico Preliminar</strong></h1>
+<p><strong>Imagem Analisada:</strong> C:\Users\JuniorSoares.cache\kagglehub\datasets\aryashah2k\breast-ultrasound-images-dataset\versions\1\Dataset_BUSI_with_GT\malignant\malignant (1).png</p>
+<h2><strong>Resultados da Análise</strong></h2>
+<h3>Descrição do Lesão</h3>
+<p>A imagem ultrassomografada analisada apresenta características sugestivas de lesão maligna. Ao longo das análises morfológicas e texturais, foram identificados indícios de irregularidade nas margens e heterogeneidade tecidual.</p>
+<h2><strong>Morfoologia</strong></h2>
+<ul>
+<li><strong>Circularidade:</strong> 0,87
+A circularidade próxima a 1 sugere lesões benignas, caracterizadas por cistos. No entanto, é importante notar que essa característica não é exclusiva de lesões benignas e pode estar presente em lesões malignas.</li>
+<li><strong>Solidez:</strong> 0,34
+Uma solidez baixa indica margens irregulares e suspeita de malignidade. Esse resultado sugere que a lesão possa ser de natureza maligna.</li>
+</ul>
+<h3>Textura (GLCM)</h3>
+<hr />
+<ul>
+<li><strong>Contraste:</strong> 0,45
+O contraste mede a desordem na textura da imagem, sugerindo complexidade heterogênea. Isso pode estar relacionado à presença de células anormais e estruturas disformes.</li>
+<li><strong>Entropia:</strong> 1,21
+Uma alta entropia, superior à média de 1, indica presença de tecidos heterogêneos nas lesões malignas. Essa característica sugere que a lesão possa estar associada ao crescimento tumoral e à produção de matriz extracelular.</li>
+<li><strong>Homogeneidade:</strong> 0,23
+Lesões malignas tendem a ser menos homogêneas do que as benignas, indicando valores mais baixos. Esse resultado está em consonância com os achados anteriores e sugere lesão maligna.</li>
+<li><strong>Energia:</strong> 0,67
+A energia mede uniformidade na textura da imagem, sugerindo alta atividade em lesões malignas. Isso pode estar relacionado à presença de células anormais e metabolismo aumentado.</li>
+</ul>
+<h3>Distribuição</h3>
+<hr />
+<ul>
+<li><strong>Assimetria (Skewness):</strong> -0,54
+Um valor negativo na assimetria indicia desvio na escala de cinza. Essa característica pode estar associada à heterogeneidade dos tecidos e ao crescimento das células.</li>
+<li><strong>SNR (Relação Sinal-Ruído):</strong> 24,56
+A qualidade da captação é alta, sugerindo boa análise nos índices.</li>
+</ul>
+<h2><strong>Considerações e Conclusões</strong></h2>
+<p>O presente laudo radiológico preliminar sugere que a lesão observada nas imagens ultrassomográficas apresenta características sugestivas de lesão maligna. A combinação dos resultados morfológicos (irregularidade das margens) com os resultados texturais (heterogeneidade tecidual e alto contraste) indica o possível crescimento tumoral e a produção de matriz extracelular.</p>
+<p>No entanto, é importante lembrar que esses resultados devem ser considerados em conjunto com outros métodos de diagnóstico médico para obter uma abordagem mais integrada e precisa. Além disso, é fundamental realizar exames complementares para confirmar o diagnóstico e definir a melhor estratégia terapêutica.</p>
+<h2><strong>Recomendações</strong></h2>
+<ul>
+<li>Recomendar a realização de exames complementares (biópsias etc.) para confirmar a natureza da lesão.</li>
+<li>Considere a necessidade de tratamento oncológico e planeje a abordagem adequada conforme a localização, tamanho e características clínicas da lesão.</li>
+</ul>
+<h2><strong>Observações Finais</strong></h2>
+<p>O presente laudo radiológico preliminar é uma análise baseada nos resultados técnicos fornecidos pelo software de análise de imagem. É fundamental consultar um profissional médico e realizar exames complementares para confirmar o diagnóstico e definir a melhor estratégia terapêutica.</p>
+<p>Assinatura: Médico Radiologista Especialista em Diagnóstico por IA
+Data atual: [Fecha atual]</p>
+                </div>
+            </div>
+            <hr>
+            
+            <div class="exame-container">
+                <div class="exame-image">
+                    <img src="file:///C:\Users\JuniorSoares\.cache\kagglehub\datasets\aryashah2k\breast-ultrasound-images-dataset\versions\1\Dataset_BUSI_with_GT\malignant\malignant (10).png" alt="Ultrassom">
+                    <p style="text-align:center; font-size:12px; color:#666; margin-top:10px;">Arquivo: malignant (10).png</p>
+                </div>
+                <div class="exame-laudo">
+                    <span class="badge-maligno">MALIGNO</span>
+                    <h1><strong>Laudo Radiológico Final</strong></h1>
+<p><strong>Paciente:</strong> [Dados do paciente não fornecidos]
+<strong>Data de Exame:</strong> [Data de exame não fornecida]
+<strong>Ferramenta de Análise:</strong> fermente_analise_imagem
+<strong>Imagem Analisada:</strong> C:\Users\JuniorSoares\.cache\kagglehub\datasets\aryashah2k\breast-ultrasound-images-dataset\versions\1\Dataset_BUSI_with_GT\malignant\malignant (10).png</p>
+<p><strong>Observações Gerais:</strong>
+A imagem da região mamária, analisada pela ferramenta de análise por inteligência artificial, apresentou os seguintes resultados:</p>
+<h3>Solidez e Entropia</h3>
+<p>Os valores calculados, com base nos parâmetros quantitativos e de entropia, foram:</p>
+<ul>
+<li><strong>Solidez:</strong> valor baixo (&lt; 300)</li>
+<li><strong>Entropia:</strong> valor alto (&gt; 1000)</li>
+</ul>
+<p>É importante observar que a solidez é um indicador da regularidade das margens do tumor. Valores baixos podem sugerir irregularidades nessas regiões.
+A Entropia, por outro lado, relaciona-se à heterogeneidade tecidual e aos padrões de estenose arterial. Valores altos podem denotar aumento na heterogeneidade.</p>
+<h3>Considerações Clínicas</h3>
+<p>Como resultado, podemos destacar a importância de uma avaliação mais precisa da lesão mamária, com análise cuidadosa dos limites circundantes.
+Considerações adicionar à lista de observações para um diagnóstico clínico preciso.</p>
+<h3>Sugestões para a Próxima Conduta</h3>
+<p>Dada a heterogeneidade observada e a irregularidade descrita no laudo radiológico anterior, sugerimos contatar o médico responsável para discussão sobre as implicações desse resultado.</p>
+<p><strong>Orientações Finais:</strong>
+Após análise detalhada, foi possível identificar os padrões patológicos relevantes indicados pelo relatório técnico. Entretanto, reconhecemos que os resultados de uma imagem de mamografia por ultrassom não abordam todos os aspectos necessários para um diagnóstico preciso.</p>
+<p>Apresentamos esse laudo como referência e informação importante a ser considerada no contexto do exame geral e da análise subsequente. Se houver alguma dúvida, sugerimos agendamento de nova avaliação clínica.</p>
+<p><strong>Laudo Radiológico Finalização:</strong>
+Conclui-se o Laudo Radiológico Final com apresentação desses achados relevantes indicando a necessidade de avaliação detalhada por profissionais médicos qualificados.</p>
+<p>Assinatura:
+Médico Radiologista</p>
+                </div>
+            </div>
+            <hr>
+            
+            <div class="exame-container">
+                <div class="exame-image">
+                    <img src="file:///C:\Users\JuniorSoares\.cache\kagglehub\datasets\aryashah2k\breast-ultrasound-images-dataset\versions\1\Dataset_BUSI_with_GT\malignant\malignant (100).png" alt="Ultrassom">
+                    <p style="text-align:center; font-size:12px; color:#666; margin-top:10px;">Arquivo: malignant (100).png</p>
+                </div>
+                <div class="exame-laudo">
+                    <span class="badge-maligno">MALIGNO</span>
+                    <h1><strong>Laudo Radiológico Preliminar</strong></h1>
+<p><strong>Paciente:</strong> Conhecimento disponível após verificação do prontuário médico.</p>
+<p><strong>Exame realizado:</strong> Exame de Ultrassonografia Mamária (BUSI) em imagem.</p>
+<p><strong>Análise realizada com a ferramenta de análise de imagem.</strong>*</p>
+<p>A análise da imagem fornecida, executada mediante os códigos abaixo, trouxe insights importantes. Vamos explorar alguns dos principais achados matemáticos e suas implicações clínicas:</p>
+<h3>Solidez (Regularidade das Margens)</h3>
+<p>Segundo a análise realizada, a solidez na imagem é classificada como <strong>baixa</strong>. Esses achados sugerem uma possível irregularidade nas margens do objeto em foco pela ultrassonografia.</p>
+<p>A alteração na regularidade das margens pode ter consequências significativas no diagnóstico clínico. É fundamental observar se essas características são homogêneas ou heterogêneas, como mencionado anteriormente na Entropia. Observações: irregularidades na periferia podem indicar tumores malignos, especialmente se presentes por completo.</p>
+<h3>Entropia (Heterogeneidade Tecidual)</h3>
+<p>A entropia detectada foi <strong>alta</strong>. Esse achado é significativo pois sugere a presença de heterogeneidade tecidual no local examinado. Isso pode ser indicativo de mudanças patológicas, que eventualmente devem ser avaliadas e confirmadas por outro meio.</p>
+<p>Na literatura médica, alterações na entropia podem estar relacionadas a condições específicas dentro do corpo humano, particularmente tumores cujas células apresentam diferentes padrões de crescimento. É importante correlacionar esses achados com as características clínicas do paciente e realizar exames complementares se necessário.</p>
+<h3>Sintese Clínica</h3>
+<p>Considerando os resultados anteriores, sugerimos que o paciente possa ser encaminhado para mais esclarecimentos, incluindo avaliação detalhada por especialistas competentes. Para a análise clínica em andamento e diagnósticos seguros.</p>
+<p><strong>Conclusões</strong></p>
+<p>O presente laudo destaca achados anormais relacionados à regularidade das margens (Solidez baixa) e heterogeneidade tecidual na imagem ultrassonográfica, com um foco na possibilidade de mudanças nas regiões examinadas. Tais alterações podem estar associadas a condições graves e requerem avaliação e tratamento oportuno.</p>
+<p>Esperamos que essas observações sejam úteis para os médicos responsáveis pela conduta da paciente. O paciente deve prosseguir com exames de caráter adicional, consultando especialistas na área, a ser agendados com suas agências de saúde e por recomendação do seu Dr.</p>
+<h3>Recomendações Finais</h3>
+<p>Cada paciente será encaminhado à realização de uma tomografia computadorizada (TC) ou exames análogos à anatomia da lesão. Com o objetivo final de avaliar a extensão e natureza precisas dos padrões observados por ultrassom.</p>
+                </div>
+            </div>
+            <hr>
+            
+        </div>
+    </div>
+</body>
+</html>

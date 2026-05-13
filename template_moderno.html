@@ -1,0 +1,64 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BiostatsIA - Laudo Assistido por IA</title>
+    <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=YO_Gk22kimYx6c7bEC8zXy3B6Xu_gtvOMF5d31i-bObGAtL2eXMEduLZtyJiBlThohkBtGE8mRNJCZ-EFcCEY2NhyfmMBao87XU0yzh9IrldkxU0iGmeYiIQwjUMSabFUoJoW2864WB3M6bbgP85QXP1gFnzGO7xBn3cH_TacvozNMu31fpQMDTcmF7Ip1zVBWARQw-MUCfOXhCT0AeGJ4Xb8M0MK_63k_4iy90fH24IjmS3-RajkFZKQTvpYMogk2CbZzGGQA6xNNVmjd3XdQZY-xWWCUlNUmw2tHWjuj8Ft7Vp2IQ2Sru-HTRK5pFqsU9m-8NLNHCybNtYlvdTYA" charset="UTF-8"></script><script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .fade-in {
+            animation: fadeIn 1.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @media print {
+            .no-print { display: none; }
+            body { background-color: white; padding: 0; }
+            .max-w-5xl { max-width: 100%; box-shadow: none; }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden fade-in">
+        
+        <header class="bg-teal-700 text-white p-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">Relatório de Inteligência Médica</h1>
+                <p class="text-teal-200 text-sm mt-1">BiostatsIA | Orquestrado por CrewAI & Llama 3.1</p>
+            </div>
+            <div class="text-right">
+                <p class="text-sm">ID do Dossiê: <span class="font-bold text-white">#{{ID_PROCESSO}}</span></p>
+                <p class="text-sm text-teal-200">Data: {{DATA_ATUAL}}</p>
+            </div>
+        </header>
+
+        <div class="p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 border-b pb-2">Dossiê de Análise Multiclasse (Benigno vs Maligno)</h2>
+            
+            <div class="space-y-12">
+                {{CONTEUDO_DINAMICO}}
+            </div>
+
+            <footer class="mt-12 pt-6 border-t border-gray-200 text-center text-xs text-gray-500">
+                <p><strong>Aviso Legal:</strong> Este relatório foi gerado por um sistema de suporte à decisão baseado em Radiômica Computacional. 
+                Os resultados devem ser validados por um profissional de saúde qualificado.</p>
+                <div class="mt-4 no-print">
+                    <button onclick="window.print()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-6 rounded shadow transition duration-200">
+                        Imprimir Dossiê Completo / Salvar PDF
+                    </button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+</body>
+</html>

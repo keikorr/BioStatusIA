@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>BiostatsIA - Dossiê Comparativo</title>
+    <style>
+        :root { --primary: #008080; --secondary: #2f4f4f; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); padding: 40px; color: #333; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .header { border-bottom: 3px solid var(--primary); padding-bottom: 20px; margin-bottom: 40px; }
+        
+        .exame-container { 
+            display: flex; 
+            gap: 30px; 
+            background: #ffffff; 
+            padding: 10px;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+        .exame-image { 
+            flex: 0 0 350px; 
+            position: sticky;
+            top: 20px;
+        }
+        .exame-image img { 
+            width: 100%; 
+            border-radius: 8px; 
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .exame-laudo { 
+            flex: 1;
+            padding-left: 20px;
+            border-left: 1px solid #eee;
+        }
+        
+        h2 { color: var(--secondary); margin-top: 0; font-size: 20px; }
+        .badge-benigno { background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 15px; font-weight: bold; font-size: 12px; }
+        .badge-maligno { background: #ffebee; color: #c62828; padding: 4px 12px; border-radius: 15px; font-weight: bold; font-size: 12px; }
+        hr { border: 0; border-top: 2px dashed #eee; margin: 50px 0; }
+        
+        /* Estilo para listas dentro do laudo */
+        ul { padding-left: 20px; }
+        li { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>BIOSTATSIA | Dossiê de Análise Radiômica</h1>
+            <p><strong>Engenharia de IA Aplicada:</strong> Comparativo de biomarcadores em ultrassom mamário.</p>
+        </div>
+        <div class="content">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start border-b border-gray-100 pb-12 mb-12">
+                <div class="col-span-1 pr-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-green-100 text-green-700">BENIGNO</span>
+                        <h3 class="text-xs font-bold text-gray-400">benign (1).png</h3>
+                    </div>
+                    <img src="file:///C:\Users\JuniorSoares\.cache\kagglehub\datasets\aryashah2k\breast-ultrasound-images-dataset\versions\1\Dataset_BUSI_with_GT\benign\benign (1).png" class="w-full rounded-lg shadow-sm border border-gray-200">
+                </div>
+                <div class="col-span-2">
+                    <div class="bg-teal-50/50 p-6 rounded-xl border border-teal-100">
+                        <h4 class="text-teal-800 font-bold text-sm mb-3">Conclusão dos Agentes (Llama 3.1)</h4>
+                        <div class="text-sm text-gray-700 leading-relaxed">
+                            <h1>Laudo Radiológico Preliminar</h1>
+<h2>Introdução</h2>
+<p>Este laudo radiológico preliminar foi gerado com base no relatório técnico fornecido pelo Analista, após análise da imagem de alta resolução. O objetivo é correlacionar os achados matemáticos (especialmente Solidez e Entropia) com padrões clínicos identificada lesão benigna a partir dos dados.</p>
+<h2>Acrônimos Utilizados</h2>
+<ul>
+<li>GLCM: Gray Level Co-ocurrence Matrix - Matriz de co-ocorrência de níveis cinza</li>
+<li>SNR: Sinal-Ruído - Relação entre o sinal e ruído na imagem.</li>
+</ul>
+<h2>Resultados da Análise</h2>
+<p>A análise dos biomarcadores matemáticos extraídos indica a presença de uma lesão benigna no tecido.</p>
+<p><strong>Morfologia</strong></p>
+<p>Dentre os dados analisados, a circularidade presente (0.0101) sugere que o tipo de lesão é mais provável seja um cisto - estruturas com forma aproximada ao círculo.
+A Solidez registrou o valor 0.864. Embora esse valor não seja extremamente baixo, ele caracteriza a formação de margens regulares.</p>
+<p><strong>Textura (GLCM)</strong></p>
+<ul>
+<li>Contraste apresentou-se com um alto desordenamento e complexidade (64,3952), indicando maior heterogeneidade.</li>
+<li>Homogeneidade encontrou-se em 0.317 o valor - sugere que a lesão tenha menos homogênea, característica também de uma lesão maligna.</li>
+<li>Energia possuiu também um alto desordenamento e complexide (0.0217), confirmando maior heterogeneidade.</li>
+<li>Entropia (7.7208) é indicativa da alta complexidade e destruição patológica que ocorre.</li>
+</ul>
+<p><strong>Distribuição</strong></p>
+<p>A análise sobre a distribuição de intensidades foi composta por um desvio na escala cinza para o Skewness (-0,1793), com boa qualidade de captura através do SNR (2.267).</p>
+<h2>Conclusão</h2>
+<p>Com base nos dados analisados e as características associadas às lesões benignas e malignas, a interpretação sugere que a imagem pode ser relacionada à uma lesão benigna, especificamente um <strong>CISTO</strong>.</p>
+<p>Esse resultado final é provavelmente uma conclusão correta, baseado no fato de que os valores analisados apresentam características típicas das estruturas císticas.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</body>
+</html>

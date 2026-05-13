@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laudo Assistido por IA - CrewAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .fade-in {
+            animation: fadeIn 1.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="p-6 md:p-12">
+
+    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden fade-in">
+        
+        <header class="bg-teal-700 text-white p-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">Relatório de Inteligência Médica</h1>
+                <p class="text-teal-200 text-sm mt-1">Orquestrado por CrewAI & Llama 3</p>
+            </div>
+            <div class="text-right">
+                <p class="text-sm">ID do Exame: <span class="font-bold text-white">USG-2023-8894</span></p>
+                <p class="text-sm text-teal-200">Data: 12 de Maio de 2026</p>
+            </div>
+        </header>
+
+        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div class="col-span-1 border-r border-gray-200 pr-0 md:pr-6">
+                <h2 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Análise da Imagem</h2>
+                
+                <div class="w-full h-48 bg-gray-800 rounded-lg flex items-center justify-center mb-6 relative overflow-hidden">
+                    <p class="text-gray-400 text-sm z-10">exame_01.png</p>
+                    <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiAvPgo8cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSIjMDAwIiAvPgo8L3N2Zz4=')]"></div>
+                </div>
+
+                <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Métricas Extraídas (Python)</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span class="text-sm text-gray-600">Entropia</span>
+                        <span class="font-mono text-sm font-bold text-teal-600">4.21</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span class="text-sm text-gray-600">Circularidade</span>
+                        <span class="font-mono text-sm font-bold text-teal-600">0.78</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span class="text-sm text-gray-600">Contraste (GLCM)</span>
+                        <span class="font-mono text-sm font-bold text-teal-600">0.35</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <span class="text-sm text-gray-600">SNR</span>
+                        <span class="font-mono text-sm font-bold text-teal-600">12.5</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-1 md:col-span-2">
+                
+                <h2 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Pipeline de Agentes (Log)</h2>
+                <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 font-mono text-xs text-slate-600 h-32 overflow-y-auto">
+                    <p class="mb-1"><span class="text-green-600">[✓] Agente_de_Entrada:</span> Arquivo validado com sucesso.</p>
+                    <p class="mb-1"><span class="text-green-600">[✓] Agente_Estatistico:</span> Features extraídas via OpenCV/Scikit-Image.</p>
+                    <p class="mb-1"><span class="text-blue-600">[⚙] Agente_Classificador (Llama 3):</span> Analisando JSON. Alta circularidade (0.78) e contraste moderado identificados.</p>
+                    <p class="mb-1"><span class="text-blue-600">[⚙] Agente_Radiologista (Llama 3):</span> Redigindo laudo preliminar baseado nas evidências.</p>
+                    <p class="text-teal-600 font-bold mt-2">>> Tarefa concluída. Laudo gerado.</p>
+                </div>
+
+                <h2 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Laudo Preliminar (Gerado pelo LLM)</h2>
+                <div class="bg-white border-l-4 border-teal-500 shadow-sm p-6 rounded text-gray-700 leading-relaxed text-sm">
+                    <p class="mb-4">
+                        <strong>Relatório de Avaliação por Imagem (Processamento Automatizado)</strong>
+                    </p>
+                    <p class="mb-4">
+                        A análise computacional da imagem de ultrassom revelou uma estrutura focal de interesse. A extração de características morfológicas indica uma <strong>circularidade de 0.78</strong>, sugerindo contornos predominantemente regulares e bem definidos.
+                    </p>
+                    <p class="mb-4">
+                        A avaliação de textura (GLCM) demonstra um nível de <strong>contraste baixo (0.35)</strong> e homogeneidade moderada em relação ao tecido adjacente. O valor de entropia (4.21) indica complexidade estrutural padrão para tecidos fibroglandulares.
+                    </p>
+                    <div class="bg-gray-100 p-3 rounded-md border border-gray-200 mt-4">
+                        <strong class="text-teal-800">Impressão Diagnóstica do Agente:</strong><br>
+                        Os achados radiômicos (contornos regulares e homogeneidade) favorecem a hipótese de uma lesão de natureza <strong>provavelmente benigna</strong> (sugestivo de correlação com categoria BI-RADS 3). Recomenda-se correlação clínica e acompanhamento padrão.
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end">
+                    <button onclick="window.print()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded shadow transition duration-200">
+                        Imprimir / Salvar PDF
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

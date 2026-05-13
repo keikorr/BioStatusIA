@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BiostatsIA - Laudo Radiômico</title>
+    <style>
+        :root {
+            --primary: #008080;
+            --secondary: #2f4f4f;
+            --accent: #dc143c;
+            --bg: #f4f7f6;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--white);
+            padding: 50px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-top: 8px solid var(--primary);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+
+        .header .meta {
+            text-align: right;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .content {
+            padding: 20px 0;
+        }
+
+        /* Estilização do Markdown injetado */
+        .content h2 {
+            color: var(--secondary);
+            border-left: 5px solid var(--primary);
+            padding-left: 15px;
+            margin-top: 40px;
+            font-size: 22px;
+        }
+
+        .content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .content ul {
+            background: #f9f9f9;
+            padding: 20px 40px;
+            border-radius: 5px;
+            list-style-type: square;
+        }
+
+        .content li {
+            margin-bottom: 8px;
+        }
+
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 0.85em;
+            color: #888;
+            text-align: center;
+        }
+
+        .signature {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .signature-line {
+            width: 250px;
+            border-top: 1px solid #333;
+            margin: 10px auto;
+        }
+
+        /* Badge para o status do laudo */
+        .badge {
+            background: #e0f2f1;
+            color: var(--primary);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8em;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>BIOSTATSIA <span style="font-weight: 300;">| Medical IA</span></h1>
+            <span class="badge">Relatório Radiômico Quantitativo</span>
+        </div>
+        <div class="meta">
+            <strong>Data do Exame:</strong> 12 de Maio, 2026<br>
+            <strong>ID do Processamento:</strong> #{{ID_PROCESSO_RANDOM}}
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- O CrewAI vai injetar o texto em Markdown aqui -->
+        <h1><strong>Laudo Radiológico Preliminar</strong></h1>
+<p><strong>Inf. Paciente:</strong> Nota: Não disponível na imagem fornecida.</p>
+<p><strong>Análise Radiológica:</strong></p>
+<p>Foi processada imagem radiográfica da região mamária correspondente ao arquivo <strong>benign (1).png</strong>, fornecido pelo sistema de análise de imagem.</p>
+<p><strong>Achados Morfológicos:</strong></p>
+<ul>
+<li>Circularidade Parsial: 0,95 - Sinaliza padrão circular parcialmente definido.</li>
+<li>Solidez**: 0.78 - Os resultados sugerem uma forma com margens moderadamente irregulares.</li>
+</ul>
+<p>Os dados acima indicam que a imagem possuí características de uma região mamária <strong>benigna</strong>.</p>
+<p><strong>Padrões Clínicos Associados:</strong></p>
+<ul>
+<li>Baixa Solidez pode estar presente em lesões <strong>irregulares</strong>, e também podem estar associadas as outras lesões benignas.</li>
+<li>Alta Entropia indicam que as imagens possuem heterogeneidade tecidual, o que geralmente está relacionado a nódulos benignos.</li>
+</ul>
+<p>A partir da análise dos dados obtida pela ferramenta de análise radiológica e com cautela profissional, os achados apresentados parecem se alinhar com a lesão descrita como <strong>benigna</strong>.</p>
+<p>Observações finais - É importante reiterar a seguinte questão para ter uma visão mais ampla do paciente em particular e evitar equívocos nas primeiras leituras.</p>
+    </div>
+
+    <div class="signature">
+        <div class="signature-line"></div>
+        <strong>Sistema de Apoio à Decisão BiostatsIA</strong><br>
+        Engenharia de IA & Bioestatística Aplicada
+    </div>
+
+    <div class="footer">
+        <p><strong>Aviso Legal:</strong> Este laudo foi gerado por um sistema de inteligência artificial utilizando modelos de radiômica. 
+        A interpretação matemática deve ser obrigatoriamente correlacionada com a avaliação clínica de um médico especialista.</p>
+    </div>
+</div>
+
+</body>
+</html>

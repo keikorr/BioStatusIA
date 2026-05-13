@@ -1,0 +1,29 @@
+tarefa_extracao:
+  description: >
+    Analise a imagem de ultrassom localizada em {caminho_imagem} utilizando a ferramenta de análise.
+    Você deve interpretar os seguintes biomarcadores matemáticos extraídos:
+    1. MORFOLOGIA:
+       - Circularidade: Valores próximos a 1 sugerem lesões benignas (cistos).
+       - Solidez: Avalia a regularidade das margens. Margens irregulares (baixa solidez) são suspeitas.
+    2. TEXTURA (GLCM):
+       - Contraste e Entropia: Medem a desordem e complexidade. Alta entropia sugere tecidos heterogêneos.
+       - Homogeneidade e Energia: Medem a uniformidade. Lesões malignas tendem a ser menos homogêneas.
+    3. DISTRIBUIÇÃO:
+       - Assimetria (Skewness): Indica o desvio na escala de cinza.
+       - SNR: Qualidade da captação.
+    
+    Seu objetivo é organizar esses dados em um relatório técnico estruturado que servirá de base para o diagnóstico.
+  expected_output: >
+    Um relatório técnico detalhado contendo todos os índices matemáticos extraídos e uma breve 
+    explicação técnica do que esses números representam na textura da imagem.
+
+tarefa_laudo:
+  description: >
+    Com base no relatório técnico gerado pelo Analista, redija o laudo radiológico final.
+    Você deve correlacionar os achados matemáticos (especialmente Solidez e Entropia) com 
+    padrões clínicos. Se a Solidez for baixa, destaque a irregularidade das margens. 
+    Se a Entropia for alta, destaque a heterogeneidade tecidual.
+    Mantenha um tom profissional, ético e cauteloso, sugerindo correlação diagnóstica final.
+  expected_output: >
+    Um laudo radiológico preliminar completo, formatado em Markdown, pronto para ser 
+    apresentado ao médico responsável.
