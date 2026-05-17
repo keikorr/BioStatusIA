@@ -1,29 +1,74 @@
+tarefa_analise_base:
+  description: >
+    Analise a base de imagens em {caminho_dataset}. Use a ferramenta
+    ferramenta_analise_base passando:
+      - caminho_dataset: {caminho_dataset}
+      - pasta_run: {pasta_run}
+    A ferramenta vai computar intensidade, outliers (IQR), normalidade (Shapiro-Wilk),
+    ruído (estimate_sigma), contraste e tamanhos. Em seguida vai decidir a estratégia
+    de pré-processamento (denoising, normalização, equalização, redimensionamento) e
+    persistir tudo em analise_base.json. Reporte os achados e a estratégia escolhida.
+  expected_output: >
+    Resumo objetivo (em texto) com: número de imagens, principais estatísticas
+    detectadas, e a estratégia de pré-processamento escolhida com justificativas.
+
 tarefa_extracao:
   description: >
-    Analise a imagem de ultrassom localizada em {caminho_imagem} utilizando a ferramenta de análise.
-    Você deve interpretar os seguintes biomarcadores matemáticos extraídos:
-    1. MORFOLOGIA:
-       - Circularidade: Valores próximos a 1 sugerem lesões benignas (cistos).
-       - Solidez: Avalia a regularidade das margens. Margens irregulares (baixa solidez) são suspeitas.
-    2. TEXTURA (GLCM):
-       - Contraste e Entropia: Medem a desordem e complexidade. Alta entropia sugere tecidos heterogêneos.
-       - Homogeneidade e Energia: Medem a uniformidade. Lesões malignas tendem a ser menos homogêneas.
-    3. DISTRIBUIÇÃO:
-       - Assimetria (Skewness): Indica o desvio na escala de cinza.
-       - SNR: Qualidade da captação.
-    
-    Seu objetivo é organizar esses dados em um relatório técnico estruturado que servirá de base para o diagnóstico.
+    Aplique a estratégia decidida pelo engenheiro de PDI e extraia os 9 biomarcadores
+    (morfologia, textura GLCM, distribuição de intensidade) de TODAS as imagens em
+    {caminho_dataset}. Use a ferramenta ferramenta_extrair_biomarcadores passando:
+      - caminho_dataset: {caminho_dataset}
+      - pasta_run: {pasta_run}
+    A ferramenta lê a estratégia de analise_base.json e persiste o vetor de
+    biomarcadores de cada imagem em biomarcadores.json.
   expected_output: >
-    Um relatório técnico detalhado contendo todos os índices matemáticos extraídos e uma breve 
-    explicação técnica do que esses números representam na textura da imagem.
+    Relatório técnico contendo: número de imagens processadas, distribuição por
+    categoria (BENIGNO/MALIGNO/INDEFINIDO) e biomarcadores da primeira imagem como
+    exemplo de saída.
+
+tarefa_treinar_classificador:
+  description: >
+    Treine os classificadores SVM e RandomForest sobre os biomarcadores extraídos.
+    Use a ferramenta ferramenta_treinar_classificador passando:
+      - pasta_run: {pasta_run}
+    A ferramenta lê biomarcadores.json e treina os modelos com split estratificado 80/20.
+    Se houver menos de 10 amostras rotuladas ou apenas 1 classe, a ferramenta reportará
+    e o treino não será executado. Persiste métricas, ROC e confusion matrix em
+    metricas.json.
+  expected_output: >
+    Tabela em Markdown com as métricas (Acurácia, Precisão, Recall, F1, AUC) de cada
+    modelo, identificação do melhor modelo (maior AUC) e comentário sobre o tamanho
+    amostral.
 
 tarefa_laudo:
   description: >
-    Com base no relatório técnico gerado pelo Analista, redija o laudo radiológico final.
-    Você deve correlacionar os achados matemáticos (especialmente Solidez e Entropia) com 
-    padrões clínicos. Se a Solidez for baixa, destaque a irregularidade das margens. 
-    Se a Entropia for alta, destaque a heterogeneidade tecidual.
-    Mantenha um tom profissional, ético e cauteloso, sugerindo correlação diagnóstica final.
+    Com base nos relatórios técnicos dos agentes anteriores (análise da base, extração
+    de biomarcadores, treino do classificador), redija o laudo radiológico final.
+    Correlacione os achados — especialmente Solidez (regularidade das margens) e
+    Entropia (heterogeneidade tecidual) — com padrões clínicos. Se a Solidez for baixa,
+    destaque irregularidade das margens. Se a Entropia for alta, destaque heterogeneidade
+    tecidual. Mencione o melhor classificador quando disponível.
+    Tom obrigatório: profissional, ético e cauteloso. Sempre sugira correlação clínica
+    e nunca afirme diagnóstico definitivo.
   expected_output: >
-    Um laudo radiológico preliminar completo, formatado em Markdown, pronto para ser 
-    apresentado ao médico responsável.
+    Laudo radiológico preliminar completo em Markdown, contendo: resumo dos achados
+    morfológicos e texturais, interpretação clínica preliminar, métricas do
+    classificador (se disponível), e aviso ético de que o laudo não substitui
+    avaliação médica.
+
+tarefa_laudo_tabular:
+  description: >
+    Analise os dados tabulares localizados em {caminho_csv} usando a ferramenta
+    ferramenta_analise_tabular. A ferramenta retornará um resumo com a coluna-rótulo,
+    distribuição de classes e estatísticas (média, mediana, desvio, min, max) das
+    features numéricas. Sua tarefa:
+    1. Identifique as 3-5 features mais discriminativas entre as classes (maior
+       diferença de média relativa ao desvio entre os grupos).
+    2. Comente o equilíbrio do dataset (balanceado ou desbalanceado).
+    3. Sugira correlação clínica preliminar — sem afirmar diagnóstico.
+    4. Mantenha tom profissional, ético e cauteloso.
+  expected_output: >
+    Laudo preliminar em Markdown contendo: cabeçalho com nome do dataset, N amostras
+    e N features; seção "Features mais discriminativas" (com valores); seção
+    "Interpretação preliminar"; rodapé com aviso ético de que o laudo não substitui
+    avaliação médica.

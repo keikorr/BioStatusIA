@@ -1,180 +1,304 @@
-# 🧬 BioStatusIA: Sistema Multi-Agente para Radiômica
+# BioStatusIA
 
-> **Sistema Inteligente de Apoio à Decisão Clínica (CDSS) para análise automatizada de imagens médicas via Radiômica, Visão Computacional e IA Multi-Agente.**
+> Sistema de Apoio à Decisão Clínica (CDSS) para análise automatizada de imagens médicas e dados clínicos tabulares, com IA Multi-Agente local.
 
-O **BioStatusIA** é um Sistema de Apoio à Decisão Clínica (**Clinical Decision Support System - CDSS**) desenvolvido para o processamento automatizado de imagens de ultrassom, utilizando uma arquitetura **multi-agente com CrewAI**.
+Pipeline completo orquestrado por agentes CrewAI rodando sobre LLM local (Ollama), com classificação ML clássica (SVM, Random Forest) e interface web Flask em duas telas.
 
-O sistema combina **Visão Computacional Clássica**, **Radiômica** e **Large Language Models (LLMs)** para transformar imagens médicas em **dados clínicos estruturados, interpretáveis e auditáveis**.
-
-A proposta central é reduzir a subjetividade da análise diagnóstica por imagem, extraindo biomarcadores quantitativos e gerando laudos automatizados com alta explicabilidade.
+Projeto acadêmico de mestrado em IA na Saúde — Fortaleza, CE.
 
 ---
 
-## 🎯 Objetivo do Projeto
+## Princípio fundamental
 
-O projeto tem como foco a análise inteligente de exames de ultrassom, especialmente no contexto da identificação de lesões benignas e malignas.
+**O sistema aceita qualquer tipo de dado.** Ao receber uma entrada, ele:
 
-Através da **Radiômica**, o sistema extrai padrões matemáticos que frequentemente são imperceptíveis à observação humana, fornecendo suporte quantitativo para decisões clínicas.
-
-### Principais Diferenciais
-
-✅ **Explicabilidade (Explainable AI)**  
-O sistema evita decisões do tipo "caixa-preta". Cada inferência é fundamentada em métricas quantitativas como:
-* Solidez e Circularidade
-* Entropia e Homogeneidade
-* Assimetria e Curtose
-* Relação sinal-ruído (SNR)
-
-✅ **Privacidade e Processamento Local**  
-Toda a camada de processamento de linguagem natural é executada localmente via **Ollama**, garantindo que dados sensíveis não deixem a infraestrutura hospitalar/local.
-
-✅ **Arquitetura Multi-Agente Especializada**  
-* **Analista Técnico**: Validação matemática e extração de features.
-* **Radiologista IA**: Interpretação clínica e redação de laudo preliminar.
-* **Classificador Cognitivo**: Inferência diagnóstica via Llama 3.1.
-* **Gerador de Relatórios**: Consolidação dos dados e estruturação dos dashboards em HTML/Tailwind.
+1. Detecta automaticamente a estrutura (imagem única, várias imagens, dataset rotulado, CSV tabular ou multimodal)
+2. Analisa estatisticamente a base (intensidade, ruído, contraste, outliers, normalidade)
+3. Decide a estratégia de pré-processamento (denoising, normalização, equalização)
+4. Extrai biomarcadores radiômicos ou processa features tabulares
+5. Treina classificadores (quando há rótulos)
+6. Gera laudo preliminar via agentes IA
 
 ---
 
-## 🏗️ Arquitetura da Solução
+## Modos detectados automaticamente
 
-```text
-                    ┌──────────────────────┐
-                    │ Dataset de Ultrassom │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                ┌──────────────────────────────┐
-                │ Ingestão via KaggleHub       │
-                └──────────┬───────────────────┘
-                           │
-                           ▼
-          ┌──────────────────────────────────────────┐
-          │ Processamento Digital de Imagem (PDI)    │
-          │ OpenCV + Scikit-Image                    │
-          │ - Segmentação e Extração de Features     │
-          └──────────┬───────────────────────────────┘
-                     │
-                     ▼
-      ┌────────────────────────────────────────────────────┐
-      │ Pipeline Multi-Agente (CrewAI + Llama 3.1)         │
-      │                                                    │
-      │  Analista Técnico (Métricas Radiômicas)            │
-      │        ↓                                           │
-      │  Radiologista IA (Interpretação Clínica)           │
-      │        ↓                                           │
-      │  Classificador Cognitivo (Inferência Local)        │
-      │        ↓                                           │
-      │  Gerador de Relatórios (Consolidação de Dados)     │
-      └──────────┬─────────────────────────────────────────┘
-                 │
-                 ▼
-      ┌──────────────────────────────────────────┐
-      │ HTML5 + Tailwind CSS                     │
-      │ Dashboard Clínico + Relatório Técnico    │
-      └──────────────────────────────────────────┘
+| Modo | Entrada | O que o pipeline faz |
+|---|---|---|
+| `imagem_unica` | Uma imagem `.png/.jpg/.bmp/.tif` | Extrai biomarcadores + laudo IA |
+| `imagens_soltas` | Pasta/ZIP com imagens sem rótulos | Estatísticas + boxplot + laudo IA |
+| `dataset_rotulado` | Pasta com subpastas `benign/` + `malignant/` | Tudo + treina SVM/RF + ROC + matriz de confusão |
+| `tabular` | CSV/TXT/TSV com features clínicas | Análise tabular + classificadores + laudo do bioestatístico |
+| `multimodal` | Pasta/ZIP com imagens **e** CSV juntos | Pipeline de imagens + análise tabular adicional |
+
+Sinônimos de pastas reconhecidos como rótulo:
+- Benignas: `benign`, `benigno`, `normal`, `negative`, `0`
+- Malignas: `malignant`, `malign`, `maligno`, `abnormal`, `positive`, `1`
+
+---
+
+## Arquitetura — pipeline 100% agentificado
+
+Cada etapa do pipeline é executada por um agente CrewAI através de uma tool dedicada.
+
+### Crew de Imagem — 4 agentes em sequência
+
+```
+engenheiro_pdi
+   ↓ FerramentaAnaliseBase → analise_base.json
+analista_tecnico
+   ↓ FerramentaExtrairBiomarcadores → biomarcadores.json
+cientista_dados
+   ↓ FerramentaTreinarClassificador → metricas.json
+radiologista_ia
+   ↓ (sem tool — interpreta tudo) → laudo Markdown final
 ```
 
----
+### Crew Tabular — 1 agente
 
-## ⚙️ Como Funciona
+```
+bioestatistico
+   ↓ FerramentaAnaliseTabular → laudo Markdown
+```
 
-O **BioStatusIA** opera em etapas integradas:
-
-### 1. 🖼️ Processamento Digital e Radiômica
-Responsável pela segmentação da lesão e extração de características através de ferramentas customizadas (`custom_tool.py`), utilizando **OpenCV** e **Scikit-Image**.
-
-### 2. 🤖 Orquestração Multi-Agente
-Utiliza o **CrewAI** para gerenciar a colaboração entre agentes. O **Analista Técnico** valida se a solidez e a entropia condizem com padrões de malignidade, enquanto o **Radiologista IA** traduz esses números em linguagem médica.
-
-### 3. 🧠 Inteligência Cognitiva Local
-Toda a lógica de classificação é processada pelo **Llama 3.1 via Ollama**, permitindo uma análise semântica profunda do vetor de features sem necessidade de internet.
+Os agentes se comunicam via JSONs persistidos em `static/runs/<id>/`, o que evita que o LLM precise ingerir megabytes de dados numéricos.
 
 ---
 
-## 🛠️ Instalação
+## Biomarcadores extraídos
+
+9 biomarcadores em 3 grupos:
+
+| Grupo | Métrica | Sinal de Malignidade |
+|---|---|---|
+| **Morfologia** | Circularidade | Baixa (<0.7) |
+|  | Solidez | Baixa (margens irregulares) |
+| **Textura (GLCM)** | Contraste | Alto |
+|  | Homogeneidade | Baixa |
+|  | Energia | Baixa |
+|  | Entropia | Alta (tecido heterogêneo) |
+| **Distribuição** | SNR | Qualidade do sinal (não diagnóstico) |
+|  | Assimetria (skewness) | Complementar |
+|  | Curtose | Complementar |
+
+**Regra clínica geral**: baixa solidez + alta entropia → suspeito de malignidade.
+
+---
+
+## Pré-processamento adaptativo
+
+Antes da extração, o `engenheiro_pdi` analisa a base e escolhe a estratégia ótima:
+
+| Condição detectada | Estratégia escolhida |
+|---|---|
+| Ruído médio > 0.05 (`estimate_sigma`) | Non-Local Means |
+| Ruído ≤ 0.05 | Gaussian blur 5×5 (default) |
+| Outliers > 10% das imagens (IQR) | Normalização por percentil 1–99% |
+| Outliers ≤ 10% | Min-max [0, 1] (default) |
+| Contraste médio < 30 | CLAHE |
+| Contraste ≥ 30 | Sem equalização |
+| Tamanhos heterogêneos | Resize obrigatório 256×256 |
+
+Cada decisão é justificada na Tela 2 com o valor detectado e a regra aplicada.
+
+---
+
+## Stack tecnológica
+
+| Camada | Tecnologia |
+|---|---|
+| Backend | Python 3.11, Flask 3.1 |
+| LLM local | Ollama (`qwen2.5:3b`) |
+| Agentes | CrewAI ≥0.203 |
+| Visão computacional | OpenCV, scikit-image |
+| ML clássico | scikit-learn (SVM RBF, Random Forest) |
+| Banco de dados | SQLite |
+| Gerenciador de pacotes | `uv` |
+| Frontend | HTML5 + Tailwind CSS (CDN) |
+| Gráficos | Plotly.js (CDN) |
+| Dataset de imagem | BUSI (via KaggleHub) |
+| Dataset tabular | Wisconsin Breast Cancer (via sklearn) |
+
+---
+
+## Instalação
 
 ### Pré-requisitos
-* **Python**: `>= 3.10 < 3.14`
-* **Ollama**: [Instale aqui](https://ollama.com)
 
-### Configuração do Modelo Local
+- Python 3.10–3.12
+- [uv](https://github.com/astral-sh/uv) — gerenciador de pacotes
+- [Ollama](https://ollama.com) com o modelo `qwen2.5:3b` baixado:
+  ```bash
+  ollama pull qwen2.5:3b
+  ```
+
+### Setup do projeto
+
 ```bash
-ollama run llama3.1
+git clone https://github.com/JuniorSoares716/BioStatusIA.git
+cd BioStatusIA
+uv sync
 ```
 
-### Clonando e Instalando
-```bash
-git clone [https://github.com/JuniorSoares716/BioStatusIA.git](https://github.com/JuniorSoares716/BioStatusIA.git)
-cd biostatusia
-pip install -r requirements.txt
+### Configuração
+
+Crie um arquivo `.env` na raiz:
+
+```env
+MODEL=ollama/qwen2.5:3b
+API_BASE=http://localhost:11434
+PYTHONUTF8=1
+PYTHONIOENCODING=utf-8
 ```
 
 ---
 
-## 🚀 Como Executar
+## Como rodar
 
-Para iniciar o pipeline de testes (configurado para processamento no `main.py`):
+### Servidor web (modo principal)
 
 ```bash
-python src/biostatusia/main.py
+uv run flask --app src/biostatusia/app.py run --port 5000
 ```
 
-### 📂 Saídas Geradas
-* **Dashboard Clínico (`dashboard_inteligencia_medica.html`)**: Interface visual rica com badges de diagnóstico e indicadores de amostragem.
-* **Relatório Técnico (`relatorio_tecnico_biostatsia.html`)**: Logs auditáveis do raciocínio dos agentes e métricas brutas.
+Abra `http://localhost:5000` — você verá a **Tela 1** com drag & drop para upload.
+
+### Datasets de teste rápido
+
+Após gerar via scripts, fica disponível:
+
+- **Mini-BUSI** (40 imagens, ~3-5 min): use o caminho `dataset_teste/`
+- **WBCD-50** (50 amostras tabulares, ~30s-1min): use `dataset_teste_csv/wbcd_50.csv`
+
+### CLI retrocompatível (sem UI)
+
+```bash
+uv run biostatsia
+```
+
+Processa a primeira imagem benigna do BUSI e gera HTMLs estáticos.
 
 ---
 
-## 🧬 Biomarcadores Analisados
+## Interface
 
-| Categoria | Métricas | Interpretação Clínica |
-| :--- | :--- | :--- |
-| **Morfologia** | Solidez, Circularidade | Avaliação da regularidade das bordas da lesão. |
-| **Textura** | Entropia, Homogeneidade | Avaliação da complexidade estrutural interna. |
-| **Estatística** | SNR, Curtose | Qualidade do sinal e distribuição tonal. |
+### Tela 1 — Upload
+
+- Drag & drop para imagem, ZIP ou CSV
+- Campo alternativo para caminho local
+- Se vazio, usa o cache do KaggleHub
+- Cards mostrando os 4 modos suportados
+- Pipeline visual em 5 etapas
+
+### Tela 2 — Resultados
+
+Seções **sempre presentes**:
+- Modo detectado + contagem de amostras
+- Tabela de estatísticas descritivas
+- Laudo IA em Markdown
+- Histórico de análises do SQLite
+
+Seções **condicionais**:
+
+| Seção | Quando aparece |
+|---|---|
+| Badge do melhor classificador | Se treinou (rotulado/tabular com ≥10 amostras) |
+| Análise da Base + Estratégia de Pré-processamento | Modos com imagem |
+| Análise dos Dados Tabulares | Modos `tabular` e `multimodal` |
+| Boxplot de biomarcadores | Modos com imagem e >1 imagem |
+| Comparação SVM vs RF + Curva ROC + Matriz de Confusão | Apenas se treinado |
 
 ---
 
-## 📁 Estrutura do Projeto
+## Estrutura do projeto
 
-```text
-biostatusia/
+```
+BioStatusIA/
+├── README.md
+├── CLAUDE.md                          # Diretrizes do projeto para Claude Code
+├── pyproject.toml
+├── uv.lock
+├── .env                               # MODEL e API_BASE do Ollama (não versionado)
+├── biostatusia.db                     # SQLite (gerado em runtime, não versionado)
+├── models/                            # Modelos .pkl treinados (não versionado)
+├── dataset_teste/                     # Mini-BUSI para testes (não versionado)
+├── dataset_teste_csv/                 # WBCD-50 tabular (versionado)
 │
-├── src/
-│   └── biostatusia/
-│       ├── config/
-│       │   ├── agents.yaml      # Definição dos perfis
-│       │   └── tasks.yaml       # Escopo das tarefas
-│       │
-│       ├── tools/
-│       │   └── custom_tool.py   # Motor de Radiômica
-│       │
-│       ├── crew.py              # Orquestração e max_iter
-│       └── main.py              # Gestão do pipeline e relatórios
-│
-├── template_moderno.html        # Fonte visual (Tailwind CSS)
-├── dashboard_inteligencia_medica.html # Saída visual final
-├── relatorio_tecnico_biostatsia.html  # Saída técnica auditável
-├── requirements.txt             # Dependências
-└── README.md                    # Documentação principal
+└── src/biostatusia/
+    ├── app.py                         # Servidor Flask — roteia e dispara crews
+    ├── main.py                        # CLI retrocompatível
+    ├── crew.py                        # BioStatusIACrew + BioStatusIACrewTabular
+    ├── database.py                    # SQLite: analises + resultados_pipeline
+    │
+    ├── pipeline/                      # Funções puras (chamadas pelas tools)
+    │   ├── io_utils.py                # listar_imagens, criar_pasta_run
+    │   ├── analise_base.py            # analisar_base + decidir_estrategia
+    │   ├── preprocessamento.py        # preprocessar + preprocessar_adaptativo
+    │   ├── segmentacao.py
+    │   ├── extracao.py                # extrair_todos (com estratégia)
+    │   ├── classificador.py           # treinar() + treinar_vetores()
+    │   └── dados_tabulares.py         # CSV/TXT: carregar, schema, features, stats
+    │
+    ├── config/
+    │   ├── agents.yaml                # 5 agentes
+    │   └── tasks.yaml                 # 5 tasks
+    │
+    ├── tools/                         # CrewAI BaseTool — wrappers sobre pipeline/
+    │   ├── analise_base_tool.py       # FerramentaAnaliseBase
+    │   ├── extracao_tool.py           # FerramentaExtrairBiomarcadores (lote)
+    │   ├── treino_tool.py             # FerramentaTreinarClassificador
+    │   ├── tabular_tool.py            # FerramentaAnaliseTabular
+    │   └── custom_tool.py             # FerramentaAnaliseImagem (single, legado)
+    │
+    ├── static/
+    │   ├── uploads/                   # Arquivos enviados pelo usuário
+    │   └── runs/                      # Workspaces dos kickoffs (JSONs)
+    │
+    └── templates/
+        ├── tela1_upload.html
+        └── tela2_resultados.html
 ```
 
 ---
 
-## ⚠️ Aviso Importante
-> **Este software é uma ferramenta de suporte à decisão clínica.** Não substitui a avaliação ou o diagnóstico realizado por um profissional médico habilitado.
+## Banco de dados (SQLite)
+
+### Tabela `analises`
+| Coluna | Tipo |
+|---|---|
+| `id` | INTEGER PRIMARY KEY |
+| `data_hora` | TEXT (ISO 8601) |
+| `imagem` | TEXT (caminho) |
+| `categoria` | TEXT (`BENIGNO` / `MALIGNO` / `INDEFINIDO` / `TABULAR`) |
+| `laudo` | TEXT (Markdown) |
+
+### Tabela `resultados_pipeline`
+| Coluna | Tipo |
+|---|---|
+| `id` | INTEGER PRIMARY KEY |
+| `data_hora` | TEXT |
+| `dataset_path` | TEXT |
+| `n_imagens` | INTEGER |
+| `pipeline_json` | TEXT (JSON com todo o resultado) |
+| `melhor_modelo` | TEXT |
+| `analise_id` | INTEGER (FK → `analises.id`) |
 
 ---
 
-## 👨‍💻 Autor
-**Projeto acadêmico de pesquisa (Mestrado)**  
-📍 Fortaleza, Ceará — Brasil  
-**Áreas**: IA na Saúde, Radiômica e Sistemas Multi-Agente.
+## Trade-offs conhecidos
+
+- **Lentidão do pipeline completo**: 4 agentes × ~30s por chamada LLM no Ollama local = ~2-5 min por análise de imagens. O modo tabular roda em ~30s-1min.
+- **Non-Local Means** é ~10× mais lento que Gaussian. Em datasets >500 imagens, a extração ficará lenta se ruído alto for detectado.
+- **Encoding no Windows**: o CrewAI emite emojis nos logs. Terminal com `charmap` (cp1252) gera `[EventBus Error]` — avisos cosméticos, não afetam execução. Mitigação no `.env`: `PYTHONUTF8=1` e `PYTHONIOENCODING=utf-8`.
 
 ---
 
-## 📜 Licença
-```text
-MIT License
-```
+## Aviso ético
+
+Este sistema é uma **ferramenta de suporte à decisão clínica**. Os laudos gerados pelos agentes IA **não substituem a avaliação de um médico habilitado**. Esse aviso é mantido em toda saída visual e em todos os laudos.
+
+---
+
+## Licença
+
+MIT

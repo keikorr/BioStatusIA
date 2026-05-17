@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BioStatusIA — Resultados</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-100 px-8 py-5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
+        <span class="text-white text-sm font-bold">B</span>
+      </div>
+      <div>
+        <h1 class="text-gray-900 font-bold text-lg leading-none">BioStatusIA</h1>
+        <p class="text-gray-400 text-xs">Resultados da Análise</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4 text-sm text-gray-500">
+      <span>{{ pipeline.n_imagens }} imagens</span>
+      <span class="text-gray-200">|</span>
+      <span>{{ dados.data_hora[:19] }}</span>
+      <a href="/" class="bg-teal-600 text-white px-4 py-1.5 rounded-lg hover:bg-teal-700 transition-colors text-xs font-medium">
+        Nova Análise
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-10 space-y-10">
+
+    <!-- Modo de análise -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center">
+          {% if pipeline.modo == 'imagem_unica' %}<span class="text-2xl">&#128206;</span>
+          {% elif pipeline.modo == 'dataset_rotulado' %}<span class="text-2xl">&#128202;</span>
+          {% elif pipeline.modo == 'tabular' %}<span class="text-2xl">&#128196;</span>
+          {% elif pipeline.modo == 'multimodal' %}<span class="text-2xl">&#129504;</span>
+          {% else %}<span class="text-2xl">&#128209;</span>
+          {% endif %}
+        </div>
+        <div class="flex-1">
+          <p class="text-xs text-gray-400 uppercase tracking-wider font-medium">Modo Detectado</p>
+          <p class="text-lg font-bold text-gray-900">
+            {% if pipeline.modo == 'imagem_unica' %}Imagem Única
+            {% elif pipeline.modo == 'dataset_rotulado' %}Dataset Rotulado (Benigno + Maligno)
+            {% elif pipeline.modo == 'tabular' %}Análise Tabular (CSV/TXT)
+            {% elif pipeline.modo == 'multimodal' %}Multimodal (Imagens + Tabular)
+            {% else %}Imagens sem Rótulos
+            {% endif %}
+          </p>
+          <p class="text-xs text-gray-500 mt-1 font-mono truncate">{{ dados.dataset_path }}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-3xl font-bold text-teal-700">{{ pipeline.n_imagens }}</p>
+          <p class="text-xs text-gray-400">
+            {% if pipeline.modo == 'tabular' %}amostras{% else %}imagens{% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Análise Tabular (quando aplicável) -->
+    {% if pipeline.tabular_stats %}
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-2 h-6 bg-indigo-500 rounded-full"></div>
+        <h3 class="text-sm font-bold text-gray-700">Análise dos Dados Tabulares</h3>
+        {% if pipeline.arquivo_tabular %}
+        <span class="ml-auto text-xs text-gray-400 font-mono truncate max-w-md">{{ pipeline.arquivo_tabular }}</span>
+        {% endif %}
+      </div>
+
+      <!-- Schema -->
+      {% if pipeline.schema_tabular %}
+      <div class="grid grid-cols-3 gap-4 mb-6 text-sm">
+        <div class="bg-gray-50 rounded-lg p-4">
+          <p class="text-xs text-gray-400 uppercase mb-1">Amostras</p>
+          <p class="text-xl font-bold text-gray-800">{{ pipeline.tabular_stats.n_amostras }}</p>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-4">
+          <p class="text-xs text-gray-400 uppercase mb-1">Features numéricas</p>
+          <p class="text-xl font-bold text-gray-800">{{ pipeline.tabular_stats.n_features }}</p>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-4">
+          <p class="text-xs text-gray-400 uppercase mb-1">Coluna-rótulo</p>
+          <p class="text-sm font-bold text-gray-800 truncate">{{ pipeline.schema_tabular.label_name or '—' }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Distribuição de classes -->
+      {% if pipeline.tabular_stats.distribuicao_labels %}
+      <div class="mb-6">
+        <h4 class="text-xs uppercase text-gray-400 mb-2 tracking-wider font-medium">Distribuição de Classes</h4>
+        <div class="flex gap-3">
+          {% for label, count in pipeline.tabular_stats.distribuicao_labels.items() %}
+          <span class="px-3 py-1.5 rounded-lg text-sm font-mono
+            {% if label == 1 %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+            {{ label }}: {{ count }}
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Tabela de features (limitada) -->
+      <h4 class="text-xs uppercase text-gray-400 mb-3 tracking-wider font-medium">Estatísticas das Features</h4>
+      <div class="overflow-x-auto max-h-80">
+        <table class="w-full text-xs">
+          <thead class="sticky top-0 bg-white">
+            <tr class="text-gray-400 uppercase border-b border-gray-100">
+              <th class="pb-2 text-left font-medium">Feature</th>
+              <th class="pb-2 text-right font-medium">Média</th>
+              <th class="pb-2 text-right font-medium">Mediana</th>
+              <th class="pb-2 text-right font-medium">Desvio</th>
+              <th class="pb-2 text-right font-medium">Min</th>
+              <th class="pb-2 text-right font-medium">Max</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fname, fstats in pipeline.tabular_stats.features.items() %}
+            <tr class="border-b border-gray-50">
+              <td class="py-1.5 text-gray-700 font-medium">{{ fname }}</td>
+              <td class="py-1.5 text-right text-gray-700 font-mono">{{ fstats.media }}</td>
+              <td class="py-1.5 text-right text-gray-700 font-mono">{{ fstats.mediana }}</td>
+              <td class="py-1.5 text-right text-gray-500 font-mono">{{ fstats.desvio }}</td>
+              <td class="py-1.5 text-right text-gray-500 font-mono">{{ fstats.min }}</td>
+              <td class="py-1.5 text-right text-gray-500 font-mono">{{ fstats.max }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Melhor classificador (só rotulado) -->
+    {% if pipeline.metricas and pipeline.melhor_modelo %}
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center gap-6">
+      <div class="w-16 h-16 bg-teal-50 rounded-xl flex items-center justify-center text-2xl text-teal-600 font-black">
+        #1
+      </div>
+      <div>
+        <p class="text-xs text-gray-400 uppercase tracking-wider font-medium mb-1">Melhor Classificador</p>
+        <p class="text-2xl font-bold text-gray-900" id="melhor-modelo-titulo">{{ pipeline.melhor_modelo }}</p>
+        <p class="text-sm text-gray-400 mt-0.5">Selecionado por maior AUC-ROC</p>
+      </div>
+      <div class="ml-auto grid grid-cols-3 gap-6 text-center">
+        <div>
+          <p class="text-xs text-gray-400 mb-1">Acurácia</p>
+          <p class="text-xl font-bold text-teal-700" id="badge-acuracia">—</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-400 mb-1">F1-Score</p>
+          <p class="text-xl font-bold text-teal-700" id="badge-f1">—</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-400 mb-1">AUC-ROC</p>
+          <p class="text-xl font-bold text-teal-700" id="badge-auc">—</p>
+        </div>
+      </div>
+    </div>
+    {% elif pipeline.aviso_classificador %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-6 text-sm text-yellow-800">
+      <strong>Classificador não treinado:</strong> {{ pipeline.aviso_classificador }}
+    </div>
+    {% endif %}
+
+    <!-- Análise da Base + Estratégia de Pré-processamento (apenas para imagens) -->
+    {% if pipeline.modo != 'tabular' and pipeline.analise_base and pipeline.analise_base.n_imagens_analisadas %}
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-2 h-6 bg-teal-500 rounded-full"></div>
+        <h3 class="text-sm font-bold text-gray-700">Análise da Base e Estratégia de Pré-processamento</h3>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Coluna 1: Análise estatística da base -->
+        <div>
+          <h4 class="text-xs uppercase text-gray-400 mb-4 tracking-wider font-medium">Características Detectadas</h4>
+          <dl class="space-y-2.5 text-sm">
+            <div class="flex justify-between border-b border-gray-50 pb-2">
+              <dt class="text-gray-500">Imagens analisadas</dt>
+              <dd class="text-gray-800 font-mono">{{ pipeline.analise_base.n_imagens_analisadas }}</dd>
+            </div>
+            <div class="flex justify-between border-b border-gray-50 pb-2">
+              <dt class="text-gray-500">Intensidade média</dt>
+              <dd class="text-gray-800 font-mono">{{ pipeline.analise_base.intensidade_media }} ± {{ pipeline.analise_base.intensidade_desvio }}</dd>
+            </div>
+            <div class="flex justify-between border-b border-gray-50 pb-2">
+              <dt class="text-gray-500">Outliers (IQR)</dt>
+              <dd class="text-gray-800 font-mono">{{ pipeline.analise_base.outliers_intensidade }}</dd>
+            </div>
+            <div class="flex justify-between border-b border-gray-50 pb-2">
+              <dt class="text-gray-500">Distribuição normal (Shapiro)</dt>
+              <dd class="font-mono">
+                {% if pipeline.analise_base.teste_normalidade.eh_normal is none %}
+                  <span class="text-gray-400">N/A</span>
+                {% elif pipeline.analise_base.teste_normalidade.eh_normal %}
+                  <span class="text-green-600">✓</span>
+                  <span class="text-gray-500 text-xs">(p={{ pipeline.analise_base.teste_normalidade.shapiro_p }})</span>
+                {% else %}
+                  <span class="text-red-500">✗</span>
+                  <span class="text-gray-500 text-xs">(p={{ pipeline.analise_base.teste_normalidade.shapiro_p }})</span>
+                {% endif %}
+              </dd>
+            </div>
+            <div class="flex justify-between border-b border-gray-50 pb-2">
+              <dt class="text-gray-500">Contraste médio</dt>
+              <dd class="text-gray-800 font-mono">{{ pipeline.analise_base.contraste_medio }}</dd>
+            </div>
+            <div class="flex justify-between border-b border-gray-50 pb-2">
+              <dt class="text-gray-500">Ruído estimado (sigma)</dt>
+              <dd class="text-gray-800 font-mono">{{ pipeline.analise_base.ruido_medio }}</dd>
+            </div>
+            <div class="flex justify-between">
+              <dt class="text-gray-500">Tamanhos consistentes</dt>
+              <dd class="font-mono">
+                {% if pipeline.analise_base.tamanhos_consistentes %}
+                  <span class="text-green-600">✓</span>
+                {% else %}
+                  <span class="text-yellow-600">✗ ({{ pipeline.analise_base.n_tamanhos_unicos }} diferentes)</span>
+                {% endif %}
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <!-- Coluna 2: Estratégia escolhida -->
+        <div>
+          <h4 class="text-xs uppercase text-gray-400 mb-4 tracking-wider font-medium">Pré-processamento Aplicado</h4>
+          <div class="space-y-3 mb-6">
+            <div class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5">
+              <span class="text-sm text-gray-600">Denoising</span>
+              <span class="px-3 py-1 rounded text-xs font-bold uppercase
+                {% if pipeline.estrategia_preproc.denoising == 'nlmeans' %}bg-indigo-100 text-indigo-700
+                {% else %}bg-teal-100 text-teal-700{% endif %}">
+                {% if pipeline.estrategia_preproc.denoising == 'nlmeans' %}Non-Local Means
+                {% else %}Gaussian 5×5{% endif %}
+              </span>
+            </div>
+            <div class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5">
+              <span class="text-sm text-gray-600">Normalização</span>
+              <span class="px-3 py-1 rounded text-xs font-bold uppercase
+                {% if pipeline.estrategia_preproc.normalizacao == 'percentil' %}bg-indigo-100 text-indigo-700
+                {% else %}bg-teal-100 text-teal-700{% endif %}">
+                {% if pipeline.estrategia_preproc.normalizacao == 'percentil' %}Percentil 1–99%
+                {% else %}Min-Max [0,1]{% endif %}
+              </span>
+            </div>
+            <div class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5">
+              <span class="text-sm text-gray-600">Equalização</span>
+              <span class="px-3 py-1 rounded text-xs font-bold uppercase
+                {% if pipeline.estrategia_preproc.equalizacao == 'clahe' %}bg-indigo-100 text-indigo-700
+                {% else %}bg-gray-200 text-gray-600{% endif %}">
+                {% if pipeline.estrategia_preproc.equalizacao == 'clahe' %}CLAHE
+                {% else %}Nenhuma{% endif %}
+              </span>
+            </div>
+            <div class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5">
+              <span class="text-sm text-gray-600">Redimensionamento</span>
+              <span class="px-3 py-1 rounded text-xs font-bold uppercase bg-teal-100 text-teal-700">
+                {{ pipeline.estrategia_preproc.tamanho_alvo[0] }}×{{ pipeline.estrategia_preproc.tamanho_alvo[1] }}
+              </span>
+            </div>
+          </div>
+
+          <h4 class="text-xs uppercase text-gray-400 mb-3 tracking-wider font-medium">Justificativa das Decisões</h4>
+          <ul class="space-y-1.5 text-xs text-gray-600">
+            {% for j in pipeline.estrategia_preproc.justificativas %}
+            <li class="flex gap-2">
+              <span class="text-teal-500 flex-shrink-0">›</span>
+              <span>{{ j }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Estatísticas descritivas dos biomarcadores (apenas modos com imagem) -->
+    {% if pipeline.modo != 'tabular' and pipeline.estatisticas %}
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-2 h-6 bg-teal-500 rounded-full"></div>
+        <h3 class="text-sm font-bold text-gray-700">Estatísticas Descritivas dos Biomarcadores</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-xs text-gray-400 uppercase tracking-wider border-b border-gray-100">
+              <th class="pb-3 text-left font-medium">Categoria</th>
+              <th class="pb-3 text-left font-medium">Biomarcador</th>
+              <th class="pb-3 text-right font-medium">N</th>
+              <th class="pb-3 text-right font-medium">Média</th>
+              <th class="pb-3 text-right font-medium">Mediana</th>
+              <th class="pb-3 text-right font-medium">Desvio</th>
+              <th class="pb-3 text-right font-medium">Min</th>
+              <th class="pb-3 text-right font-medium">Max</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cat, dados_cat in pipeline.estatisticas.items() %}
+              {% for campo, stats in dados_cat.campos.items() %}
+              <tr class="border-b border-gray-50">
+                {% if loop.first %}
+                <td rowspan="{{ dados_cat.campos|length }}" class="py-2 align-top">
+                  <span class="px-2 py-0.5 rounded text-xs font-bold uppercase
+                    {% if cat == 'MALIGNO' %}bg-red-100 text-red-700
+                    {% elif cat == 'BENIGNO' %}bg-green-100 text-green-700
+                    {% else %}bg-gray-100 text-gray-700{% endif %}">
+                    {{ cat }}
+                  </span>
+                </td>
+                {% endif %}
+                <td class="py-2 text-gray-700 font-medium capitalize">{{ campo }}</td>
+                <td class="py-2 text-right text-gray-500 font-mono">{{ dados_cat.n }}</td>
+                <td class="py-2 text-right text-gray-700 font-mono">{{ stats.media }}</td>
+                <td class="py-2 text-right text-gray-700 font-mono">{{ stats.mediana }}</td>
+                <td class="py-2 text-right text-gray-500 font-mono">{{ stats.desvio }}</td>
+                <td class="py-2 text-right text-gray-500 font-mono">{{ stats.min }}</td>
+                <td class="py-2 text-right text-gray-500 font-mono">{{ stats.max }}</td>
+              </tr>
+              {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Distribuição de biomarcadores -->
+    {% if pipeline.modo != 'tabular' and pipeline.n_imagens > 1 and pipeline.estatisticas %}
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <h3 class="text-sm font-bold text-gray-700 mb-1">Distribuição dos Biomarcadores</h3>
+      <p class="text-xs text-gray-400 mb-4">
+        {% if pipeline.modo == 'dataset_rotulado' %}Comparação entre categorias{% else %}Distribuição geral{% endif %}
+      </p>
+      <div id="chart-boxplot" class="h-80"></div>
+    </div>
+    {% endif %}
+
+    <!-- Gráficos do classificador (só se rotulado e treinado) -->
+    {% if pipeline.metricas %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h3 class="text-sm font-bold text-gray-700 mb-4">Comparação de Classificadores</h3>
+        <div id="chart-comparacao" class="h-72"></div>
+      </div>
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h3 class="text-sm font-bold text-gray-700 mb-4">Curva ROC</h3>
+        <div id="chart-roc" class="h-72"></div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <h3 class="text-sm font-bold text-gray-700 mb-1">Matriz de Confusão</h3>
+      <p class="text-xs text-gray-400 mb-4">Melhor modelo no conjunto de teste</p>
+      <div id="chart-cm" class="h-80"></div>
+    </div>
+    {% endif %}
+
+    <!-- Laudo IA -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-2 h-6 bg-teal-500 rounded-full"></div>
+        <h3 class="text-sm font-bold text-gray-700">
+          {% if pipeline.modo == 'tabular' %}Relatório da Análise Tabular{% else %}Laudo do Radiologista IA{% endif %}
+        </h3>
+        <span class="ml-auto text-xs text-gray-400 font-mono truncate max-w-md">{{ dados.imagem }}</span>
+        <span class="px-2 py-0.5 rounded text-xs font-bold uppercase
+          {% if dados.categoria == 'MALIGNO' %}bg-red-100 text-red-700
+          {% elif dados.categoria == 'BENIGNO' %}bg-green-100 text-green-700
+          {% else %}bg-gray-100 text-gray-700{% endif %}">
+          {{ dados.categoria }}
+        </span>
+      </div>
+      <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed">
+        {{ laudo_html | safe }}
+      </div>
+      <p class="mt-6 text-xs text-gray-400 border-t border-gray-100 pt-4">
+        Este laudo é uma ferramenta de suporte à decisão clínica e não substitui a avaliação de um médico habilitado.
+      </p>
+    </div>
+
+    <!-- Histórico -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+      <h3 class="text-sm font-bold text-gray-700 mb-5">Histórico de Análises</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-xs text-gray-400 uppercase tracking-wider border-b border-gray-100">
+              <th class="pb-3 text-left font-medium">ID</th>
+              <th class="pb-3 text-left font-medium">Data/Hora</th>
+              <th class="pb-3 text-left font-medium">Imagem</th>
+              <th class="pb-3 text-left font-medium">Categoria</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in historico %}
+            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+              <td class="py-3 text-gray-500 font-mono text-xs">{{ row[0] }}</td>
+              <td class="py-3 text-gray-600">{{ row[1][:19] }}</td>
+              <td class="py-3 text-gray-600 font-mono text-xs truncate max-w-xs">{{ row[2].split('\\')[-1] }}</td>
+              <td class="py-3">
+                <span class="px-2 py-0.5 rounded text-xs font-bold uppercase
+                  {% if row[3] == 'MALIGNO' %}bg-red-100 text-red-700
+                  {% elif row[3] == 'BENIGNO' %}bg-green-100 text-green-700
+                  {% else %}bg-gray-100 text-gray-700{% endif %}">
+                  {{ row[3] }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Plotly charts -->
+  <script>
+    const pipeline = {{ pipeline_json | safe }};
+    const metricas = pipeline.metricas || {};
+    const rocData  = pipeline.roc_data || {};
+    const cmData   = pipeline.confusion_matrix || {};
+    const stats    = pipeline.estatisticas || {};
+    const melhor   = pipeline.melhor_modelo || '';
+
+    const layout_base = {
+      margin: { t: 10, b: 50, l: 50, r: 10 },
+      paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+      font: { family: 'ui-sans-serif, system-ui, sans-serif', size: 11, color: '#6b7280' },
+    };
+    const cores = { SVM: '#0d9488', RandomForest: '#6366f1' };
+    const coresCat = { BENIGNO: '#10b981', MALIGNO: '#ef4444', INDEFINIDO: '#94a3b8' };
+
+    // --- Badge ---
+    if (metricas[melhor]) {
+      document.getElementById('badge-acuracia').textContent = (metricas[melhor].acuracia * 100).toFixed(1) + '%';
+      document.getElementById('badge-f1').textContent       = (metricas[melhor].f1 * 100).toFixed(1) + '%';
+      document.getElementById('badge-auc').textContent      = (metricas[melhor].auc * 100).toFixed(1) + '%';
+    }
+
+    // --- Boxplot de biomarcadores (sempre que houver >1 imagem) ---
+    if (document.getElementById('chart-boxplot')) {
+      const tracesBox = [];
+      const categorias = Object.keys(stats);
+      const campos = ['solidez', 'circularidade', 'entropia', 'homogeneidade', 'contraste'];
+      for (const cat of categorias) {
+        const valoresJunto = [];
+        const labelsJunto = [];
+        for (const campo of campos) {
+          const v = stats[cat]?.campos?.[campo]?.valores;
+          if (v && v.length) {
+            valoresJunto.push(...v);
+            labelsJunto.push(...Array(v.length).fill(campo));
+          }
+        }
+        if (valoresJunto.length) {
+          tracesBox.push({
+            name: cat.charAt(0) + cat.slice(1).toLowerCase(),
+            type: 'box',
+            y: valoresJunto,
+            x: labelsJunto,
+            marker: { color: coresCat[cat] || '#94a3b8' },
+            boxpoints: 'outliers',
+          });
+        }
+      }
+      Plotly.newPlot('chart-boxplot', tracesBox, {
+        ...layout_base,
+        boxmode: 'group',
+        xaxis: { title: 'Biomarcador' },
+        yaxis: { title: 'Valor' },
+        legend: { orientation: 'h', y: -0.2 },
+      }, { responsive: true, displayModeBar: false });
+    }
+
+    // --- Comparação de classificadores ---
+    if (document.getElementById('chart-comparacao') && Object.keys(metricas).length) {
+      const keys = ['acuracia', 'precisao', 'recall', 'f1', 'auc'];
+      const labels = ['Acurácia', 'Precisão', 'Recall', 'F1', 'AUC'];
+      const tracesComp = Object.entries(metricas).map(([nome, vals]) => ({
+        name: nome,
+        type: 'bar',
+        x: labels,
+        y: keys.map(k => vals[k]),
+        marker: { color: cores[nome] || '#94a3b8' },
+        text: keys.map(k => (vals[k] * 100).toFixed(1) + '%'),
+        textposition: 'outside',
+      }));
+      Plotly.newPlot('chart-comparacao', tracesComp, {
+        ...layout_base,
+        barmode: 'group',
+        yaxis: { range: [0, 1.1], tickformat: '.0%' },
+        legend: { orientation: 'h', y: -0.2 },
+      }, { responsive: true, displayModeBar: false });
+    }
+
+    // --- Curva ROC ---
+    if (document.getElementById('chart-roc') && Object.keys(rocData).length) {
+      const tracesRoc = Object.entries(rocData).map(([nome, d]) => ({
+        name: `${nome} (AUC=${metricas[nome]?.auc ?? '?'})`,
+        type: 'scatter', mode: 'lines',
+        x: d.fpr, y: d.tpr,
+        line: { color: cores[nome] || '#94a3b8', width: 2 },
+      }));
+      tracesRoc.push({
+        name: 'Aleatório', type: 'scatter', mode: 'lines',
+        x: [0, 1], y: [0, 1],
+        line: { dash: 'dot', color: '#d1d5db', width: 1 },
+      });
+      Plotly.newPlot('chart-roc', tracesRoc, {
+        ...layout_base,
+        xaxis: { title: 'Taxa Falsos Positivos', range: [0, 1] },
+        yaxis: { title: 'Taxa Verdadeiros Positivos', range: [0, 1] },
+        legend: { orientation: 'h', y: -0.25 },
+      }, { responsive: true, displayModeBar: false });
+    }
+
+    // --- Matriz de Confusão ---
+    if (document.getElementById('chart-cm') && cmData[melhor]) {
+      const cm = cmData[melhor];
+      Plotly.newPlot('chart-cm', [{
+        type: 'heatmap',
+        z: cm,
+        x: ['Pred. Benigno', 'Pred. Maligno'],
+        y: ['Real Benigno', 'Real Maligno'],
+        colorscale: [[0, '#f0fdfa'], [1, '#0d9488']],
+        showscale: false,
+      }], {
+        ...layout_base,
+        annotations: cm.flatMap((row, i) => row.map((val, j) => ({
+          x: j, y: i, text: String(val), showarrow: false,
+          font: { size: 22, color: val > Math.max(...cm.flat()) / 2 ? '#fff' : '#1f2937' },
+        }))),
+      }, { responsive: true, displayModeBar: false });
+    }
+  </script>
+
+</body>
+</html>
