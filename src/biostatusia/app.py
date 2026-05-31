@@ -151,11 +151,13 @@ def analisar():
     from biostatusia.pipeline.classificador import treinar_vetores
     from biostatusia.pipeline.dados_tabulares import (
         analisar_tabular, carregar_csv, detectar_schema, extrair_features,
+        decidir_estrategia_tabular, preprocessar_tabular_amostras,
     )
 
     # 1. Resolver caminho do dataset
     arquivo = request.files.get("arquivo")
     caminho_manual = request.form.get("caminho_manual", "").strip()
+    kaggle_id = request.form.get("kaggle_id", "").strip()
 
     dataset_path = ""
     if arquivo and arquivo.filename:
@@ -175,9 +177,8 @@ def analisar():
     else:
         try:
             import kagglehub
-            dataset_path = kagglehub.dataset_download(
-                "aryashah2k/breast-ultrasound-images-dataset"
-            )
+            dataset_to_download = kaggle_id if kaggle_id else "aryashah2k/breast-ultrasound-images-dataset"
+            dataset_path = kagglehub.dataset_download(dataset_to_download)
         except Exception as e:
             return f"Nenhum dataset fornecido e KaggleHub falhou: {e}", 400
 
@@ -217,8 +218,18 @@ def analisar():
             return "Falha ao ler o arquivo tabular.", 400
         header, data = resultado
         schema = detectar_schema(header, data)
-        X, y, label_map = extrair_features(data, schema)
-        stats_tab = analisar_tabular(X, y, schema)
+        
+        # 1. Extrair features bruto (mantendo NaNs)
+        X_raw, y, label_map = extrair_features(data, schema)
+        
+        # 2. Análise Estatística sobre o bruto
+        stats_tab = analisar_tabular(X_raw, y, schema)
+        
+        # 3. Decidir Estratégia de Pré-processamento
+        estrategia = decidir_estrategia_tabular(stats_tab)
+        
+        # 4. Executar Pré-processamento (imputar NaNs)
+        X_preproc = preprocessar_tabular_amostras(X_raw, estrategia)
 
         pipeline_data: dict = {
             "modo": "tabular",
@@ -227,19 +238,21 @@ def analisar():
             "schema_tabular": schema,
             "label_map": label_map,
             "tabular_stats": stats_tab,
+            "estrategia_preproc": estrategia,
         }
 
         melhor = "N/A"
-        if y is not None and len(set(y.tolist())) >= 2 and len(X) >= 10:
+        if y is not None and len(set(y.tolist())) >= 2 and len(X_preproc) >= 10:
             try:
-                res_clf = treinar_vetores(X, y)
+                # O AutoML roda com o escalamento dinâmico
+                res_clf = treinar_vetores(X_preproc, y, scaling=estrategia["escalamento"])
                 pipeline_data.update(res_clf)
                 melhor = res_clf["melhor_modelo"]
             except Exception as e:
                 pipeline_data["erro_classificador"] = str(e)
         else:
             pipeline_data["aviso_classificador"] = (
-                f"Treino não executado: {len(X)} amostras, "
+                f"Treino não executado: {len(X_preproc)} amostras, "
                 f"{len(set(y.tolist())) if y is not None else 0} classes."
             )
 

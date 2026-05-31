@@ -2,7 +2,12 @@ import pickle
 from pathlib import Path
 
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+import warnings
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
@@ -13,7 +18,7 @@ from sklearn.metrics import (
     roc_curve,
 )
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.svm import SVC
 
 MODEL_DIR = Path(__file__).parent.parent.parent.parent / "models"
@@ -46,18 +51,28 @@ def treinar(registros: list[dict]) -> dict:
     return treinar_vetores(X, y)
 
 
-def treinar_vetores(X: np.ndarray, y: np.ndarray) -> dict:
-    """Versão genérica: recebe X (amostras × features) e y (rótulos 0/1) prontos."""
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+def treinar_vetores(X: np.ndarray, y: np.ndarray, scaling: str = "standard") -> dict:
+    """Versão genérica com escalamento dinâmico baseado na estratégia decidida."""
+    if scaling == "robust":
+        scaler = RobustScaler()
+    elif scaling == "standard":
+        scaler = StandardScaler()
+    else:
+        scaler = None
+
+    X_scaled = scaler.fit_transform(X) if scaler is not None else X
 
     X_train, X_test, y_train, y_test = train_test_split(
         X_scaled, y, test_size=0.2, random_state=42, stratify=y
     )
 
     modelos = {
+        "LogisticRegression": LogisticRegression(random_state=42, max_iter=2000),
+        "KNN": KNeighborsClassifier(n_neighbors=5),
         "SVM": SVC(kernel="rbf", probability=True, random_state=42),
         "RandomForest": RandomForestClassifier(n_estimators=100, random_state=42),
+        "GradientBoosting": GradientBoostingClassifier(n_estimators=100, random_state=42),
+        "MLP": MLPClassifier(hidden_layer_sizes=(64, 32), max_iter=2000, random_state=42),
     }
 
     resultado: dict = {"metricas": {}, "roc_data": {}, "confusion_matrix": {}}
@@ -92,13 +107,16 @@ def treinar_vetores(X: np.ndarray, y: np.ndarray) -> dict:
 
 def classificar(biomarcadores: dict) -> tuple[str, float]:
     """Classifica usando o melhor modelo salvo em disco. Retorna (categoria, probabilidade)."""
-    for nome in ["randomforest", "svm"]:
+    nomes_possiveis = [
+        "logisticregression", "knn", "svm", "randomforest", "gradientboosting", "mlp"
+    ]
+    for nome in nomes_possiveis:
         caminho = MODEL_DIR / f"modelo_{nome}.pkl"
         if caminho.exists():
             with open(caminho, "rb") as f:
                 salvo = pickle.load(f)
             X = np.array([_vetor(biomarcadores)])
-            X_scaled = salvo["scaler"].transform(X)
+            X_scaled = salvo["scaler"].transform(X) if salvo.get("scaler") is not None else X
             prob = float(salvo["modelo"].predict_proba(X_scaled)[0][1])
             return ("MALIGNO" if prob > 0.5 else "BENIGNO"), round(prob, 4)
     return "INDEFINIDO", 0.0
