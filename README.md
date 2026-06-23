@@ -241,7 +241,7 @@ Seleção de região de interesse diretamente na interface → laudo IA focado e
 ### Setup
 
 ```bash
-git clone https://github.com/JuniorSoares716/BioStatusIA.git
+git clone https://github.com/keikorr/BioStatusIA.git
 cd BioStatusIA
 uv sync
 ```
