@@ -86,6 +86,12 @@
           {% elif pipeline.modo == 'dataset_rotulado' %}📊
           {% elif pipeline.modo == 'tabular' %}📄
           {% elif pipeline.modo == 'multimodal' %}🧠
+          {% elif pipeline.modo == 'sinal_temporal' %}📡
+          {% elif pipeline.modo == 'audio_biomedico' %}🎵
+          {% elif pipeline.modo == 'imagem_dicom_2d' %}🩻
+          {% elif pipeline.modo == 'volume_3d' %}🧊
+          {% elif pipeline.modo == 'video_medico' %}🎬
+          {% elif pipeline.modo == 'multimodal_expandido' %}🔬
           {% else %}📂
           {% endif %}
         </div>
@@ -96,24 +102,40 @@
             {% elif pipeline.modo == 'dataset_rotulado' %}Dataset Rotulado (Benigno vs Maligno)
             {% elif pipeline.modo == 'tabular' %}Análise Tabular Completa (CSV/TXT)
             {% elif pipeline.modo == 'multimodal' %}Análise Multimodal (Imagens + Tabular)
+            {% elif pipeline.modo == 'sinal_temporal' %}Sinal Temporal Fisiológico ({{ pipeline.tipo_sinal or 'ECG/EEG/EMG' }})
+            {% elif pipeline.modo == 'audio_biomedico' %}Áudio Biomédico ({{ pipeline.tipo_sinal or 'Fonocardiograma / Sons Pulmonares' }})
+            {% elif pipeline.modo == 'imagem_dicom_2d' %}Imagem DICOM 2D ({{ pipeline.tipo_sinal or 'Raio-X / Mamografia / Ultrassom' }})
+            {% elif pipeline.modo == 'volume_3d' %}Volume 3D ({{ pipeline.tipo_sinal or 'TC / RM / PET' }})
+            {% elif pipeline.modo == 'video_medico' %}Vídeo Médico ({{ pipeline.tipo_sinal or 'Endoscopia / Ultrassom Dinâmico' }})
+            {% elif pipeline.modo == 'multimodal_expandido' %}Análise Multimodal Expandida (múltiplas famílias)
             {% else %}Processamento em Lote (Imagens sem Rótulos)
             {% endif %}
           </p>
           <p class="text-xs text-slate-400 mt-1 font-mono truncate max-w-2xl">{{ dados.dataset_path }}</p>
         </div>
+        {% if pipeline.familia and pipeline.familia not in ('tabular', 'F3') %}
+        <div class="hidden lg:flex items-center gap-2 text-xs">
+          <span class="px-3 py-1.5 bg-teal-50 text-teal-700 rounded-full font-bold border border-teal-100">
+            Família {{ pipeline.familia }}
+          </span>
+        </div>
+        {% endif %}
       </div>
     </div>
 
     <!-- Navegação em Abas Premium -->
-    <div class="border-b border-slate-200 flex gap-8 text-sm">
-      <button onclick="switchTab('tab-pdi')" data-tab="tab-pdi" class="tab-btn pb-3 border-b-2 tab-active transition-all focus:outline-none">
-        🔧 1. Pré-processamento Adaptativo
+    <div class="border-b border-slate-200 flex flex-wrap gap-6 text-sm">
+      <button onclick="switchTab('tab-estatistica')" data-tab="tab-estatistica" class="tab-btn pb-3 border-b-2 tab-active transition-all focus:outline-none">
+        📈 1. Análise Estatística
       </button>
-      <button onclick="switchTab('tab-estatistica')" data-tab="tab-estatistica" class="tab-btn pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-all focus:outline-none">
-        📈 2. Análise Estatística Avançada
+      <button onclick="switchTab('tab-pdi')" data-tab="tab-pdi" class="tab-btn pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-all focus:outline-none">
+        🔧 2. Pré-processamento
       </button>
       <button onclick="switchTab('tab-laudo')" data-tab="tab-laudo" class="tab-btn pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-all focus:outline-none">
         🧠 3. AutoML & Laudo IA
+      </button>
+      <button onclick="switchTab('tab-interativo')" data-tab="tab-interativo" class="tab-btn pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-all focus:outline-none">
+        🔬 4. Laudo Interativo
       </button>
     </div>
 
@@ -777,6 +799,176 @@
 
     </div>
 
+    <!-- ========================================== -->
+    <!-- ABA 4: LAUDO INTERATIVO                  -->
+    <!-- ========================================== -->
+    <div id="tab-interativo" class="tab-pane hidden space-y-8">
+
+      <div class="premium-card bg-white rounded-2xl p-6 shadow-sm">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-1 h-5 bg-teal-500 rounded-full"></div>
+          <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Análise Focada pelo Médico</h3>
+        </div>
+        <p class="text-xs text-slate-400 mb-6">
+          Selecione um trecho do sinal ou marque uma região na imagem. A IA gera um laudo
+          focado <strong>exclusivamente</strong> naquele recorte.
+        </p>
+
+        <!-- ── F1/F2: Viewer de Sinal Temporal ─────────────────────────── -->
+        {% if pipeline.familia in ('F1','F2') %}
+        <div class="space-y-4">
+          <div class="flex items-center gap-3 flex-wrap">
+            <label class="text-xs font-semibold text-slate-600">Canal:</label>
+            <select id="sel-canal" class="text-xs border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-300">
+              {% if pipeline.canais %}
+                {% for c in pipeline.canais[:12] %}
+                <option value="{{ c }}">{{ c }}</option>
+                {% endfor %}
+              {% else %}
+                <option value="canal_0">Canal 0</option>
+              {% endif %}
+            </select>
+            <span class="text-xs text-slate-400">Arraste para selecionar o trecho de interesse:</span>
+          </div>
+          <div id="chart-sinal-interativo" class="h-72 w-full border border-slate-100 rounded-xl bg-slate-50"></div>
+          <div class="flex items-center gap-4 text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
+            <span>Seleção:</span>
+            <span id="sel-inicio" class="font-mono font-bold text-teal-700">—</span>
+            <span>→</span>
+            <span id="sel-fim" class="font-mono font-bold text-teal-700">—</span>
+            <span id="sel-unidade" class="text-slate-400">segundos</span>
+            <button id="btn-analisar-trecho"
+              class="ml-auto bg-teal-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-teal-700 active:scale-95 transition-all disabled:opacity-40"
+              disabled onclick="analisarTrecho()">
+              Analisar Trecho Selecionado
+            </button>
+          </div>
+        </div>
+
+        <!-- ── F3/F4: Viewer de Imagem com ROI ─────────────────────────── -->
+        {% elif pipeline.familia in ('F3','F4') %}
+        <div class="space-y-4">
+          {% if pipeline.familia == 'F4' %}
+          <div class="flex items-center gap-3">
+            <label class="text-xs font-semibold text-slate-600">Slice axial:</label>
+            <input type="range" id="slice-slider" min="0" max="100" value="50" class="flex-1 accent-teal-600"
+              oninput="carregarSlice(this.value)">
+            <span id="slice-idx-label" class="font-mono text-xs text-teal-700 w-10 text-right">50</span>
+            <span class="text-xs text-slate-400">/ <span id="slice-total">—</span></span>
+          </div>
+          {% endif %}
+          <div class="relative inline-block w-full max-w-lg">
+            <img id="img-dicom" src="" alt="Imagem médica"
+              class="w-full rounded-xl border border-slate-200 bg-slate-100 min-h-64 object-contain"
+              style="display:none">
+            <div id="img-placeholder" class="w-full h-64 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-300 text-sm">
+              Carregando imagem...
+            </div>
+            <canvas id="roi-canvas" class="absolute top-0 left-0 w-full h-full cursor-crosshair rounded-xl"
+              style="display:none"
+              onmousedown="roiStart(event)" onmousemove="roiMove(event)" onmouseup="roiEnd(event)">
+            </canvas>
+          </div>
+          <div class="flex items-center gap-4 text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
+            <span>ROI:</span>
+            <span id="roi-info" class="font-mono text-teal-700">Clique e arraste na imagem</span>
+            <button onclick="limparROI()" class="text-xs text-slate-400 hover:text-slate-600 underline">Limpar</button>
+            <button id="btn-analisar-roi"
+              class="ml-auto bg-teal-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-teal-700 active:scale-95 transition-all disabled:opacity-40"
+              disabled onclick="analisarROI()">
+              Analisar Região Selecionada
+            </button>
+          </div>
+        </div>
+
+        <!-- ── F5: Viewer de Vídeo ────────────────────────────────────────── -->
+        {% elif pipeline.familia == 'F5' %}
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            <label class="text-xs font-semibold text-slate-600">Frame:</label>
+            <input type="range" id="frame-slider" min="0" max="299" value="0" class="flex-1 accent-teal-600"
+              oninput="carregarFrame(this.value)">
+            <span id="frame-idx-label" class="font-mono text-xs text-teal-700 w-10 text-right">0</span>
+          </div>
+          <img id="img-frame" src="" alt="Frame do vídeo"
+            class="w-full max-w-lg rounded-xl border border-slate-200 bg-slate-100 min-h-48 object-contain">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-slate-500 block mb-1">Frame início</label>
+              <input type="number" id="frame-inicio" value="0" min="0"
+                class="w-full text-xs border border-slate-200 rounded-lg px-3 py-1.5 font-mono focus:outline-none focus:ring-2 focus:ring-teal-300">
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 block mb-1">Frame fim</label>
+              <input type="number" id="frame-fim" value="30" min="1"
+                class="w-full text-xs border border-slate-200 rounded-lg px-3 py-1.5 font-mono focus:outline-none focus:ring-2 focus:ring-teal-300">
+            </div>
+          </div>
+          <button id="btn-analisar-video"
+            class="w-full bg-teal-600 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-teal-700 active:scale-95 transition-all"
+            onclick="analisarVideo()">
+            Analisar Trecho de Vídeo Selecionado
+          </button>
+        </div>
+
+        <!-- ── Modos de imagem PNG/JPG originais ──────────────────────────── -->
+        {% else %}
+        <div class="space-y-4">
+          {% if dados.imagem and dados.imagem != 'None' %}
+          <div class="relative inline-block w-full max-w-lg">
+            <img id="img-dicom" src="/static/uploads/{{ dados.imagem.split('\\')[-1].split('/')[-1] }}"
+              alt="Imagem analisada"
+              class="w-full rounded-xl border border-slate-200 bg-slate-100 object-contain max-h-80"
+              onerror="this.style.display='none'; document.getElementById('img-placeholder-orig').style.display='flex'">
+            <div id="img-placeholder-orig" class="hidden w-full h-48 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 items-center justify-center text-slate-300 text-sm">
+              Imagem não disponível para visualização local
+            </div>
+            <canvas id="roi-canvas" class="absolute top-0 left-0 w-full h-full cursor-crosshair rounded-xl"
+              onmousedown="roiStart(event)" onmousemove="roiMove(event)" onmouseup="roiEnd(event)">
+            </canvas>
+          </div>
+          <div class="flex items-center gap-4 text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
+            <span>ROI:</span>
+            <span id="roi-info" class="font-mono text-teal-700">Clique e arraste na imagem para delimitar região</span>
+            <button onclick="limparROI()" class="text-xs text-slate-400 hover:text-slate-600 underline">Limpar</button>
+            <button id="btn-analisar-roi"
+              class="ml-auto bg-teal-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-teal-700 active:scale-95 transition-all disabled:opacity-40"
+              disabled onclick="analisarROI()">
+              Analisar Região
+            </button>
+          </div>
+          {% else %}
+          <p class="text-slate-400 text-sm text-center py-8">
+            A análise interativa por seleção de região está disponível para imagens,
+            DICOM, volumes 3D, sinais temporais e vídeos médicos.
+          </p>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Painel de resposta do laudo interativo -->
+      <div id="painel-laudo-interativo" class="hidden premium-card bg-white rounded-3xl p-8 shadow-md border border-teal-100 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-teal-400 to-teal-600"></div>
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center text-xl">🔬</div>
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900 leading-none">Laudo Interativo — Análise Focada</h3>
+            <p class="text-xs text-slate-400 mt-1 font-mono">Gerado por <span id="laudo-int-trecho">—</span></p>
+          </div>
+          <div id="laudo-int-spinner" class="ml-auto hidden">
+            <div class="w-6 h-6 border-2 border-teal-300 border-t-teal-600 rounded-full animate-spin"></div>
+          </div>
+        </div>
+        <div id="laudo-interativo-conteudo" class="prose prose-teal max-w-none text-slate-600 text-sm leading-relaxed border-t border-slate-100/80 pt-6"></div>
+        <div class="mt-6 text-[11px] text-slate-400 border-t border-slate-100 pt-4 flex gap-2 items-center">
+          <span class="text-rose-500 font-bold">⚠️ AVISO ÉTICO:</span>
+          <span>Laudo de suporte gerado por IA — NÃO substitui avaliação médica habilitada.</span>
+        </div>
+      </div>
+
+    </div><!-- fim tab-interativo -->
+
   </main>
 
   <!-- Plotly charts & dynamic scripts -->
@@ -946,6 +1138,222 @@
         }))),
       }, { responsive: true, displayModeBar: false });
     }
+
+    // ── Aba 4: Laudo Interativo ───────────────────────────────────────────────
+    const RESULTADO_ID = {{ dados.id }};
+    const FAMILIA = '{{ pipeline.familia or "" }}';
+    const TIPO_SINAL = '{{ pipeline.tipo_sinal or dados.categoria or "" }}';
+
+    // ── F1/F2: gráfico de sinal temporal ─────────────────────────────────────
+    const dadosViz = pipeline.dados_viz || [];
+    const canaisViz = pipeline.canais || ['canal_0'];
+    let selInicio = null, selFim = null;
+
+    if (FAMILIA === 'F1' || FAMILIA === 'F2') {
+      const elChart = document.getElementById('chart-sinal-interativo');
+      if (elChart && dadosViz.length) {
+        const fs = pipeline.taxa_amostragem || 1000;
+        const canalIdx = 0;
+        const y = Array.isArray(dadosViz[0]) ? dadosViz[canalIdx] : dadosViz;
+        const x = y.map((_, i) => i / fs);
+        const trace = {
+          x, y, type: 'scatter', mode: 'lines',
+          name: canaisViz[canalIdx] || 'Canal 0',
+          line: { color: '#0d9488', width: 1.5 }
+        };
+        Plotly.newPlot('chart-sinal-interativo', [trace], {
+          ...layout_base,
+          dragmode: 'select',
+          xaxis: { title: 'Tempo (s)' },
+          yaxis: { title: 'Amplitude' },
+          selectdirection: 'h',
+        }, { responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['toImage'] });
+
+        document.getElementById('chart-sinal-interativo').on('plotly_selected', function(eventData) {
+          if (!eventData || !eventData.range) return;
+          selInicio = eventData.range.x[0];
+          selFim = eventData.range.x[1];
+          document.getElementById('sel-inicio').textContent = selInicio.toFixed(3);
+          document.getElementById('sel-fim').textContent = selFim.toFixed(3);
+          document.getElementById('btn-analisar-trecho').disabled = false;
+        });
+
+        document.getElementById('sel-canal').addEventListener('change', function() {
+          const idx = canaisViz.indexOf(this.value);
+          if (idx < 0) return;
+          const yNew = Array.isArray(dadosViz[0]) ? dadosViz[idx] : dadosViz;
+          const xNew = yNew.map((_, i) => i / fs);
+          Plotly.restyle('chart-sinal-interativo', { x: [xNew], y: [yNew], name: [this.value] }, [0]);
+        });
+      }
+    }
+
+    function analisarTrecho() {
+      const canal = document.getElementById('sel-canal')?.value || '';
+      enviarLaudoInterativo({
+        inicio_s: selInicio,
+        fim_s: selFim,
+        canal: canal,
+        descricao: `Trecho ${selInicio?.toFixed(2)}s–${selFim?.toFixed(2)}s, canal ${canal}`
+      });
+    }
+
+    // ── F3/F4: canvas ROI ─────────────────────────────────────────────────────
+    let roiDrawing = false, roiX0 = 0, roiY0 = 0, roiRect = null;
+
+    function initCanvas() {
+      const canvas = document.getElementById('roi-canvas');
+      const img = document.getElementById('img-dicom');
+      if (!canvas || !img) return;
+      canvas.style.display = 'block';
+      canvas.width = img.offsetWidth;
+      canvas.height = img.offsetHeight;
+    }
+
+    function roiStart(e) {
+      roiDrawing = true;
+      const canvas = document.getElementById('roi-canvas');
+      const rect = canvas.getBoundingClientRect();
+      roiX0 = e.clientX - rect.left;
+      roiY0 = e.clientY - rect.top;
+    }
+    function roiMove(e) {
+      if (!roiDrawing) return;
+      const canvas = document.getElementById('roi-canvas');
+      const ctx = canvas.getContext('2d');
+      const rect = canvas.getBoundingClientRect();
+      const x1 = e.clientX - rect.left;
+      const y1 = e.clientY - rect.top;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#0d9488';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 3]);
+      ctx.strokeRect(roiX0, roiY0, x1 - roiX0, y1 - roiY0);
+      ctx.fillStyle = 'rgba(13,148,136,0.08)';
+      ctx.fillRect(roiX0, roiY0, x1 - roiX0, y1 - roiY0);
+    }
+    function roiEnd(e) {
+      roiDrawing = false;
+      const canvas = document.getElementById('roi-canvas');
+      const img = document.getElementById('img-dicom');
+      const rect = canvas.getBoundingClientRect();
+      const x1 = e.clientX - rect.left;
+      const y1 = e.clientY - rect.top;
+      const scaleX = (img.naturalWidth || img.offsetWidth) / img.offsetWidth;
+      const scaleY = (img.naturalHeight || img.offsetHeight) / img.offsetHeight;
+      roiRect = {
+        x: Math.round(Math.min(roiX0, x1) * scaleX),
+        y: Math.round(Math.min(roiY0, y1) * scaleY),
+        w: Math.round(Math.abs(x1 - roiX0) * scaleX),
+        h: Math.round(Math.abs(y1 - roiY0) * scaleY),
+      };
+      if (roiRect.w > 5 && roiRect.h > 5) {
+        document.getElementById('roi-info').textContent =
+          `x=${roiRect.x}, y=${roiRect.y}, ${roiRect.w}×${roiRect.h}px`;
+        const btn = document.getElementById('btn-analisar-roi');
+        if (btn) btn.disabled = false;
+      }
+    }
+    function limparROI() {
+      roiRect = null;
+      const canvas = document.getElementById('roi-canvas');
+      if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+      document.getElementById('roi-info').textContent = 'Clique e arraste na imagem para delimitar região';
+      const btn = document.getElementById('btn-analisar-roi');
+      if (btn) btn.disabled = true;
+    }
+    function analisarROI() {
+      if (!roiRect) return;
+      const sliceIdx = parseInt(document.getElementById('slice-slider')?.value || 0);
+      enviarLaudoInterativo({ roi: roiRect, slice_idx: sliceIdx,
+        descricao: `ROI (${roiRect.x},${roiRect.y}) ${roiRect.w}×${roiRect.h}px` });
+    }
+
+    // ── F4: slider de slice ────────────────────────────────────────────────────
+    function carregarSlice(idx) {
+      document.getElementById('slice-idx-label').textContent = idx;
+      fetch(`/slice/${RESULTADO_ID}/${idx}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.imagem_b64) {
+            const img = document.getElementById('img-dicom');
+            img.src = 'data:image/png;base64,' + d.imagem_b64;
+            img.style.display = 'block';
+            document.getElementById('img-placeholder')?.style && (document.getElementById('img-placeholder').style.display = 'none');
+            document.getElementById('slice-total').textContent = d.n_slices;
+            document.getElementById('slice-slider').max = d.n_slices - 1;
+            initCanvas();
+          }
+        }).catch(() => {});
+    }
+
+    // ── F5: carregamento de frame ──────────────────────────────────────────────
+    function carregarFrame(idx) {
+      document.getElementById('frame-idx-label').textContent = idx;
+      fetch(`/frame/${RESULTADO_ID}/${idx}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.imagem_b64) {
+            document.getElementById('img-frame').src = 'data:image/png;base64,' + d.imagem_b64;
+          }
+        }).catch(() => {});
+    }
+    function analisarVideo() {
+      const inicio = parseInt(document.getElementById('frame-inicio')?.value || 0);
+      const fim = parseInt(document.getElementById('frame-fim')?.value || 30);
+      enviarLaudoInterativo({ frame_inicio: inicio, frame_fim: fim,
+        descricao: `Frames ${inicio}–${fim}` });
+    }
+
+    // ── Envio do laudo interativo (comum a todas as famílias) ─────────────────
+    function enviarLaudoInterativo(dados_selecao) {
+      const painel = document.getElementById('painel-laudo-interativo');
+      const conteudo = document.getElementById('laudo-interativo-conteudo');
+      const spinner = document.getElementById('laudo-int-spinner');
+      const trechoLabel = document.getElementById('laudo-int-trecho');
+
+      painel.classList.remove('hidden');
+      spinner.classList.remove('hidden');
+      conteudo.innerHTML = '<p class="text-slate-400 text-xs animate-pulse">Aguardando análise do agente IA...</p>';
+      trechoLabel.textContent = dados_selecao.descricao || 'trecho selecionado';
+
+      fetch('/laudo_interativo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resultado_id: RESULTADO_ID,
+          tipo_sinal: TIPO_SINAL,
+          dados_selecao: dados_selecao,
+        })
+      })
+      .then(r => r.json())
+      .then(d => {
+        spinner.classList.add('hidden');
+        if (d.erro) {
+          conteudo.innerHTML = `<p class="text-rose-500 text-sm">${d.erro}</p>`;
+        } else {
+          conteudo.innerHTML = d.laudo_html;
+        }
+        painel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      })
+      .catch(err => {
+        spinner.classList.add('hidden');
+        conteudo.innerHTML = `<p class="text-rose-500 text-sm">Erro de comunicação: ${err}</p>`;
+      });
+    }
+
+    // Inicializações ao entrar na aba interativo
+    document.querySelector('[data-tab="tab-interativo"]')?.addEventListener('click', () => {
+      setTimeout(() => {
+        if (FAMILIA === 'F4') carregarSlice(50);
+        if (FAMILIA === 'F5') carregarFrame(0);
+        initCanvas();
+      }, 100);
+    });
+
+    // Ajuste de canvas quando imagem carrega
+    document.getElementById('img-dicom')?.addEventListener('load', initCanvas);
+
   </script>
 
 </body>
