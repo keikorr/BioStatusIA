@@ -651,7 +651,162 @@ def _bio_roi_dicom(path: Path, roi: dict, slice_idx: int | None) -> dict:
         return {}
 
 
-# ── Rota: Slice de volume 3D ────────────────────────────────────────────────
+# ── Rota: Histórico para Aba 4 ───────────────────────────────────────────────
+
+@app.route("/api/historico")
+def api_historico():
+    """Retorna JSON com os últimos 30 resultados do banco para o seletor da Aba 4."""
+    from biostatusia.database import listar_resultados_completo
+    return jsonify(listar_resultados_completo())
+
+
+# ── Rota: Laudo de Amostra Avulsa ─────────────────────────────────────────────
+
+@app.route("/laudo_amostra", methods=["POST"])
+def laudo_amostra():
+    """
+    Recebe um arquivo avulso (multipart) OU um resultado_id do banco e
+    gera laudo do radiologista_ia_interativo sem executar o pipeline completo.
+
+    Casos de uso da Aba 4 — Seção A:
+      - Upload de nova amostra (arquivo de imagem, sinal, DICOM, etc.)
+      - Seleção de análise anterior pelo resultado_id
+    """
+    from biostatusia.crew import BioStatusIACrewInterativo
+    from biostatusia.database import buscar_resultado, salvar_laudo_interativo
+    import markdown as md_
+
+    resultado_id_str = request.form.get("resultado_id", "").strip()
+    arquivo = request.files.get("arquivo")
+
+    # ── Caso 1: análise já existente no banco ──────────────────────────────
+    if resultado_id_str and resultado_id_str.isdigit():
+        resultado_id = int(resultado_id_str)
+        dados = buscar_resultado(resultado_id)
+        if not dados:
+            return jsonify({"erro": f"Resultado {resultado_id} não encontrado"}), 404
+
+        pipeline = dados["pipeline"]
+        familia = pipeline.get("familia", "")
+        tipo_sinal = pipeline.get("tipo_sinal", "") or dados.get("categoria", "")
+
+        # Resumo do pipeline como contexto para o agente
+        biomarcadores_ctx = {
+            "fonte": "banco",
+            "resultado_id": resultado_id,
+            "familia": familia,
+            "tipo_sinal": tipo_sinal,
+            "modo": pipeline.get("modo", ""),
+            "n_amostras": pipeline.get("n_imagens", 0),
+            "melhor_modelo": dados.get("melhor_modelo", "N/A"),
+        }
+        # Anexa métricas se existirem
+        if pipeline.get("metricas"):
+            melhor = dados.get("melhor_modelo", "")
+            m = pipeline["metricas"].get(melhor, {})
+            biomarcadores_ctx["metricas_modelo"] = {
+                "auc": m.get("auc"),
+                "sensibilidade": m.get("sensibilidade"),
+                "especificidade": m.get("especificidade"),
+                "f1": m.get("f1"),
+            }
+        # Anexa biomarcadores de sinal se existirem
+        bio_list = pipeline.get("biomarcadores_sinal", [])
+        if bio_list:
+            biomarcadores_ctx["exemplo_biomarcadores"] = bio_list[0].get("biomarcadores", {})
+
+        descricao_selecao = f"Análise do resultado #{resultado_id} — {dados.get('dataset_path', '')}"
+
+    # ── Caso 2: upload de arquivo avulso ──────────────────────────────────
+    elif arquivo and arquivo.filename:
+        nome = arquivo.filename
+        dest = UPLOAD_DIR / nome
+        arquivo.save(str(dest))
+
+        # Detecta estrutura do arquivo
+        modo = detectar_estrutura(dest)
+        familia = ""
+        tipo_sinal = ""
+
+        biomarcadores_ctx = {
+            "fonte": "upload_avulso",
+            "arquivo": nome,
+            "modo": modo,
+            "familia": familia,
+        }
+
+        pasta_run = criar_pasta_run()
+
+        try:
+            if eh_imagem(dest):
+                from biostatusia.pipeline.extracao import extrair_biomarcadores_lote
+                bio = extrair_biomarcadores_lote([str(dest)], {})
+                biomarcadores_ctx["biomarcadores"] = bio[0] if bio else {}
+                familia = "F3"
+
+            elif eh_sinal_temporal(dest) or eh_audio_biomedico(dest):
+                from biostatusia.pipeline.io_sinais import carregar_sinal
+                from biostatusia.pipeline.extracao_temporal import extrair_features_temporal
+                sinal = carregar_sinal(str(dest))
+                feats = extrair_features_temporal(sinal)
+                biomarcadores_ctx["biomarcadores"] = feats
+                familia = "F1" if eh_sinal_temporal(dest) else "F2"
+                tipo_sinal = sinal.tipo
+
+            elif eh_dicom(dest):
+                from biostatusia.pipeline.extracao_dicom import extrair_features_dicom
+                feats = extrair_features_dicom(dest)
+                biomarcadores_ctx["biomarcadores"] = feats
+                familia = "F3"
+                tipo_sinal = "DICOM"
+
+            elif eh_tabular(dest):
+                from biostatusia.pipeline.dados_tabulares import (
+                    carregar_csv, detectar_schema, extrair_features, analisar_tabular
+                )
+                res = carregar_csv(str(dest))
+                if res:
+                    header, data = res
+                    schema = detectar_schema(header, data)
+                    X, y, _ = extrair_features(data, schema)
+                    stats = analisar_tabular(X, y, schema)
+                    biomarcadores_ctx["tabular_stats"] = {
+                        "n_amostras": stats.get("n_amostras", 0),
+                        "n_features": stats.get("n_features", 0),
+                    }
+
+        except Exception as e:
+            biomarcadores_ctx["erro_extracao"] = str(e)
+
+        biomarcadores_ctx["familia"] = familia
+        biomarcadores_ctx["tipo_sinal"] = tipo_sinal
+        descricao_selecao = f"Amostra avulsa: {nome} (modo: {modo})"
+
+    else:
+        return jsonify({"erro": "Forneça resultado_id ou um arquivo para análise."}), 400
+
+    # ── Chama o agente interativo ──────────────────────────────────────────
+    try:
+        crew_out = BioStatusIACrewInterativo().crew().kickoff(inputs={
+            "dados_selecao": json.dumps({"descricao": descricao_selecao}, ensure_ascii=False),
+            "tipo_sinal": biomarcadores_ctx.get("tipo_sinal", ""),
+            "biomarcadores_trecho": json.dumps(biomarcadores_ctx, ensure_ascii=False),
+        })
+        laudo_foco = str(crew_out)
+    except Exception as e:
+        laudo_foco = f"Erro ao gerar laudo: {e}"
+
+    laudo_id = salvar_laudo_interativo(
+        resultado_id=int(resultado_id_str) if resultado_id_str and resultado_id_str.isdigit() else 0,
+        laudo_foco=laudo_foco,
+    )
+
+    return jsonify({
+        "laudo_html": md_.markdown(laudo_foco),
+        "laudo_id": laudo_id,
+    })
+
+
 
 @app.route("/slice/<int:resultado_id>/<int:idx>")
 def volume_slice(resultado_id: int, idx: int):

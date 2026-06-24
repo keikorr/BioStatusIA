@@ -180,3 +180,31 @@ def listar_resultados() -> list[tuple]:
     ).fetchall()
     conn.close()
     return rows
+
+
+def listar_resultados_completo(limite: int = 30) -> list[dict]:
+    """Retorna metadados completos para popular o seletor de amostra na Aba 4."""
+    conn = _get_conn()
+    rows = conn.execute(
+        """SELECT rp.id, rp.data_hora, rp.dataset_path, rp.n_imagens,
+                  rp.melhor_modelo, rp.familia_sinal, rp.sinal_tipo,
+                  a.categoria
+           FROM resultados_pipeline rp
+           LEFT JOIN analises a ON a.id = rp.analise_id
+           ORDER BY rp.id DESC LIMIT ?""",
+        (limite,),
+    ).fetchall()
+    conn.close()
+    return [
+        {
+            "id": r[0],
+            "data_hora": r[1][:19] if r[1] else "",
+            "dataset_path": r[2] or "",
+            "n_imagens": r[3] or 0,
+            "melhor_modelo": r[4] or "N/A",
+            "familia_sinal": r[5] or "",
+            "sinal_tipo": r[6] or "",
+            "categoria": r[7] or "",
+        }
+        for r in rows
+    ]
