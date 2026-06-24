@@ -125,8 +125,8 @@ Toda leitura passa por `pipeline/io_sinais.py::carregar_sinal()` que despacha pa
         │
         ▼
 [Tela 2 — Resultados (4 abas)]
-  Aba 1: Pré-processamento + Estratégia
-  Aba 2: Estatísticas + Biomarcadores
+  Aba 1: Estatísticas + Biomarcadores
+  Aba 2: Pré-processamento + Estratégia
   Aba 3: AutoML + Laudo IA (Markdown)
   Aba 4: Laudo Interativo (seleção de ROI / trecho temporal / frame)
 ```

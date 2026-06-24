@@ -29,7 +29,7 @@ O **BioStatusIA v2** expande o CDSS original (focado em ultrassom mamário) para
 *   **RF-05 (AutoML Enriquecido):** 6 classificadores concorrentes, 5-fold StratifiedKFold, ECE, latência de inferência, teste de McNemar, seleção por AUC com preferência por sensibilidade ≥ 0.80.
 *   **RF-06 (Laudo IA Especializado):** Cada família de sinal tem agente e task específicos — `radiologista_ia` interpreta achados considerando o contexto clínico do tipo de sinal.
 *   **RF-07 (Laudo Interativo):** Endpoint `POST /laudo_interativo` recebe seleção (ROI / trecho temporal / frame) e retorna laudo focado com 5 seções obrigatórias.
-*   **RF-08 (Interface em 4 Abas):** Pré-processamento, Estatísticas, AutoML/Laudo, Laudo Interativo.
+*   **RF-08 (Interface em 4 Abas):** Estatísticas/Biomarcadores, Pré-processamento, AutoML/Laudo, Laudo Interativo.
 
 ### Requisitos Não-Funcionais (RNF)
 
@@ -243,7 +243,15 @@ else:
 
 ## 🎨 6. Interface Web — 4 Abas (Tela 2)
 
-### Aba 1 — Pré-processamento
+### Aba 1 — Estatísticas & Biomarcadores
+
+- Tabela de biomarcadores (média ± desvio por categoria)
+- Boxplot de distribuição por biomarcador (Plotly.js)
+- Schema tabular (colunas, tipos, missing values) para modos CSV
+- 31 métricas univariadas por feature (sidebar interativa)
+- Heatmap de correlação (CSS inline, sem dependência extra)
+
+### Aba 2 — Pré-processamento
 
 Cards explicativos com decisão + justificativa para cada etapa:
 - Denoising escolhido (Non-Local Means vs Gaussian) com ruído detectado
@@ -251,14 +259,6 @@ Cards explicativos com decisão + justificativa para cada etapa:
 - Equalização (CLAHE vs nenhuma) com contraste detectado
 - Resize (obrigatório vs não necessário) com tamanhos detectados
 - Shapiro-Wilk: distribuição normal vs não-normal
-
-### Aba 2 — Estatísticas
-
-- Tabela de biomarcadores (média ± desvio por categoria)
-- Boxplot de distribuição por biomarcador (Plotly.js)
-- Schema tabular (colunas, tipos, missing values) para modos CSV
-- 31 métricas univariadas por feature (sidebar interativa)
-- Heatmap de correlação (CSS inline, sem dependência extra)
 
 ### Aba 3 — AutoML & Laudo
 
