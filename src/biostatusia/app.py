@@ -7,12 +7,10 @@ from flask import Flask, jsonify, redirect, render_template, request, url_for
 
 from biostatusia.pipeline.io_utils import (
     criar_pasta_run,
-    eh_audio_biomedico,
     eh_dicom,
     eh_imagem,
     eh_sinal_temporal,
     eh_tabular,
-    eh_video,
     eh_volumetrico,
     encontrar_csv,
     label_pasta,
@@ -30,10 +28,11 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 def detectar_estrutura(caminho: Path) -> str:
     """
-    Retorna o modo de operação detectado.
-    Modos originais: imagem_unica | tabular | multimodal | dataset_rotulado | imagens_soltas
-    Novos modos:     sinal_temporal | audio_biomedico | imagem_dicom_2d | volume_3d | video_medico
-    Modo inválido:   invalido
+    Retorna o modo de operação detectado (escopo v3 — F1/F3/F4 + tabular).
+    Modos de imagem comum: imagem_unica | imagens_soltas | dataset_rotulado | multimodal
+    Modos tabular/sinal:    tabular | sinal_temporal | imagem_dicom_2d | volume_3d
+    Multimodal expandido:   multimodal_expandido
+    Modo inválido:          invalido
     """
     if caminho.is_file():
         if eh_imagem(caminho):
@@ -42,38 +41,32 @@ def detectar_estrutura(caminho: Path) -> str:
             return "tabular"
         if eh_sinal_temporal(caminho):
             return "sinal_temporal"
-        if eh_audio_biomedico(caminho):
-            return "audio_biomedico"
         if eh_dicom(caminho):
             return "imagem_dicom_2d"
         if eh_volumetrico(caminho):
             return "volume_3d"
-        if eh_video(caminho):
-            return "video_medico"
         return "invalido"
 
     if not caminho.is_dir():
         return "invalido"
 
     # Inventariar conteúdo da pasta
-    tem_tab = tem_img = tem_temporal = tem_audio = tem_dicom = tem_vol = tem_video = False
+    tem_tab = tem_img = tem_temporal = tem_dicom = tem_vol = False
     for arq in caminho.rglob("*"):
         if not arq.is_file():
             continue
         if eh_tabular(arq):        tem_tab = True
         elif eh_imagem(arq):       tem_img = True
         elif eh_sinal_temporal(arq): tem_temporal = True
-        elif eh_audio_biomedico(arq): tem_audio = True
         elif eh_dicom(arq):        tem_dicom = True
         elif eh_volumetrico(arq):  tem_vol = True
-        elif eh_video(arq):        tem_video = True
 
     # ── Multimodal expandido ─────────────────────────────────────────────────
-    n_tipos = sum([tem_tab, tem_img, tem_temporal, tem_audio, tem_dicom, tem_vol, tem_video])
+    n_tipos = sum([tem_tab, tem_img, tem_temporal, tem_dicom, tem_vol])
     if n_tipos > 1 and not (tem_tab and tem_img and n_tipos == 2):
         return "multimodal_expandido"
 
-    # ── Modos originais ──────────────────────────────────────────────────────
+    # ── Modos com imagem comum ───────────────────────────────────────────────
     if tem_tab and tem_img:
         return "multimodal"
     if tem_tab:
@@ -94,9 +87,7 @@ def detectar_estrutura(caminho: Path) -> str:
     # ── Modos de arquivo único por família ───────────────────────────────────
     if tem_img:        return "imagens_soltas"
     if tem_temporal:   return "sinal_temporal"
-    if tem_audio:      return "audio_biomedico"
     if tem_vol:        return "volume_3d"
-    if tem_video:      return "video_medico"
     if tem_dicom:
         # Pasta de DICOMs: muitos → série 3D, poucos → imagem 2D
         n_dcm = sum(1 for f in caminho.rglob("*.dcm") if f.is_file())
@@ -172,10 +163,8 @@ def _consolidar_sinal(pasta_run: Path, modo: str, familia: str) -> dict:
     """Consolida JSONs das novas crews de sinal (F1–F5)."""
     _mapa_json = {
         "F1": "biomarcadores_temporal.json",
-        "F2": "biomarcadores_audio.json",
         "F3": "biomarcadores_dicom.json",
         "F4": "biomarcadores_volumetrico.json",
-        "F5": "biomarcadores_video.json",
     }
     nome_json = _mapa_json.get(familia, "biomarcadores_temporal.json")
     payload = _ler_json(pasta_run, nome_json) or {}
@@ -219,7 +208,6 @@ def analisar():
         BioStatusIACrewTabular,
         BioStatusIACrewSinal,
         BioStatusIACrewImagem3D,
-        BioStatusIACrewVideo,
     )
     from biostatusia.database import salvar, salvar_resultado
     from biostatusia.pipeline.classificador import treinar_vetores
@@ -265,8 +253,8 @@ def analisar():
     if modo == "invalido":
         return (
             "Entrada não reconhecida. Aceito: imagens (.png/.jpg/.tif), "
-            "CSV/TXT, ZIP, .edf/.mat/.dat/.hea (sinais), .wav/.mp3/.flac (áudio), "
-            ".dcm (DICOM), .nii/.nii.gz/.mha (volume), .mp4/.avi/.mov (vídeo), "
+            "CSV/TXT, ZIP, .edf/.mat/.dat/.hea (sinais temporais F1), "
+            ".dcm (DICOM 2D F3), .nii/.nii.gz/.mha (volume 3D F4), "
             "ou pasta com qualquer combinação desses arquivos."
         ), 400
 
@@ -346,28 +334,6 @@ def analisar():
         )
         return redirect(url_for("tela2", resultado_id=resultado_id))
 
-    # ── MODO ÁUDIO BIOMÉDICO (F2) ──────────────────────────────────────────────
-    if modo == "audio_biomedico":
-        try:
-            crew_out = BioStatusIACrewSinal().crew().kickoff(inputs={
-                "caminho_dataset": dataset_path,
-                "pasta_run": str(pasta_run),
-                "tipo_sinal": "auto",
-            })
-            laudo = str(crew_out)
-        except Exception as e:
-            laudo = f"Erro no pipeline de áudio: {e}"
-
-        pipeline_data = _consolidar_sinal(pasta_run, modo, "F2")
-        melhor = pipeline_data.get("melhor_modelo", "N/A")
-        analise_id = salvar(dataset_path, "AUDIO_BIOMEDICO", laudo)
-        resultado_id = salvar_resultado(
-            dataset_path=dataset_path, n_imagens=pipeline_data["n_imagens"],
-            pipeline_data=pipeline_data, melhor_modelo=melhor, analise_id=analise_id,
-            familia_sinal="F2", sinal_tipo=pipeline_data.get("tipo_sinal", ""),
-        )
-        return redirect(url_for("tela2", resultado_id=resultado_id))
-
     # ── MODO DICOM 2D (F3) ────────────────────────────────────────────────────
     if modo == "imagem_dicom_2d":
         try:
@@ -409,27 +375,6 @@ def analisar():
             dataset_path=dataset_path, n_imagens=pipeline_data["n_imagens"],
             pipeline_data=pipeline_data, melhor_modelo=melhor, analise_id=analise_id,
             familia_sinal="F4", sinal_tipo=pipeline_data.get("tipo_sinal", ""),
-        )
-        return redirect(url_for("tela2", resultado_id=resultado_id))
-
-    # ── MODO VÍDEO MÉDICO (F5) ─────────────────────────────────────────────────
-    if modo == "video_medico":
-        try:
-            crew_out = BioStatusIACrewVideo().crew().kickoff(inputs={
-                "caminho_dataset": dataset_path,
-                "pasta_run": str(pasta_run),
-            })
-            laudo = str(crew_out)
-        except Exception as e:
-            laudo = f"Erro no pipeline de vídeo: {e}"
-
-        pipeline_data = _consolidar_sinal(pasta_run, modo, "F5")
-        melhor = pipeline_data.get("melhor_modelo", "N/A")
-        analise_id = salvar(dataset_path, "VIDEO_MEDICO", laudo)
-        resultado_id = salvar_resultado(
-            dataset_path=dataset_path, n_imagens=pipeline_data["n_imagens"],
-            pipeline_data=pipeline_data, melhor_modelo=melhor, analise_id=analise_id,
-            familia_sinal="F5", sinal_tipo=pipeline_data.get("tipo_sinal", ""),
         )
         return redirect(url_for("tela2", resultado_id=resultado_id))
 
@@ -504,153 +449,6 @@ def tela2(resultado_id: int):
     )
 
 
-# ── Rota: Laudo Interativo ────────────────────────────────────────────────────
-
-@app.route("/laudo_interativo", methods=["POST"])
-def laudo_interativo():
-    """
-    Recebe seleção do médico (trecho de sinal ou ROI de imagem) e gera laudo focado.
-    Payload JSON:
-    {
-      "resultado_id": 42,
-      "tipo_sinal": "ECG",
-      "dados_selecao": {
-        "inicio_s": 10.5, "fim_s": 13.2, "canal": "II"      // para F1/F2
-        "roi": {"x":120,"y":80,"w":60,"h":60}, "slice_idx":45 // para F3/F4
-        "frame_inicio": 300, "frame_fim": 360                  // para F5
-      }
-    }
-    """
-    from biostatusia.crew import BioStatusIACrewInterativo
-    from biostatusia.database import buscar_resultado, salvar_laudo_interativo
-    import markdown as md_
-
-    payload = request.get_json(force=True) or {}
-    resultado_id = payload.get("resultado_id")
-    tipo_sinal = payload.get("tipo_sinal", "")
-    selecao = payload.get("dados_selecao", {})
-
-    if not resultado_id:
-        return jsonify({"erro": "resultado_id obrigatório"}), 400
-
-    dados = buscar_resultado(resultado_id)
-    if not dados:
-        return jsonify({"erro": "Resultado não encontrado"}), 404
-
-    pipeline = dados["pipeline"]
-    familia = pipeline.get("familia", "")
-
-    # Extrair biomarcadores do trecho selecionado
-    biomarcadores_trecho = _extrair_biomarcadores_selecao(
-        dados, selecao, familia, tipo_sinal
-    )
-    dados_selecao_str = json.dumps(selecao, ensure_ascii=False)
-
-    try:
-        crew_out = BioStatusIACrewInterativo().crew().kickoff(inputs={
-            "dados_selecao": dados_selecao_str,
-            "tipo_sinal": tipo_sinal or pipeline.get("tipo_sinal", ""),
-            "biomarcadores_trecho": json.dumps(biomarcadores_trecho, ensure_ascii=False),
-        })
-        laudo_foco = str(crew_out)
-    except Exception as e:
-        laudo_foco = f"Erro ao gerar laudo interativo: {e}"
-
-    # Persistir no banco
-    roi_json = json.dumps(selecao.get("roi")) if selecao.get("roi") else None
-    laudo_id = salvar_laudo_interativo(
-        resultado_id=resultado_id,
-        laudo_foco=laudo_foco,
-        trecho_inicio=selecao.get("inicio_s"),
-        trecho_fim=selecao.get("fim_s"),
-        roi_json=roi_json,
-        canal=selecao.get("canal"),
-        slice_idx=selecao.get("slice_idx"),
-    )
-
-    return jsonify({
-        "laudo_html": md_.markdown(laudo_foco),
-        "laudo_id": laudo_id,
-    })
-
-
-def _extrair_biomarcadores_selecao(dados: dict, selecao: dict, familia: str, tipo_sinal: str) -> dict:
-    """Extrai biomarcadores do trecho/região selecionado para enviar ao agente."""
-    bio: dict = {"familia": familia, "tipo": tipo_sinal}
-
-    try:
-        # F1/F2 — trecho de sinal temporal
-        if familia in ("F1", "F2") and "inicio_s" in selecao:
-            bio_list = dados["pipeline"].get("biomarcadores_sinal", [])
-            if bio_list:
-                bio["exemplo_biomarcadores"] = bio_list[0].get("biomarcadores", {})
-            bio["trecho_inicio_s"] = selecao.get("inicio_s")
-            bio["trecho_fim_s"] = selecao.get("fim_s")
-            bio["canal_selecionado"] = selecao.get("canal", "todos")
-
-        # F3/F4 — ROI de imagem
-        elif familia in ("F3", "F4") and "roi" in selecao:
-            roi = selecao["roi"]
-            dataset_path = dados.get("dataset_path", "")
-            if dataset_path and Path(dataset_path).is_file():
-                bio.update(_bio_roi_dicom(Path(dataset_path), roi, selecao.get("slice_idx")))
-            bio["roi"] = roi
-
-        # F5 — trecho de vídeo
-        elif familia == "F5" and "frame_inicio" in selecao:
-            bio["frames"] = f"{selecao.get('frame_inicio')} – {selecao.get('frame_fim')}"
-
-        # Existente: imagem PNG/JPG
-        elif familia in ("F3", "") and dados.get("imagem"):
-            bio["categoria_global"] = dados.get("categoria", "")
-
-    except Exception as e:
-        bio["erro_extracao"] = str(e)
-
-    return bio
-
-
-def _bio_roi_dicom(path: Path, roi: dict, slice_idx: int | None) -> dict:
-    """Extrai biomarcadores de uma ROI em uma imagem DICOM ou PNG."""
-    import cv2
-    import numpy as np
-    from scipy.stats import skew, kurtosis
-
-    ext = path.suffix.lower()
-    x, y, w, h = int(roi.get("x", 0)), int(roi.get("y", 0)), int(roi.get("w", 64)), int(roi.get("h", 64))
-
-    try:
-        if ext == ".dcm":
-            from biostatusia.pipeline.leitura_dicom import ler_dicom
-            sinal = ler_dicom(path)
-            arr = sinal.dados
-        elif ext in {".nii", ".mha"} or "".join(path.suffixes).lower() == ".nii.gz":
-            from biostatusia.pipeline.io_sinais import carregar_sinal
-            sinal = carregar_sinal(path)
-            arr = sinal.dados[slice_idx or sinal.dados.shape[0] // 2]
-        else:
-            from PIL import Image
-            img = Image.open(str(path)).convert("L")
-            arr = np.array(img).astype(np.float32) / 255.0
-
-        roi_arr = arr[y:y+h, x:x+w]
-        if roi_arr.size == 0:
-            return {}
-
-        flat = roi_arr.flatten()
-        return {
-            "roi_media": round(float(np.mean(flat)), 4),
-            "roi_desvio": round(float(np.std(flat)), 4),
-            "roi_max": round(float(np.max(flat)), 4),
-            "roi_min": round(float(np.min(flat)), 4),
-            "roi_assimetria": round(float(skew(flat)), 4),
-            "roi_curtose": round(float(kurtosis(flat)), 4),
-            "roi_shape": list(roi_arr.shape),
-        }
-    except Exception:
-        return {}
-
-
 # ── Rota: Histórico para Aba 4 ───────────────────────────────────────────────
 
 @app.route("/api/historico")
@@ -658,6 +456,50 @@ def api_historico():
     """Retorna JSON com os últimos 30 resultados do banco para o seletor da Aba 4."""
     from biostatusia.database import listar_resultados_completo
     return jsonify(listar_resultados_completo())
+
+
+# ── Via 1: Laudo Populacional (nível da base) ─────────────────────────────────
+
+@app.route("/laudo_populacional/<int:resultado_id>")
+def laudo_populacional(resultado_id: int):
+    """
+    Relatório analítico determinístico do dataset completo: distribuição
+    estatística, correlações de biomarcadores e pódio final do AutoML.
+    Não depende do LLM — montado a partir do pipeline_data persistido.
+    """
+    from biostatusia.database import buscar_resultado
+    from biostatusia.pipeline.relatorios import (
+        construir_laudo_populacional, construir_podio, correlacoes_biomarcadores,
+    )
+
+    dados = buscar_resultado(resultado_id)
+    if not dados:
+        return jsonify({"erro": f"Resultado {resultado_id} não encontrado"}), 404
+
+    pipeline = dict(dados["pipeline"])
+
+    # Enriquecer com correlações calculadas sobre os biomarcadores de sinal, se houver.
+    bio_list = pipeline.get("biomarcadores_sinal", [])
+    if bio_list:
+        from biostatusia.pipeline.inferencia import achatar_biomarcadores
+        vetores, nomes = [], []
+        for r in bio_list:
+            v = achatar_biomarcadores(r.get("biomarcadores", {}))
+            if v.size:
+                vetores.append(v.tolist())
+        if vetores:
+            largura = min(len(x) for x in vetores)
+            vetores = [x[:largura] for x in vetores]
+            nomes = [f"f{i}" for i in range(largura)]
+            pipeline["correlacoes_biomarcadores"] = correlacoes_biomarcadores(vetores, nomes)
+
+    laudo_md = construir_laudo_populacional(pipeline)
+    podio = construir_podio(pipeline.get("metricas", {}), pipeline.get("melhor_modelo", ""))
+    return jsonify({
+        "laudo_html": md.markdown(laudo_md, extensions=["tables"]),
+        "laudo_md": laudo_md,
+        "podio": podio,
+    })
 
 
 # ── Rota: Laudo de Amostra Avulsa ─────────────────────────────────────────────
@@ -744,13 +586,13 @@ def laudo_amostra():
                 biomarcadores_ctx["biomarcadores"] = bio[0] if bio else {}
                 familia = "F3"
 
-            elif eh_sinal_temporal(dest) or eh_audio_biomedico(dest):
+            elif eh_sinal_temporal(dest):
                 from biostatusia.pipeline.io_sinais import carregar_sinal
                 from biostatusia.pipeline.extracao_temporal import extrair_features_temporal
                 sinal = carregar_sinal(str(dest))
                 feats = extrair_features_temporal(sinal)
                 biomarcadores_ctx["biomarcadores"] = feats
-                familia = "F1" if eh_sinal_temporal(dest) else "F2"
+                familia = "F1"
                 tipo_sinal = sinal.tipo
 
             elif eh_dicom(dest):
@@ -780,6 +622,22 @@ def laudo_amostra():
 
         biomarcadores_ctx["familia"] = familia
         biomarcadores_ctx["tipo_sinal"] = tipo_sinal
+
+        # ── Inferência individual: isola o vencedor do pódio e classifica ──
+        bio_extraido = biomarcadores_ctx.get("biomarcadores")
+        if isinstance(bio_extraido, dict) and bio_extraido:
+            try:
+                from biostatusia.pipeline.inferencia import (
+                    achatar_biomarcadores, prever_exemplar,
+                )
+                vetor = achatar_biomarcadores(bio_extraido)
+                if vetor.size:
+                    biomarcadores_ctx["inferencia_modelo"] = prever_exemplar(
+                        vetor, familia or "IMG"
+                    )
+            except Exception as e:
+                biomarcadores_ctx["inferencia_erro"] = str(e)
+
         descricao_selecao = f"Amostra avulsa: {nome} (modo: {modo})"
 
     else:
@@ -806,55 +664,6 @@ def laudo_amostra():
         "laudo_id": laudo_id,
     })
 
-
-
-@app.route("/slice/<int:resultado_id>/<int:idx>")
-def volume_slice(resultado_id: int, idx: int):
-    """Retorna um slice axial de um volume 3D como PNG base64."""
-    from biostatusia.database import buscar_resultado
-    from biostatusia.pipeline.leitura_volumetrica import slice_para_png_base64
-    from biostatusia.pipeline.io_sinais import carregar_sinal
-
-    dados = buscar_resultado(resultado_id)
-    if not dados:
-        return jsonify({"erro": "Resultado não encontrado"}), 404
-
-    dataset_path = dados.get("dataset_path", "")
-    path = Path(dataset_path)
-    if not path.exists():
-        return jsonify({"erro": "Arquivo não encontrado"}), 404
-
-    try:
-        sinal = carregar_sinal(str(path))
-        b64 = slice_para_png_base64(sinal.dados, idx)
-        n_slices = sinal.dados.shape[0]
-        return jsonify({"imagem_b64": b64, "n_slices": n_slices, "idx": idx})
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
-
-
-# ── Rota: Frame de vídeo ────────────────────────────────────────────────────
-
-@app.route("/frame/<int:resultado_id>/<int:idx>")
-def video_frame(resultado_id: int, idx: int):
-    """Retorna um frame específico de um vídeo como PNG base64."""
-    from biostatusia.database import buscar_resultado
-    from biostatusia.pipeline.leitura_video import extrair_frame, frame_para_png_base64
-
-    dados = buscar_resultado(resultado_id)
-    if not dados:
-        return jsonify({"erro": "Resultado não encontrado"}), 404
-
-    path = Path(dados.get("dataset_path", ""))
-    if not path.exists():
-        return jsonify({"erro": "Vídeo não encontrado"}), 404
-
-    try:
-        frame = extrair_frame(path, idx)
-        b64 = frame_para_png_base64(frame)
-        return jsonify({"imagem_b64": b64, "frame_idx": idx})
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
 
 
 if __name__ == "__main__":

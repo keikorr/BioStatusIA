@@ -10,7 +10,7 @@ import numpy as np
 
 @dataclass
 class SinalNormalizado:
-    familia: str              # "F1" | "F2" | "F3" | "F4" | "F5"
+    familia: str              # "F1" | "F3" | "F4"
     tipo: str                 # "ECG" | "EEG" | "RX" | ...
     dados: np.ndarray         # shape varia por família (veja abaixo)
     taxa_amostragem: float    # Hz  (0.0 para imagens/volumes)
@@ -21,10 +21,8 @@ class SinalNormalizado:
 
     # Shapes esperados por família:
     #   F1 (temporal): (n_canais, n_amostras)
-    #   F2 (áudio):    (1, n_amostras)       — mono
     #   F3 (imagem 2D):(H, W)                — float32 [0,1]
     #   F4 (volume 3D):(D, H, W)             — float32 [0,1]
-    #   F5 (vídeo):    (n_frames, H, W)      — float32 [0,1]
 
 
 def _detectar_tipo_temporal(ext: str) -> str:
@@ -55,11 +53,6 @@ def carregar_sinal(caminho: str | Path) -> "SinalNormalizado":
         from biostatusia.pipeline.leitura_temporal import ler_sinal_temporal
         return ler_sinal_temporal(path)
 
-    # F2 — Áudio Biomédico
-    if ext in {".wav", ".mp3", ".flac"}:
-        from biostatusia.pipeline.leitura_audio import ler_audio_biomedico
-        return ler_audio_biomedico(path)
-
     # F3 — DICOM 2D
     if ext == ".dcm":
         from biostatusia.pipeline.leitura_dicom import ler_dicom
@@ -70,12 +63,7 @@ def carregar_sinal(caminho: str | Path) -> "SinalNormalizado":
         from biostatusia.pipeline.leitura_volumetrica import ler_volume_3d
         return ler_volume_3d(path)
 
-    # F5 — Vídeo Médico
-    if ext in {".mp4", ".avi", ".mov"}:
-        from biostatusia.pipeline.leitura_video import ler_video_medico
-        return ler_video_medico(path)
-
-    raise ValueError(f"Extensão não suportada: {ext} ({path.name})")
+    raise ValueError(f"Extensão não suportada (escopo F1/F3/F4): {ext} ({path.name})")
 
 
 def _downsample_para_viz(dados: np.ndarray, max_pts: int = 2000) -> list:

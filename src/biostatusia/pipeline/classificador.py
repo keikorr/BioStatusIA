@@ -51,7 +51,8 @@ def treinar(registros: list[dict]) -> dict:
     return treinar_vetores(X, y)
 
 
-def treinar_vetores(X: np.ndarray, y: np.ndarray, scaling: str = "standard") -> dict:
+def treinar_vetores(X: np.ndarray, y: np.ndarray, scaling: str = "standard",
+                    familia: str = "", feature_names: list[str] | None = None) -> dict:
     """Versão genérica com escalamento dinâmico baseado na estratégia decidida."""
     if scaling == "robust":
         scaler = RobustScaler()
@@ -99,9 +100,22 @@ def treinar_vetores(X: np.ndarray, y: np.ndarray, scaling: str = "standard") -> 
         with open(MODEL_DIR / f"modelo_{nome.lower()}.pkl", "wb") as f:
             pickle.dump({"modelo": modelo, "scaler": scaler}, f)
 
-    resultado["melhor_modelo"] = max(
+    melhor = max(
         resultado["metricas"], key=lambda k: resultado["metricas"][k]["auc"]
     )
+    resultado["melhor_modelo"] = melhor
+
+    # Persistir o vencedor do pódio para inferência individual (Aba 4 / Laudo Individual).
+    try:
+        from biostatusia.pipeline.inferencia import salvar_modelo_vencedor
+        salvar_modelo_vencedor(
+            nome=melhor, modelo=modelos[melhor], scaler=scaler,
+            familia=familia or "IMG", feature_names=feature_names,
+            metricas=resultado["metricas"][melhor],
+        )
+    except Exception:
+        pass
+
     return resultado
 
 

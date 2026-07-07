@@ -2,7 +2,16 @@
 
 ## O que é este projeto
 
-Sistema de Apoio à Decisão Clínica (CDSS) para análise automatizada de **18 tipos de sinais biomédicos** organizados em 5 famílias. O pipeline é **flexível e detecta automaticamente o tipo de entrada**: aceita qualquer formato e adapta todo o processamento ao que for viável. Combina **radiômica e extração multi-domínio** (OpenCV/scikit-image/MNE/librosa), **AutoML com 6 classificadores e avaliação enriquecida** (Sensibilidade, Especificidade, ECE, McNemar), **IA Multi-Agente** (6 Crews CrewAI + Ollama) e uma **interface web Flask com 4 abas**.
+Sistema de Apoio à Decisão Clínica (CDSS) para análise automatizada de sinais biomédicos com foco em **3 famílias de sinal + dados tabulares** (áudio F2 e vídeo F5 foram **removidos do escopo** na v3). O pipeline é **flexível e detecta automaticamente o tipo de entrada** em escopo e adapta o processamento ao que for viável. Combina **radiômica e extração multi-domínio** (OpenCV/scikit-image/MNE/wfdb/pydicom/nibabel), **AutoML com 6 classificadores e avaliação enriquecida** (Sensibilidade, Especificidade, MCC, Kappa, ECE, McNemar, SHAP, balanceamento SMOTE/ADASYN), **IA Multi-Agente** (5 Crews CrewAI + Ollama) e uma **interface web Flask com 4 abas + laudo populacional e laudo individual**.
+
+### Escopo v3 (F1/F3/F4 + tabular)
+
+| Família | Tipos | Leitura |
+|---|---|---|
+| **F1 — Sinais Temporais** | ECG, EEG, EMG, EOG, PPG, PA, Espirometria | `mne`, `wfdb`, `scipy` |
+| **F3 — Imagem DICOM 2D** | Raio-X, Mamografia, Ultrassom estático | `pydicom` |
+| **F4 — Volume 3D** | TC, RM, PET/SPECT | `nibabel`, `SimpleITK` |
+| **Tabular** | Features clínicas multimodais | parser próprio |
 
 Contexto acadêmico: projeto de mestrado em IA na Saúde — Fortaleza, CE.
 
@@ -12,7 +21,7 @@ Contexto acadêmico: projeto de mestrado em IA na Saúde — Fortaleza, CE.
 
 > **O sistema aceita QUALQUER tipo de dado.** Sempre executa análise estatística sobre o que receber e adapta o pipeline ao que é viável.
 
-Existem **10 modos** detectados automaticamente em `app.py::detectar_estrutura()`:
+Existem **8 modos em escopo** detectados automaticamente em `app.py::detectar_estrutura()` (v3 — sem `audio_biomedico` nem `video_medico`):
 
 | Modo | O que é | Crew disparada |
 |---|---|---|
@@ -22,11 +31,9 @@ Existem **10 modos** detectados automaticamente em `app.py::detectar_estrutura()
 | `tabular` | CSV/TXT/TSV único ou pasta só com tabulares | `BioStatusIACrewTabular` |
 | `multimodal` | Pasta/ZIP com imagens **e** CSV/TXT juntos | `BioStatusIACrew` + tabular |
 | `sinal_temporal` | Arquivos `.dat/.hea/.edf/.bdf/.mat/.xml/.c3d` | `BioStatusIACrewSinal` |
-| `audio_biomedico` | Arquivos `.wav/.flac/.mp3` (fonocardiograma/sons pulmonares) | `BioStatusIACrewSinal` |
 | `imagem_dicom_2d` | Arquivo `.dcm` único (Raio-X, Mamografia, Ultrassom estático) | `BioStatusIACrewImagem3D` |
 | `volume_3d` | `.nii/.nii.gz/.mha` ou pasta com ≥10 `.dcm` (TC, RM, PET/SPECT) | `BioStatusIACrewImagem3D` |
-| `video_medico` | `.mp4/.avi/.mov` (Endoscopia, Ultrassom dinâmico) | `BioStatusIACrewVideo` |
-| `multimodal_expandido` | Mix de imagens/sinais/vídeo/tabular | `BioStatusIACrew` + sub-crews |
+| `multimodal_expandido` | Mix de imagens/sinais/tabular | `BioStatusIACrew` + sub-crews |
 
 A análise estatística sempre roda. Treino de classificadores só ocorre com rótulos e ≥10 amostras com 2 classes. Laudo IA roda apenas quando há sinal ou imagem disponível.
 
@@ -36,18 +43,16 @@ A análise estatística sempre roda. Treino de classificadores só ocorre com r�
 
 | Família | Tipos suportados | Biblioteca de leitura |
 |---|---|---|
-| **F1 — Sinais Temporais** | ECG, EEG, EMG, EOG, PPG, PA, Espirometria, PSG, Movimento | `mne`, `wfdb`, `scipy`, `bioread` |
-| **F2 — Áudio Biomédico** | Fonocardiograma, Sons Pulmonares | `soundfile`, `librosa`, `scipy` |
+| **F1 — Sinais Temporais** | ECG, EEG, EMG, EOG, PPG, PA, Espirometria, PSG, Movimento | `mne`, `wfdb`, `scipy` |
 | **F3 — Imagem DICOM 2D** | Raio-X, Mamografia, Ultrassom estático | `pydicom` |
 | **F4 — Volume 3D** | TC, RM, PET/SPECT | `nibabel`, `SimpleITK` |
-| **F5 — Vídeo Médico** | Endoscopia, Ultrassom dinâmico | `cv2` (OpenCV) |
 
 ### `SinalNormalizado` — dataclass de saída unificada
 
 ```python
 @dataclass
 class SinalNormalizado:
-    familia: str          # "F1" | "F2" | "F3" | "F4" | "F5"
+    familia: str          # "F1" | "F3" | "F4"
     tipo: str             # "ECG" | "EEG" | "Fonocardiograma" | ...
     dados: np.ndarray     # array bruto
     taxa_amostragem: float
@@ -61,22 +66,26 @@ Toda leitura passa por `pipeline/io_sinais.py::carregar_sinal()` que despacha pa
 
 ---
 
-## Estado atual do projeto (v2)
+## Estado atual do projeto (v3)
 
 | Componente | Status |
 |---|---|
 | Motor de radiômica (`pipeline/extracao.py`) | Feito |
-| Extratores F1–F5 (`pipeline/extracao_*.py`) | Feito |
-| Leitores F1–F5 (`pipeline/leitura_*.py`) | Feito |
+| Extratores F1/F3/F4 (`pipeline/extracao_*.py`) | Feito |
+| Leitores F1/F3/F4 (`pipeline/leitura_*.py`) | Feito |
 | Dispatcher universal (`pipeline/io_sinais.py`) | Feito |
-| AutoML 6 modelos + métricas enriquecidas (`pipeline/avaliacao_modelos.py`) | Feito |
-| 6 Crews CrewAI | Feito |
-| 11 agentes (`config/agents.yaml`) | Feito |
-| 11 tasks (`config/tasks.yaml`) | Feito |
-| 10 tools CrewAI (`tools/`) | Feito |
+| Ingestão validada com Pydantic (`pipeline/ingestao.py`) | Feito (v3) |
+| AutoML 6 modelos + métricas enriquecidas + MCC/Kappa/SHAP/SMOTE (`pipeline/avaliacao_modelos.py`) | Feito |
+| Inferência individual — vencedor do pódio (`pipeline/inferencia.py`) | Feito (v3) |
+| Laudo populacional determinístico (`pipeline/relatorios.py`) | Feito (v3) |
+| Ponto de extensão CNN (`pipeline/deep_learning.py`) | Scaffold (v3) |
+| 5 Crews CrewAI | Feito |
+| 8 agentes (`config/agents.yaml`) | Feito |
+| 9 tasks (`config/tasks.yaml`) | Feito |
+| 8 tools CrewAI (`tools/`) | Feito |
 | Banco SQLite com 3 tabelas + migração v2 | Feito |
-| Servidor Flask com 5 rotas + 3 rotas novas | Feito |
-| Tela 1 — upload universal (10 modos) | Feito |
+| Servidor Flask com rotas de análise + laudo populacional + laudo individual | Feito |
+| Tela 1 — upload (8 modos em escopo) | Feito |
 | Tela 2 — 4 abas + Laudo Interativo | Feito |
 | Dashboard HTML estático CLI (`main.py`) | Mantido para retrocompatibilidade |
 
@@ -86,24 +95,21 @@ Toda leitura passa por `pipeline/io_sinais.py::carregar_sinal()` que despacha pa
 
 ```
 [Tela 1 — Upload]
-  Usuário envia: imagem, ZIP, CSV, .edf, .dcm, .nii, .mp4, caminho local...
+  Usuário envia: imagem, ZIP, CSV, .edf, .dcm, .nii, caminho local...
         │
         ▼
 [detectar_estrutura()]     ←── app.py
-  10 modos: imagem_unica | imagens_soltas | dataset_rotulado | tabular |
-            multimodal | sinal_temporal | audio_biomedico | imagem_dicom_2d |
-            volume_3d | video_medico | multimodal_expandido
+  8 modos: imagem_unica | imagens_soltas | dataset_rotulado | tabular |
+           multimodal | sinal_temporal | imagem_dicom_2d |
+           volume_3d | multimodal_expandido
+  (validação de cabeçalho opcional via pipeline/ingestao.py — Pydantic)
         │
-        ├──[F1/F2]──► BioStatusIACrewSinal
-        │                analista_sinais_fisiologicos (Temporal/Audio)
+        ├──[F1]──────► BioStatusIACrewSinal
+        │                analista_sinais_fisiologicos (Temporal)
         │                → radiologista_ia
         │
         ├──[F3/F4]──► BioStatusIACrewImagem3D
         │                especialista_imagem_medica (DICOM 2D / Volume 3D)
-        │                → radiologista_ia
-        │
-        ├──[F5]──────► BioStatusIACrewVideo
-        │                analista_video_medico
         │                → radiologista_ia
         │
         ├──[Img]────► BioStatusIACrew (original)
@@ -115,7 +121,12 @@ Toda leitura passa por `pipeline/io_sinais.py::carregar_sinal()` que despacha pa
         │
         ▼
 [avaliacao_modelos.py]   ←── quando há rótulos e ≥10 amostras
-  6 classificadores, 5-fold CV, métricas enriquecidas, McNemar A/B
+  6 classificadores, 5-fold CV, métricas enriquecidas (MCC, Kappa, ECE),
+  balanceamento SMOTE/ADASYN, McNemar A/B, SHAP no vencedor
+        │
+        ▼
+[inferencia.py]  ←── persiste o vencedor do pódio (models/vencedor_<familia>.pkl)
+  Laudo individual recarrega o campeão e classifica novo exemplar
         │
         ▼
 [Persistência]  ←── database.py
@@ -145,10 +156,11 @@ Toda leitura passa por `pipeline/io_sinais.py::carregar_sinal()` que despacha pa
 | Banco de dados | SQLite (built-in) | `biostatusia.db` na raiz |
 | Visão Computacional | OpenCV, scikit-image | — |
 | Sinais Fisiológicos | MNE-Python, wfdb | — |
-| Áudio Biomédico | librosa, soundfile | — |
 | DICOM | pydicom | — |
 | Volumes 3D | nibabel, SimpleITK | — |
 | Classificadores ML | scikit-learn | `>=1.3.0` (6 modelos) |
+| Balanceamento / Interpretabilidade | imbalanced-learn, shap | — |
+| Deep Learning (opcional) | torch, torchvision | scaffold `deep_learning.py` |
 | Gráficos | Plotly.js (via CDN) | 2.32 |
 | Frontend | Tailwind CSS (via CDN) | latest |
 
@@ -181,29 +193,29 @@ BioStatusIA/
     │
     ├── pipeline/                     # Funções puras (chamadas pelas tools)
     │   ├── __init__.py
-    │   ├── io_utils.py               # Extensões + predicados para 5 famílias
+    │   ├── io_utils.py               # Extensões + predicados (F1/F3/F4/tabular)
     │   ├── io_sinais.py              # SinalNormalizado + carregar_sinal()
+    │   ├── ingestao.py               # (v3) Validação Pydantic + leitura de cabeçalho
     │   ├── analise_base.py           # analisar_base + decidir_estrategia
     │   ├── preprocessamento.py       # preprocessar + preprocessar_adaptativo
     │   ├── segmentacao.py
     │   ├── extracao.py               # extrair_todos (imagens + estratégia)
-    │   ├── classificador.py          # treinar() + treinar_vetores()
+    │   ├── classificador.py          # treinar() + treinar_vetores() (+persiste vencedor)
     │   ├── dados_tabulares.py        # CSV/TXT: schema, features, stats
-    │   ├── avaliacao_modelos.py      # 6 modelos, 5-fold CV, ECE, McNemar
+    │   ├── avaliacao_modelos.py      # 6 modelos, CV, MCC/Kappa/ECE, SMOTE, SHAP, McNemar
+    │   ├── inferencia.py             # (v3) Vencedor do pódio + previsão de exemplar único
+    │   ├── relatorios.py             # (v3) Laudo populacional (pódio, correlações)
+    │   ├── deep_learning.py          # (v3) Scaffold ExtratorCNN (torch opcional)
     │   ├── leitura_temporal.py       # Lê .dat/.edf/.mat/.xml/.c3d → SinalNormalizado
-    │   ├── leitura_audio.py          # Lê .wav/.flac/.mp3 → SinalNormalizado
     │   ├── leitura_dicom.py          # Lê .dcm único ou série → SinalNormalizado
     │   ├── leitura_volumetrica.py    # Lê .nii/.nii.gz/.mha → SinalNormalizado
-    │   ├── leitura_video.py          # Lê .mp4/.avi/.mov → SinalNormalizado
     │   ├── extracao_temporal.py      # Features F1: RMS, HRV, bandas EEG, FVC...
-    │   ├── extracao_audio.py         # Features F2: MFCC, ZCR, centroide, bandas
     │   ├── extracao_dicom.py         # Features F3: 9 biomarcadores + DICOM-específicos
-    │   ├── extracao_volumetrica.py   # Features F4: stats 3D, GLCM por plano, morfologia
-    │   └── extracao_video.py         # Features F5: motion index, textura keyframe
+    │   └── extracao_volumetrica.py   # Features F4: stats 3D, GLCM por plano, morfologia
     │
     ├── config/
-    │   ├── agents.yaml               # 11 agentes
-    │   └── tasks.yaml                # 11 tasks
+    │   ├── agents.yaml               # 8 agentes
+    │   └── tasks.yaml                # 9 tasks
     │
     ├── tools/                        # CrewAI BaseTool — wrappers sobre pipeline/
     │   ├── analise_base_tool.py      # FerramentaAnaliseBase
@@ -212,17 +224,15 @@ BioStatusIA/
     │   ├── tabular_tool.py           # FerramentaAnaliseTabular
     │   ├── custom_tool.py            # FerramentaAnaliseImagem (single, legado)
     │   ├── sinais_temporais_tool.py  # FerramentaExtrairSinalTemporal
-    │   ├── audio_biomedico_tool.py   # FerramentaExtrairAudio
     │   ├── dicom_tool.py             # FerramentaExtrairDICOM
-    │   ├── volumetrico_tool.py       # FerramentaExtrairVolume3D
-    │   └── video_medico_tool.py      # FerramentaExtrairVideo
+    │   └── volumetrico_tool.py       # FerramentaExtrairVolume3D
     │
     ├── static/
     │   ├── uploads/                  # Arquivos enviados — não versionar
     │   └── runs/                     # Workspaces dos kickoffs — não versionar
     │
     └── templates/
-        ├── tela1_upload.html         # Upload com drag & drop (10 modos)
+        ├── tela1_upload.html         # Upload com drag & drop (8 modos)
         └── tela2_resultados.html     # 4 abas + Laudo Interativo
 ```
 
@@ -273,10 +283,9 @@ Aceita três formas de entrada:
 
 | Família | Interface de seleção |
 |---|---|
-| F1/F2 (sinal/áudio) | Plotly com `dragmode: 'select'` + dropdown de canal |
+| F1 (sinal temporal) | Plotly com `dragmode: 'select'` + dropdown de canal |
 | F3 (DICOM 2D) | Canvas overlay com ROI retangular |
 | F4 (Volume 3D) | Slider de slice (chama `GET /slice/<id>/<idx>`) + canvas ROI |
-| F5 (Vídeo) | Slider de frame (chama `GET /frame/<id>/<idx>`) + range inputs |
 | Default (imagem comum) | Canvas overlay com ROI retangular |
 
 Rotas novas em `app.py`:
@@ -318,7 +327,7 @@ Melhor modelo = maior AUC, com preferência por `sensibilidade ≥ 0.8` (minimiz
 
 ---
 
-## Agentes CrewAI (v2) — 6 Crews, 11 agentes
+## Agentes CrewAI (v3) — 5 Crews, 8 agentes
 
 ### Crew 1: `BioStatusIACrew` — fluxo completo de imagem (original)
 
@@ -335,11 +344,11 @@ Melhor modelo = maior AUC, com preferência por `sensibilidade ≥ 0.8` (minimiz
 |---|---|
 | `bioestatistico` | `FerramentaAnaliseTabular` |
 
-### Crew 3: `BioStatusIACrewSinal` — F1 + F2
+### Crew 3: `BioStatusIACrewSinal` — F1
 
 | Ordem | Agente | Tools |
 |---|---|---|
-| 1 | `analista_sinais_fisiologicos` | `FerramentaExtrairSinalTemporal` + `FerramentaExtrairAudio` |
+| 1 | `analista_sinais_fisiologicos` | `FerramentaExtrairSinalTemporal` |
 | 2 | `radiologista_ia` | — |
 
 ### Crew 4: `BioStatusIACrewImagem3D` — F3 + F4
@@ -349,14 +358,7 @@ Melhor modelo = maior AUC, com preferência por `sensibilidade ≥ 0.8` (minimiz
 | 1 | `especialista_imagem_medica` | `FerramentaExtrairDICOM` + `FerramentaExtrairVolume3D` |
 | 2 | `radiologista_ia` | — |
 
-### Crew 5: `BioStatusIACrewVideo` — F5
-
-| Ordem | Agente | Tool |
-|---|---|---|
-| 1 | `analista_video_medico` | `FerramentaExtrairVideo` |
-| 2 | `radiologista_ia` | — |
-
-### Crew 6: `BioStatusIACrewInterativo` — Laudo Interativo
+### Crew 5: `BioStatusIACrewInterativo` — Laudo Interativo
 
 | Agente | Tools | Restrição |
 |---|---|---|
@@ -390,7 +392,7 @@ n_imagens     INTEGER
 pipeline_json TEXT               -- payload completo para Tela 2
 melhor_modelo TEXT
 analise_id    INTEGER            -- FK → analises.id
-familia_sinal TEXT               -- "F1" | "F2" | "F3" | "F4" | "F5" | ""
+familia_sinal TEXT               -- "F1" | "F3" | "F4" | ""
 sinal_tipo    TEXT               -- "ECG" | "EEG" | "Raio-X" | ...
 ```
 
@@ -430,13 +432,6 @@ Migração v2 é idempotente (`_migrar_v2()` usa `try/except OperationalError` p
 - EMG específico: RMS envelope, frequência mediana
 - Espirometria: FVC, FEV1, FEV1/FVC, PEF
 
-### F2 — Áudio Biomédico (`leitura_audio.py` → `extracao_audio.py`)
-
-- MFCCs (20 coeficientes) + delta MFCCs
-- Centroide espectral, bandwidth, rolloff, chroma (12), flatness, contraste espectral
-- ZCR, RMS envelope, duração
-- Bandas de energia: sub-20Hz, 20–200Hz, 200Hz–1kHz, 1–2kHz, 2k+Hz
-
 ### F3 — DICOM 2D (`leitura_dicom.py` → `extracao_dicom.py`)
 
 - 9 biomarcadores originais (morfologia, textura GLCM, distribuição)
@@ -452,15 +447,6 @@ Migração v2 é idempotente (`_migrar_v2()` usa `try/except OperationalError` p
 - GLCM por plano ortogonal (axial/coronal/sagital)
 - Morfologia 3D: volume da lesão (mm³), esfericidade, axes do bounding box
 - `slice_para_png_base64(volume, idx)` → base64 para a rota `/slice/`
-
-### F5 — Vídeo Médico (`leitura_video.py` → `extracao_video.py`)
-
-- OpenCV com amostragem adaptativa (até `max_frames=300`)
-- Frames armazenados como `(n_frames, 256, 256)` float32 [0,1]
-- Temporal: contagem de frames, FPS, brilho médio/desvio, variação temporal
-- Movimento: motion index (diff de frames), frame de maior movimento, P90 motion, % frames alta variação
-- Textura do keyframe (maior variância): GLCM, entropia, skewness, kurtosis
-- `frame_para_png_base64(frame)` → base64 para a rota `/frame/`
 
 ---
 
@@ -487,9 +473,7 @@ Regra geral: **baixa solidez + alta entropia → suspeito de malignidade**.
 | Família | Dataset | Slug no Kaggle | Formato |
 |---|---|---|---|
 | F1 — ECG | ECG Heartbeat Categorization | `shayanfazeli/heartbeat` | CSV (MIT-BIH) |
-| F2 — Áudio | Respiratory Sound Database (ICBHI 2017) | `vbookshelf/respiratory-sound-database` | WAV + CSV |
 | F3 — DICOM/Raio-X | Chest X-Ray Images (Pneumonia) | `paultimothymooney/chest-xray-pneumonia` | JPEG (NORMAL/PNEUMONIA) |
-| F5 — Endoscopia | Kvasir Dataset v2 | `meliodas23/kvasir-v2` | JPEG (8 classes) |
 
 Para volumes 3D (F4), datasets como BRATS são muito pesados para KaggleHub — usar download direto.
 
@@ -547,7 +531,8 @@ PYTHONIOENCODING=utf-8
 - Não trocar `Process.sequential` por `Process.hierarchical` sem revisar `manager_llm`.
 - Não aumentar `max_iter` sem medir tempo de resposta.
 - Não adicionar ferramentas ao `radiologista_ia` nem ao `radiologista_ia_interativo`.
-- Não restringir `detectar_estrutura()` — manter os 10 modos.
+- Não reintroduzir áudio (F2) nem vídeo (F5) — foram removidos do escopo na v3.
+- Manter os 8 modos em escopo em `detectar_estrutura()` (F1/F3/F4 + tabular + imagem comum).
 - Não treinar classificadores fora do contexto rotulado.
 - Não reduzir `MAX_CONTENT_LENGTH` — volumes 3D precisam de 4 GB.
 - Não quebrar a `SinalNormalizado` — é o contrato entre leitores e extratores.
