@@ -60,6 +60,109 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
+
+    /* ── Laudo Body ──────────────────────────────────────────────────────────── */
+    .laudo-body h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #0f766e;
+      border-left: 3px solid #14b8a6;
+      padding-left: 0.75rem;
+      margin-top: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .laudo-body h3 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #334155;
+      margin-top: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    .laudo-body p {
+      color: #475569;
+      font-size: 0.8rem;
+      line-height: 1.75;
+      margin-bottom: 0.5rem;
+    }
+    .laudo-body strong {
+      color: #0f766e;
+      font-weight: 700;
+    }
+    .laudo-body ul {
+      list-style: none;
+      padding: 0;
+      margin: 0.5rem 0 1rem 0;
+    }
+    .laudo-body ul li {
+      padding: 0.25rem 0 0.25rem 1.25rem;
+      position: relative;
+      color: #475569;
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+    .laudo-body ul li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: #14b8a6;
+      font-weight: 700;
+    }
+    .laudo-body hr {
+      border: none;
+      border-top: 1px solid #e2e8f0;
+      margin: 1.25rem 0;
+    }
+    .laudo-body blockquote {
+      border-left: 3px solid #99f6e4;
+      padding-left: 1rem;
+      color: #64748b;
+      font-size: 0.8rem;
+      font-style: italic;
+      margin: 0.75rem 0;
+    }
+
+    /* ── Aviso ético âmbar ───────────────────────────────────────────────────── */
+    .aviso-etico {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 0.875rem;
+      padding: 0.875rem 1rem;
+      margin-top: 1.5rem;
+    }
+    .aviso-etico-icon {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+    }
+    .aviso-etico-texto {
+      font-size: 0.72rem;
+      color: #92400e;
+      line-height: 1.55;
+    }
+    .aviso-etico-titulo {
+      font-weight: 800;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #b45309;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    /* ── Impressão: só o card do laudo ──────────────────────────────────────── */
+    @media print {
+      .no-print { display: none !important; }
+      .laudo-card { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+      body { background: white !important; }
+    }
   </style>
 </head>
 
@@ -318,6 +421,32 @@
         <p class="text-slate-400 text-sm">Esta run não executou nenhum pipeline de pré-processamento adaptativo.</p>
       </div>
       {% endif %}
+
+      <!-- Engenharia de Features (derivadas das imagens pré-processadas) -->
+      <div id="secao-features-engenharia" class="premium-card bg-white rounded-2xl p-6 shadow-sm hidden">
+        <div class="flex items-center gap-3 mb-1">
+          <div class="w-1 h-5 bg-teal-500 rounded-full"></div>
+          <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider">🔬 Engenharia de Features</h3>
+        </div>
+        <p class="text-xs text-slate-400 ml-4 mb-4">
+          Features derivadas das imagens pré-processadas (Sobel, histograma, LBP, quadrantes),
+          ordenadas por importância.
+        </p>
+
+        <div class="flex flex-wrap items-center gap-2 mb-4 ml-4">
+          <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Método</span>
+          <span id="fe-metodo" class="text-xs font-mono font-bold text-teal-700 bg-teal-50 border border-teal-100 rounded-lg px-2.5 py-1">—</span>
+          <span id="fe-amostras" class="text-xs text-slate-400"></span>
+        </div>
+
+        <div class="bg-slate-50/50 rounded-xl p-3 border border-slate-100/60 mb-5">
+          <h4 class="text-[10px] uppercase text-slate-400 font-bold mb-2 ml-1">Features mais importantes</h4>
+          <div id="chart-features-imp" style="min-height:340px"></div>
+        </div>
+
+        <h4 class="text-[10px] uppercase text-slate-400 font-bold mb-3 ml-1">Valores médios da amostra</h4>
+        <div id="grid-features-engenharia" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+      </div>
 
     </div>
 
@@ -825,31 +954,50 @@
       {% endif %}
 
       <!-- Laudo IA -->
-      <div class="premium-card bg-white rounded-3xl p-8 shadow-md border border-slate-100 relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-teal-500 to-teal-700"></div>
-        <div class="flex items-center gap-4 mb-6">
-          <div class="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center text-xl">✍️</div>
-          <div>
-            <h3 class="text-base font-extrabold text-slate-900 leading-none">
-              {% if pipeline.modo == 'tabular' %}Relatório da Análise Tabular Clínico{% else %}Dossiê e Laudo do Radiologista IA{% endif %}
-            </h3>
-            <p class="text-xs text-slate-400 mt-1 font-mono">Assinado Digitalmente &bull; Agentes Multidisciplinares CrewAI</p>
+      <div class="laudo-card premium-card bg-white rounded-3xl shadow-md border border-slate-100 overflow-hidden">
+        <!-- Cabeçalho colorido -->
+        <div class="bg-gradient-to-r from-teal-600 to-teal-800 px-7 py-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 bg-white/15 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">✍️</div>
+              <div>
+                <h3 class="text-white font-extrabold text-base leading-tight">
+                  {% if pipeline.modo == 'tabular' %}Relatório da Análise Tabular Clínico{% else %}Dossiê e Laudo do Radiologista IA{% endif %}
+                </h3>
+                <p class="text-teal-200 text-xs mt-0.5 font-mono">Agentes Multidisciplinares CrewAI &bull; Assinado Digitalmente</p>
+                {% if dados.data_hora %}
+                <p class="text-teal-300 text-[10px] mt-1 font-mono">{{ dados.data_hora[:19] }}</p>
+                {% endif %}
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-2 flex-shrink-0">
+              <span class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider ring-2
+                {% if dados.categoria == 'MALIGNO' %}bg-rose-500 text-white ring-rose-300/50
+                {% elif dados.categoria == 'BENIGNO' %}bg-emerald-500 text-white ring-emerald-300/50
+                {% else %}bg-white/20 text-white ring-white/30{% endif %}">
+                {{ dados.categoria }}
+              </span>
+              <button onclick="window.print()"
+                class="no-print flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-[10px] font-semibold px-3 py-1.5 rounded-lg transition-all border border-white/20">
+                🖨️ Imprimir Laudo
+              </button>
+            </div>
           </div>
-          <div class="ml-auto flex items-center gap-2">
-            <span class="font-mono text-xs text-slate-400 max-w-[120px] truncate">{{ dados.imagem }}</span>
-            <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider
-              {% if dados.categoria == 'MALIGNO' %}bg-rose-100 text-rose-700 shadow-sm shadow-rose-200/50
-              {% elif dados.categoria == 'BENIGNO' %}bg-emerald-100 text-emerald-700 shadow-sm shadow-emerald-200/50
-              {% else %}bg-slate-100 text-slate-700{% endif %}">{{ dados.categoria }}</span>
+        </div>
+        <!-- Corpo do laudo -->
+        <div class="px-7 pt-6 pb-2">
+          <div class="laudo-body">
+            {{ laudo_html | safe }}
+          </div>
+          <div class="aviso-etico">
+            <span class="aviso-etico-icon">🛡️</span>
+            <div class="aviso-etico-texto">
+              <span class="aviso-etico-titulo">Aviso Ético Obrigatório</span>
+              Este relatório é gerado por IA para suporte à decisão clínica e não substitui a avaliação presencial de um profissional de saúde qualificado. Não utilize este laudo como único critério diagnóstico.
+            </div>
           </div>
         </div>
-        <div class="prose prose-teal max-w-none text-slate-600 text-sm leading-relaxed border-t border-slate-100/80 pt-6 font-normal">
-          {{ laudo_html | safe }}
-        </div>
-        <div class="mt-8 text-[11px] text-slate-400 border-t border-slate-100 pt-4 flex gap-2 items-center">
-          <span class="text-rose-500 font-bold">⚠️ AVISO ÉTICO:</span>
-          <span>Este relatório é gerado por IA para suporte à decisão clínica e não substitui a avaliação presencial de um profissional de saúde qualificado.</span>
-        </div>
+        <div class="h-4"></div>
       </div>
 
       <!-- Histórico SQLite -->
@@ -934,31 +1082,30 @@
             </div>
           </div>
 
-          <!-- Painel de Banco -->
+          <!-- Painel de Exemplos do Dataset Atual -->
           <div id="painel-banco" class="hidden space-y-3">
             <div class="flex items-center justify-between">
-              <p class="text-xs text-slate-500">Selecione uma análise anterior para gerar um novo laudo:</p>
-              <button onclick="carregarHistoricoBanco()" class="text-xs text-teal-600 hover:underline font-semibold">🔄 Atualizar</button>
+              <p class="text-xs text-slate-500 font-semibold">Exemplos do Dataset Atual</p>
+              <button onclick="carregarExemplosDataset()" class="text-xs text-teal-600 hover:underline font-semibold">🔄 Atualizar</button>
             </div>
             <div id="tabela-banco" class="overflow-x-auto max-h-60 overflow-y-auto border border-slate-100 rounded-xl">
               <table class="w-full text-xs">
                 <thead class="sticky top-0 bg-slate-50">
                   <tr class="text-slate-400 uppercase tracking-wider border-b border-slate-100 text-left">
                     <th class="px-3 py-2 font-semibold w-6"></th>
-                    <th class="px-3 py-2 font-semibold">ID</th>
-                    <th class="px-3 py-2 font-semibold">Data / Hora</th>
-                    <th class="px-3 py-2 font-semibold">Arquivo</th>
+                    <th class="px-3 py-2 font-semibold">#</th>
+                    <th class="px-3 py-2 font-semibold">Nome</th>
+                    <th class="px-3 py-2 font-semibold">Categoria</th>
                     <th class="px-3 py-2 font-semibold">Família</th>
-                    <th class="px-3 py-2 font-semibold">Amostras</th>
-                    <th class="px-3 py-2 font-semibold">Modelo</th>
+                    <th class="px-3 py-2 font-semibold">Biomarcadores (resumo)</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-banco">
-                  <tr><td colspan="7" class="py-6 text-center text-slate-400">Carregando...</td></tr>
+                  <tr><td colspan="6" class="py-6 text-center text-slate-400">Carregando...</td></tr>
                 </tbody>
               </table>
             </div>
-            <p id="banco-selecao-info" class="text-xs text-teal-700 font-semibold hidden">✓ Análise selecionada: <span id="banco-selecao-label"></span></p>
+            <p id="banco-selecao-info" class="text-xs text-teal-700 font-semibold hidden">✓ Exemplo selecionado: <span id="banco-selecao-label"></span></p>
           </div>
 
           <!-- Botão de geração -->
@@ -973,200 +1120,29 @@
       </div>
 
       <!-- Painel de resposta do laudo de amostra -->
-      <div id="painel-laudo-amostra" class="hidden premium-card bg-white rounded-3xl p-8 shadow-md border border-teal-100 relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-teal-400 to-teal-600"></div>
-        <div class="flex items-center gap-4 mb-6">
-          <div class="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center text-xl">🩺</div>
-          <div>
-            <h3 class="text-base font-extrabold text-slate-900 leading-none">Laudo de Amostra — Radiologista IA</h3>
-            <p class="text-xs text-slate-400 mt-1 font-mono" id="label-fonte-laudo-amostra">—</p>
-          </div>
-        </div>
-        <div id="conteudo-laudo-amostra" class="prose prose-teal max-w-none text-slate-600 text-sm leading-relaxed border-t border-slate-100/80 pt-6"></div>
-        <div class="mt-6 text-[11px] text-slate-400 border-t border-slate-100 pt-4 flex gap-2 items-center">
-          <span class="text-rose-500 font-bold">⚠️ AVISO ÉTICO:</span>
-          <span>Laudo de suporte gerado por IA — NÃO substitui avaliação médica habilitada.</span>
-        </div>
-      </div>
-
-      <!-- Divisor visual -->
-      <div class="flex items-center gap-4 my-2">
-        <div class="flex-1 h-px bg-slate-200"></div>
-        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Seção B — Análise Focada por Região / Trecho</span>
-        <div class="flex-1 h-px bg-slate-200"></div>
-      </div>
-
-      <!-- ===== SEÇÃO B: ROI / Trecho (existente) ===== -->
-      <div class="premium-card bg-white rounded-2xl p-6 shadow-sm">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="w-1 h-5 bg-teal-500 rounded-full"></div>
-          <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Análise Focada pelo Médico</h3>
-        </div>
-        <p class="text-xs text-slate-400 mb-6">
-          Selecione um trecho do sinal ou marque uma região na imagem. A IA gera um laudo
-          focado <strong>exclusivamente</strong> naquele recorte.
-        </p>
-
-        <!-- ── F1/F2: Viewer de Sinal Temporal ─────────────────────────── -->
-        {% if pipeline.familia in ('F1','F2') %}
-        <div class="space-y-4">
-          <div class="flex items-center gap-3 flex-wrap">
-            <label class="text-xs font-semibold text-slate-600">Canal:</label>
-            <select id="sel-canal"
-              class="text-xs border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-300">
-              {% if pipeline.canais %}
-              {% for c in pipeline.canais[:12] %}
-              <option value="{{ c }}">{{ c }}</option>
-              {% endfor %}
-              {% else %}
-              <option value="canal_0">Canal 0</option>
-              {% endif %}
-            </select>
-            <span class="text-xs text-slate-400">Arraste para selecionar o trecho de interesse:</span>
-          </div>
-          <div id="chart-sinal-interativo" class="h-72 w-full border border-slate-100 rounded-xl bg-slate-50"></div>
-          <div
-            class="flex items-center gap-4 text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
-            <span>Seleção:</span>
-            <span id="sel-inicio" class="font-mono font-bold text-teal-700">—</span>
-            <span>→</span>
-            <span id="sel-fim" class="font-mono font-bold text-teal-700">—</span>
-            <span id="sel-unidade" class="text-slate-400">segundos</span>
-            <button id="btn-analisar-trecho"
-              class="ml-auto bg-teal-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-teal-700 active:scale-95 transition-all disabled:opacity-40"
-              disabled onclick="analisarTrecho()">
-              Analisar Trecho Selecionado
-            </button>
-          </div>
-        </div>
-
-        <!-- ── F3/F4: Viewer de Imagem com ROI ─────────────────────────── -->
-        {% elif pipeline.familia in ('F3','F4') %}
-        <div class="space-y-4">
-          {% if pipeline.familia == 'F4' %}
+      <div id="painel-laudo-amostra" class="hidden laudo-card premium-card bg-white rounded-3xl shadow-md border border-slate-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-teal-600 to-teal-800 px-7 py-5">
           <div class="flex items-center gap-3">
-            <label class="text-xs font-semibold text-slate-600">Slice axial:</label>
-            <input type="range" id="slice-slider" min="0" max="100" value="50" class="flex-1 accent-teal-600"
-              oninput="carregarSlice(this.value)">
-            <span id="slice-idx-label" class="font-mono text-xs text-teal-700 w-10 text-right">50</span>
-            <span class="text-xs text-slate-400">/ <span id="slice-total">—</span></span>
-          </div>
-          {% endif %}
-          <div class="relative inline-block w-full max-w-lg">
-            <img id="img-dicom" src="" alt="Imagem médica"
-              class="w-full rounded-xl border border-slate-200 bg-slate-100 min-h-64 object-contain"
-              style="display:none">
-            <div id="img-placeholder"
-              class="w-full h-64 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-300 text-sm">
-              Carregando imagem...
-            </div>
-            <canvas id="roi-canvas" class="absolute top-0 left-0 w-full h-full cursor-crosshair rounded-xl"
-              style="display:none" onmousedown="roiStart(event)" onmousemove="roiMove(event)" onmouseup="roiEnd(event)">
-            </canvas>
-          </div>
-          <div
-            class="flex items-center gap-4 text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
-            <span>ROI:</span>
-            <span id="roi-info" class="font-mono text-teal-700">Clique e arraste na imagem</span>
-            <button onclick="limparROI()" class="text-xs text-slate-400 hover:text-slate-600 underline">Limpar</button>
-            <button id="btn-analisar-roi"
-              class="ml-auto bg-teal-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-teal-700 active:scale-95 transition-all disabled:opacity-40"
-              disabled onclick="analisarROI()">
-              Analisar Região Selecionada
-            </button>
-          </div>
-        </div>
-
-        <!-- ── F5: Viewer de Vídeo ────────────────────────────────────────── -->
-        {% elif pipeline.familia == 'F5' %}
-        <div class="space-y-4">
-          <div class="flex items-center gap-3">
-            <label class="text-xs font-semibold text-slate-600">Frame:</label>
-            <input type="range" id="frame-slider" min="0" max="299" value="0" class="flex-1 accent-teal-600"
-              oninput="carregarFrame(this.value)">
-            <span id="frame-idx-label" class="font-mono text-xs text-teal-700 w-10 text-right">0</span>
-          </div>
-          <img id="img-frame" src="" alt="Frame do vídeo"
-            class="w-full max-w-lg rounded-xl border border-slate-200 bg-slate-100 min-h-48 object-contain">
-          <div class="grid grid-cols-2 gap-4">
+            <div class="w-11 h-11 bg-white/15 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">🩺</div>
             <div>
-              <label class="text-xs text-slate-500 block mb-1">Frame início</label>
-              <input type="number" id="frame-inicio" value="0" min="0"
-                class="w-full text-xs border border-slate-200 rounded-lg px-3 py-1.5 font-mono focus:outline-none focus:ring-2 focus:ring-teal-300">
-            </div>
-            <div>
-              <label class="text-xs text-slate-500 block mb-1">Frame fim</label>
-              <input type="number" id="frame-fim" value="30" min="1"
-                class="w-full text-xs border border-slate-200 rounded-lg px-3 py-1.5 font-mono focus:outline-none focus:ring-2 focus:ring-teal-300">
+              <h3 class="text-white font-extrabold text-base leading-tight">Laudo de Amostra — Radiologista IA</h3>
+              <p class="text-teal-200 text-xs mt-0.5 font-mono" id="label-fonte-laudo-amostra">—</p>
             </div>
           </div>
-          <button id="btn-analisar-video"
-            class="w-full bg-teal-600 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-teal-700 active:scale-95 transition-all"
-            onclick="analisarVideo()">
-            Analisar Trecho de Vídeo Selecionado
-          </button>
         </div>
-
-        <!-- ── Modos de imagem PNG/JPG originais ──────────────────────────── -->
-        {% else %}
-        <div class="space-y-4">
-          {% if dados.imagem and dados.imagem != 'None' %}
-          <div class="relative inline-block w-full max-w-lg">
-            <img id="img-dicom" src="/static/uploads/{{ dados.imagem.split('\\')[-1].split('/')[-1] }}"
-              alt="Imagem analisada"
-              class="w-full rounded-xl border border-slate-200 bg-slate-100 object-contain max-h-80"
-              onerror="this.style.display='none'; document.getElementById('img-placeholder-orig').style.display='flex'">
-            <div id="img-placeholder-orig"
-              class="hidden w-full h-48 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 items-center justify-center text-slate-300 text-sm">
-              Imagem não disponível para visualização local
+        <div class="px-7 pt-6 pb-2">
+          <div id="conteudo-laudo-amostra" class="laudo-body"></div>
+          <div class="aviso-etico">
+            <span class="aviso-etico-icon">🛡️</span>
+            <div class="aviso-etico-texto">
+              <span class="aviso-etico-titulo">Aviso Ético Obrigatório</span>
+              Laudo de suporte gerado por IA — NÃO substitui avaliação médica habilitada. Consulte sempre um profissional de saúde qualificado.
             </div>
-            <canvas id="roi-canvas" class="absolute top-0 left-0 w-full h-full cursor-crosshair rounded-xl"
-              onmousedown="roiStart(event)" onmousemove="roiMove(event)" onmouseup="roiEnd(event)">
-            </canvas>
           </div>
-          <div
-            class="flex items-center gap-4 text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
-            <span>ROI:</span>
-            <span id="roi-info" class="font-mono text-teal-700">Clique e arraste na imagem para delimitar região</span>
-            <button onclick="limparROI()" class="text-xs text-slate-400 hover:text-slate-600 underline">Limpar</button>
-            <button id="btn-analisar-roi"
-              class="ml-auto bg-teal-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-teal-700 active:scale-95 transition-all disabled:opacity-40"
-              disabled onclick="analisarROI()">
-              Analisar Região
-            </button>
-          </div>
-          {% else %}
-          <p class="text-slate-400 text-sm text-center py-8">
-            A análise interativa por seleção de região está disponível para imagens,
-            DICOM, volumes 3D, sinais temporais e vídeos médicos.
-          </p>
-          {% endif %}
         </div>
-        {% endif %}
+        <div class="h-4"></div>
       </div>
 
-      <!-- Painel de resposta do laudo interativo (Seção B) -->
-      <div id="painel-laudo-interativo"
-        class="hidden premium-card bg-white rounded-3xl p-8 shadow-md border border-teal-100 relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-teal-400 to-teal-600"></div>
-        <div class="flex items-center gap-4 mb-6">
-          <div class="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center text-xl">🔬</div>
-          <div>
-            <h3 class="text-base font-extrabold text-slate-900 leading-none">Laudo Interativo — Análise Focada</h3>
-            <p class="text-xs text-slate-400 mt-1 font-mono">Gerado por <span id="laudo-int-trecho">—</span></p>
-          </div>
-          <div id="laudo-int-spinner" class="ml-auto hidden">
-            <div class="w-6 h-6 border-2 border-teal-300 border-t-teal-600 rounded-full animate-spin"></div>
-          </div>
-        </div>
-        <div id="laudo-interativo-conteudo"
-          class="prose prose-teal max-w-none text-slate-600 text-sm leading-relaxed border-t border-slate-100/80 pt-6">
-        </div>
-        <div class="mt-6 text-[11px] text-slate-400 border-t border-slate-100 pt-4 flex gap-2 items-center">
-          <span class="text-rose-500 font-bold">⚠️ AVISO ÉTICO:</span>
-          <span>Laudo de suporte gerado por IA — NÃO substitui avaliação médica habilitada.</span>
-        </div>
-      </div>
 
 
   </main>
@@ -1181,6 +1157,69 @@
     const comparacaoAB = pipeline.comparacao_ab || {};
     const stats = pipeline.estatisticas || {};
     const melhor = pipeline.melhor_modelo || '';
+
+    // ── Engenharia de Features (gráfico de importância + cards na aba Pré-proc) ─
+    function renderFeaturesEngenharia() {
+      const fe = pipeline.features_engenharia || {};
+      const ranking = fe.ranking || [];
+      if (!ranking.length) return;
+
+      const secao = document.getElementById('secao-features-engenharia');
+      if (!secao) return;
+
+      document.getElementById('fe-metodo').textContent = fe.metodo || '—';
+      document.getElementById('fe-amostras').textContent =
+        fe.n_amostras ? `· ${fe.n_amostras} amostra(s)` : '';
+
+      // Gráfico de barras horizontais das top features por importância.
+      const top = ranking.slice(0, 10).reverse();
+      const nomes = top.map(d => d.nome);
+      const scores = top.map(d => d.score);
+      const maxScore = Math.max(...scores, 1e-9);
+      const coresBar = scores.map(s => {
+        const r = s / maxScore;
+        return r >= 0.66 ? '#0d9488' : (r >= 0.33 ? '#14b8a6' : '#5eead4');
+      });
+      const hover = top.map(d =>
+        d.p_valor !== null && d.p_valor !== undefined
+          ? `${d.nome}<br>score: ${d.score}<br>p-valor: ${d.p_valor}`
+          : `${d.nome}<br>score: ${d.score}`);
+
+      Plotly.newPlot('chart-features-imp', [{
+        type: 'bar', orientation: 'h',
+        x: scores, y: nomes,
+        marker: { color: coresBar },
+        text: scores.map(s => s.toFixed(2)), textposition: 'outside',
+        hoverinfo: 'text', hovertext: hover,
+      }], {
+        ...layout_base,
+        margin: { t: 10, b: 40, l: 120, r: 30 },
+        xaxis: { title: 'Importância (score)', zeroline: false },
+        yaxis: { automargin: true },
+      }, { displayModeBar: false, responsive: true });
+
+      // Cards com os valores médios da amostra.
+      const grid = document.getElementById('grid-features-engenharia');
+      const medias = fe.medias || {};
+      const chaves = Object.keys(medias);
+      const maxAbs = Math.max(...chaves.map(k => Math.abs(medias[k])), 1e-9);
+      grid.innerHTML = chaves.map((k, i) => {
+        const v = medias[k];
+        const ratio = Math.abs(v) / maxAbs;
+        const cor = ratio >= 0.66 ? '#0d9488' : (ratio >= 0.33 ? '#d97706' : '#94a3b8');
+        return `<div class="rounded-xl p-3 border border-slate-100 opacity-0 transition-all duration-500"
+                     style="background:rgba(13,148,136,0.04);transition-delay:${i * 20}ms">
+          <div class="text-[10px] uppercase tracking-wider text-slate-400 font-bold truncate" title="${k}">${k}</div>
+          <div class="mt-1 font-mono font-bold text-base" style="color:${cor}">${Number(v).toFixed(4)}</div>
+        </div>`;
+      }).join('');
+
+      secao.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        grid.querySelectorAll('div[style]').forEach(el => { el.style.opacity = '1'; });
+      });
+    }
+    renderFeaturesEngenharia();
 
     const layout_base = {
       margin: { t: 20, b: 50, l: 50, r: 20 },
@@ -1428,10 +1467,12 @@
     const FAMILIA = '{{ pipeline.familia or "" }}';
     const TIPO_SINAL = '{{ pipeline.tipo_sinal or dados.categoria or "" }}';
 
-    // ── Seção A: Toggle Upload / Banco ────────────────────────────────────────
+    // ── Seção A: Toggle Upload / Exemplos do dataset ──────────────────────────
     let modoAmostra = 'upload';
-    let bancSelecaoId = null;
+    let exemploSelecionadoIdx = null;
+    let exemploSelecionadoNome = '';
     let arquivoSelecionado = null;
+    const RESULTADO_ID = {{ dados.id }};
 
     function setModoAmostra(modo) {
       modoAmostra = modo;
@@ -1445,7 +1486,7 @@
         ? 'px-4 py-2 rounded-lg text-xs font-bold transition-all bg-teal-600 text-white shadow'
         : 'px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-700';
       if (!isUpload && document.getElementById('tbody-banco').children.length <= 1) {
-        carregarHistoricoBanco();
+        carregarExemplosDataset();
       }
       atualizarBotaoGerar();
     }
@@ -1472,44 +1513,61 @@
 
     function atualizarBotaoGerar() {
       const btn = document.getElementById('btn-gerar-laudo-amostra');
-      const pronto = modoAmostra === 'upload' ? !!arquivoSelecionado : !!bancSelecaoId;
+      const pronto = modoAmostra === 'upload' ? !!arquivoSelecionado : exemploSelecionadoIdx !== null;
       btn.disabled = !pronto;
     }
 
-    function carregarHistoricoBanco() {
+    function resumoBiomarcadores(bio) {
+      if (!bio || typeof bio !== 'object') return '—';
+      const pares = [];
+      for (const k of Object.keys(bio)) {
+        const v = bio[k];
+        if (typeof v === 'number') {
+          pares.push(`${k}: ${Number(v).toFixed(2)}`);
+        } else if (v && typeof v === 'object') {
+          const sub = Object.keys(v)[0];
+          if (sub && typeof v[sub] === 'number') pares.push(`${sub}: ${Number(v[sub]).toFixed(2)}`);
+        }
+        if (pares.length >= 3) break;
+      }
+      return pares.length ? pares.join(' · ') : '—';
+    }
+
+    function carregarExemplosDataset() {
       const tbody = document.getElementById('tbody-banco');
-      tbody.innerHTML = '<tr><td colspan="7" class="py-4 text-center text-slate-400 text-xs">Carregando...</td></tr>';
-      fetch('/api/historico')
+      tbody.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-slate-400 text-xs">Carregando...</td></tr>';
+      fetch('/api/exemplos/' + RESULTADO_ID)
         .then(r => r.json())
         .then(rows => {
-          if (!rows.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="py-4 text-center text-slate-400 text-xs">Nenhuma análise encontrada.</td></tr>';
+          if (!Array.isArray(rows) || !rows.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-slate-400 text-xs">Nenhum exemplo disponível neste dataset.</td></tr>';
             return;
           }
           tbody.innerHTML = rows.map(r => {
-            const nome = r.dataset_path ? r.dataset_path.split(/[\\/]/).pop() : '—';
-            const familia = r.familia_sinal || r.sinal_tipo || '—';
-            return `<tr class="border-b border-slate-50 hover:bg-teal-50/30 cursor-pointer transition-colors" onclick="selecionarBanco(${r.id}, '${nome.replace(/'/g,"\\'")} — #${r.id}')">
-              <td class="px-3 py-2"><input type="radio" name="banco-radio" value="${r.id}" class="accent-teal-600"></td>
-              <td class="px-3 py-2 font-mono text-slate-400">${r.id}</td>
-              <td class="px-3 py-2 text-slate-600">${r.data_hora}</td>
-              <td class="px-3 py-2 font-mono text-slate-700 truncate max-w-[180px]">${nome}</td>
+            const nome = (r.nome || `exemplo_${r.idx}`).replace(/'/g, "\\'");
+            const familia = r.familia || r.tipo || '—';
+            const resumo = resumoBiomarcadores(r.biomarcadores);
+            return `<tr class="border-b border-slate-50 hover:bg-teal-50/30 cursor-pointer transition-colors" onclick="selecionarExemplo(${r.idx}, '${nome}')">
+              <td class="px-3 py-2"><input type="radio" name="banco-radio" value="${r.idx}" class="accent-teal-600"></td>
+              <td class="px-3 py-2 font-mono text-slate-400">${r.idx}</td>
+              <td class="px-3 py-2 font-mono text-slate-700 truncate max-w-[160px]">${r.nome || '—'}</td>
+              <td class="px-3 py-2 text-slate-500">${r.categoria || '—'}</td>
               <td class="px-3 py-2 text-slate-500">${familia}</td>
-              <td class="px-3 py-2 text-slate-500">${r.n_imagens}</td>
-              <td class="px-3 py-2 text-slate-500">${r.melhor_modelo}</td>
+              <td class="px-3 py-2 text-slate-500 truncate max-w-[200px]" title="${resumo}">${resumo}</td>
             </tr>`;
           }).join('');
         })
         .catch(() => {
-          tbody.innerHTML = '<tr><td colspan="7" class="py-4 text-center text-rose-400 text-xs">Erro ao carregar histórico.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-rose-400 text-xs">Erro ao carregar exemplos.</td></tr>';
         });
     }
 
-    function selecionarBanco(id, label) {
-      bancSelecaoId = id;
-      document.querySelectorAll('[name="banco-radio"]').forEach(r => r.checked = (parseInt(r.value) === id));
+    function selecionarExemplo(idx, nome) {
+      exemploSelecionadoIdx = idx;
+      exemploSelecionadoNome = nome;
+      document.querySelectorAll('[name="banco-radio"]').forEach(r => r.checked = (parseInt(r.value) === idx));
       const info = document.getElementById('banco-selecao-info');
-      document.getElementById('banco-selecao-label').textContent = label;
+      document.getElementById('banco-selecao-label').textContent = `#${idx} — ${nome}`;
       info.classList.remove('hidden');
       atualizarBotaoGerar();
     }
@@ -1526,9 +1584,10 @@
       if (modoAmostra === 'upload' && arquivoSelecionado) {
         formData.append('arquivo', arquivoSelecionado);
         fonte = `Upload: ${arquivoSelecionado.name}`;
-      } else if (bancSelecaoId) {
-        formData.append('resultado_id', String(bancSelecaoId));
-        fonte = `Análise #${bancSelecaoId} do banco`;
+      } else if (exemploSelecionadoIdx !== null) {
+        formData.append('resultado_id', String(RESULTADO_ID));
+        formData.append('exemplo_idx', String(exemploSelecionadoIdx));
+        fonte = `Exemplo #${exemploSelecionadoIdx} — ${exemploSelecionadoNome}`;
       }
 
       try {
@@ -1550,220 +1609,6 @@
       }
     }
 
-    // ── F1/F2: gráfico de sinal temporal ─────────────────────────────────────
-    const dadosViz = pipeline.dados_viz || [];
-    const canaisViz = pipeline.canais || ['canal_0'];
-    let selInicio = null, selFim = null;
-
-    if (FAMILIA === 'F1' || FAMILIA === 'F2') {
-      const elChart = document.getElementById('chart-sinal-interativo');
-      if (elChart && dadosViz.length) {
-        const fs = pipeline.taxa_amostragem || 1000;
-        const canalIdx = 0;
-        const y = Array.isArray(dadosViz[0]) ? dadosViz[canalIdx] : dadosViz;
-        const x = y.map((_, i) => i / fs);
-        const trace = {
-          x, y, type: 'scatter', mode: 'lines',
-          name: canaisViz[canalIdx] || 'Canal 0',
-          line: { color: '#0d9488', width: 1.5 }
-        };
-        Plotly.newPlot('chart-sinal-interativo', [trace], {
-          ...layout_base,
-          dragmode: 'select',
-          xaxis: { title: 'Tempo (s)' },
-          yaxis: { title: 'Amplitude' },
-          selectdirection: 'h',
-        }, { responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['toImage'] });
-
-        document.getElementById('chart-sinal-interativo').on('plotly_selected', function (eventData) {
-          if (!eventData || !eventData.range) return;
-          selInicio = eventData.range.x[0];
-          selFim = eventData.range.x[1];
-          document.getElementById('sel-inicio').textContent = selInicio.toFixed(3);
-          document.getElementById('sel-fim').textContent = selFim.toFixed(3);
-          document.getElementById('btn-analisar-trecho').disabled = false;
-        });
-
-        document.getElementById('sel-canal').addEventListener('change', function () {
-          const idx = canaisViz.indexOf(this.value);
-          if (idx < 0) return;
-          const yNew = Array.isArray(dadosViz[0]) ? dadosViz[idx] : dadosViz;
-          const xNew = yNew.map((_, i) => i / fs);
-          Plotly.restyle('chart-sinal-interativo', { x: [xNew], y: [yNew], name: [this.value] }, [0]);
-        });
-      }
-    }
-
-    function analisarTrecho() {
-
-      const canal = document.getElementById('sel-canal')?.value || '';
-      enviarLaudoInterativo({
-        inicio_s: selInicio,
-        fim_s: selFim,
-        canal: canal,
-        descricao: `Trecho ${selInicio?.toFixed(2)}s–${selFim?.toFixed(2)}s, canal ${canal}`
-      });
-    }
-
-    // ── F3/F4: canvas ROI ─────────────────────────────────────────────────────
-    let roiDrawing = false, roiX0 = 0, roiY0 = 0, roiRect = null;
-
-    function initCanvas() {
-      const canvas = document.getElementById('roi-canvas');
-      const img = document.getElementById('img-dicom');
-      if (!canvas || !img) return;
-      canvas.style.display = 'block';
-      canvas.width = img.offsetWidth;
-      canvas.height = img.offsetHeight;
-    }
-
-    function roiStart(e) {
-      roiDrawing = true;
-      const canvas = document.getElementById('roi-canvas');
-      const rect = canvas.getBoundingClientRect();
-      roiX0 = e.clientX - rect.left;
-      roiY0 = e.clientY - rect.top;
-    }
-    function roiMove(e) {
-      if (!roiDrawing) return;
-      const canvas = document.getElementById('roi-canvas');
-      const ctx = canvas.getContext('2d');
-      const rect = canvas.getBoundingClientRect();
-      const x1 = e.clientX - rect.left;
-      const y1 = e.clientY - rect.top;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = '#0d9488';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 3]);
-      ctx.strokeRect(roiX0, roiY0, x1 - roiX0, y1 - roiY0);
-      ctx.fillStyle = 'rgba(13,148,136,0.08)';
-      ctx.fillRect(roiX0, roiY0, x1 - roiX0, y1 - roiY0);
-    }
-    function roiEnd(e) {
-      roiDrawing = false;
-      const canvas = document.getElementById('roi-canvas');
-      const img = document.getElementById('img-dicom');
-      const rect = canvas.getBoundingClientRect();
-      const x1 = e.clientX - rect.left;
-      const y1 = e.clientY - rect.top;
-      const scaleX = (img.naturalWidth || img.offsetWidth) / img.offsetWidth;
-      const scaleY = (img.naturalHeight || img.offsetHeight) / img.offsetHeight;
-      roiRect = {
-        x: Math.round(Math.min(roiX0, x1) * scaleX),
-        y: Math.round(Math.min(roiY0, y1) * scaleY),
-        w: Math.round(Math.abs(x1 - roiX0) * scaleX),
-        h: Math.round(Math.abs(y1 - roiY0) * scaleY),
-      };
-      if (roiRect.w > 5 && roiRect.h > 5) {
-        document.getElementById('roi-info').textContent =
-          `x=${roiRect.x}, y=${roiRect.y}, ${roiRect.w}×${roiRect.h}px`;
-        const btn = document.getElementById('btn-analisar-roi');
-        if (btn) btn.disabled = false;
-      }
-    }
-    function limparROI() {
-      roiRect = null;
-      const canvas = document.getElementById('roi-canvas');
-      if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-      document.getElementById('roi-info').textContent = 'Clique e arraste na imagem para delimitar região';
-      const btn = document.getElementById('btn-analisar-roi');
-      if (btn) btn.disabled = true;
-    }
-    function analisarROI() {
-      if (!roiRect) return;
-      const sliceIdx = parseInt(document.getElementById('slice-slider')?.value || 0);
-      enviarLaudoInterativo({
-        roi: roiRect, slice_idx: sliceIdx,
-        descricao: `ROI (${roiRect.x},${roiRect.y}) ${roiRect.w}×${roiRect.h}px`
-      });
-    }
-
-    // ── F4: slider de slice ────────────────────────────────────────────────────
-    function carregarSlice(idx) {
-      document.getElementById('slice-idx-label').textContent = idx;
-      fetch(`/slice/${RESULTADO_ID}/${idx}`)
-        .then(r => r.json())
-        .then(d => {
-          if (d.imagem_b64) {
-            const img = document.getElementById('img-dicom');
-            img.src = 'data:image/png;base64,' + d.imagem_b64;
-            img.style.display = 'block';
-            document.getElementById('img-placeholder')?.style && (document.getElementById('img-placeholder').style.display = 'none');
-            document.getElementById('slice-total').textContent = d.n_slices;
-            document.getElementById('slice-slider').max = d.n_slices - 1;
-            initCanvas();
-          }
-        }).catch(() => { });
-    }
-
-    // ── F5: carregamento de frame ──────────────────────────────────────────────
-    function carregarFrame(idx) {
-      document.getElementById('frame-idx-label').textContent = idx;
-      fetch(`/frame/${RESULTADO_ID}/${idx}`)
-        .then(r => r.json())
-        .then(d => {
-          if (d.imagem_b64) {
-            document.getElementById('img-frame').src = 'data:image/png;base64,' + d.imagem_b64;
-          }
-        }).catch(() => { });
-    }
-    function analisarVideo() {
-      const inicio = parseInt(document.getElementById('frame-inicio')?.value || 0);
-      const fim = parseInt(document.getElementById('frame-fim')?.value || 30);
-      enviarLaudoInterativo({
-        frame_inicio: inicio, frame_fim: fim,
-        descricao: `Frames ${inicio}–${fim}`
-      });
-    }
-
-    // ── Envio do laudo interativo (comum a todas as famílias) ─────────────────
-    function enviarLaudoInterativo(dados_selecao) {
-      const painel = document.getElementById('painel-laudo-interativo');
-      const conteudo = document.getElementById('laudo-interativo-conteudo');
-      const spinner = document.getElementById('laudo-int-spinner');
-      const trechoLabel = document.getElementById('laudo-int-trecho');
-
-      painel.classList.remove('hidden');
-      spinner.classList.remove('hidden');
-      conteudo.innerHTML = '<p class="text-slate-400 text-xs animate-pulse">Aguardando análise do agente IA...</p>';
-      trechoLabel.textContent = dados_selecao.descricao || 'trecho selecionado';
-
-      fetch('/laudo_interativo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resultado_id: RESULTADO_ID,
-          tipo_sinal: TIPO_SINAL,
-          dados_selecao: dados_selecao,
-        })
-      })
-        .then(r => r.json())
-        .then(d => {
-          spinner.classList.add('hidden');
-          if (d.erro) {
-            conteudo.innerHTML = `<p class="text-rose-500 text-sm">${d.erro}</p>`;
-          } else {
-            conteudo.innerHTML = d.laudo_html;
-          }
-          painel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        })
-        .catch(err => {
-          spinner.classList.add('hidden');
-          conteudo.innerHTML = `<p class="text-rose-500 text-sm">Erro de comunicação: ${err}</p>`;
-        });
-    }
-
-    // Inicializações ao entrar na aba interativo
-    document.querySelector('[data-tab="tab-interativo"]')?.addEventListener('click', () => {
-      setTimeout(() => {
-        if (FAMILIA === 'F4') carregarSlice(50);
-        if (FAMILIA === 'F5') carregarFrame(0);
-        initCanvas();
-      }, 100);
-    });
-
-    // Ajuste de canvas quando imagem carrega
-    document.getElementById('img-dicom')?.addEventListener('load', initCanvas);
 
   </script>
 

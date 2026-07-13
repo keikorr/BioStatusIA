@@ -106,6 +106,58 @@ def _ler_json(pasta: Path, nome: str) -> dict | list | None:
         return json.load(f)
 
 
+def _computar_engenharia_features(biomarcadores: list, estrategia: dict, limite: int = 24) -> dict | None:
+    """Extrai features de engenharia de uma amostra balanceada de imagens e as ordena
+    por importância. Retorna estrutura com método, ranking e médias — ou None."""
+    import numpy as np
+    from biostatusia.pipeline.preprocessamento import (
+        engenharia_features, preprocessar_adaptativo, ranquear_features,
+    )
+
+    por_cat: dict = {}
+    for r in biomarcadores:
+        por_cat.setdefault(r.get("categoria", "INDEFINIDO"), []).append(r)
+
+    cota = max(1, limite // max(1, len(por_cat)))
+    amostra = [r for lista in por_cat.values() for r in lista[:cota]]
+    if not amostra:
+        return None
+
+    mapa = {"BENIGNO": 0, "MALIGNO": 1}
+    linhas, rotulos, nomes = [], [], None
+    for r in amostra:
+        caminho = r.get("caminho", "")
+        if not caminho or not Path(caminho).exists():
+            continue
+        img = preprocessar_adaptativo(caminho, estrategia)
+        if img is None:
+            continue
+        feats = engenharia_features(img, estrategia)
+        if not feats:
+            continue
+        if nomes is None:
+            nomes = list(feats.keys())
+        linhas.append([feats.get(k, 0.0) for k in nomes])
+        rotulos.append(mapa.get(r.get("categoria", "")))
+
+    if not linhas or nomes is None:
+        return None
+
+    X = np.array(linhas, dtype=float)
+    y = None
+    if all(v is not None for v in rotulos) and len(set(rotulos)) >= 2:
+        y = np.array(rotulos)
+
+    ranking = ranquear_features(X, nomes, y)
+    medias = {nomes[i]: round(float(X[:, i].mean()), 4) for i in range(len(nomes))}
+    return {
+        "metodo": ranking["metodo"],
+        "ranking": ranking["ranking"],
+        "medias": medias,
+        "n_amostras": int(X.shape[0]),
+    }
+
+
 def _consolidar_imagem(pasta_run: Path, modo: str) -> dict:
     """Consolida JSONs da crew de imagem (modos originais)."""
     import numpy as np
@@ -150,6 +202,24 @@ def _consolidar_imagem(pasta_run: Path, modo: str) -> dict:
                 "valores": arr.tolist(),
             }
     pipeline_data["estatisticas"] = estatisticas
+
+    pipeline_data["biomarcadores"] = [
+        {
+            "caminho": r.get("caminho", ""),
+            "categoria": r.get("categoria", ""),
+            "biomarcadores": r.get("biomarcadores", {}),
+        }
+        for r in biomarcadores[:50]
+    ]
+
+    try:
+        fe = _computar_engenharia_features(
+            biomarcadores, pipeline_data.get("estrategia_preproc", {})
+        )
+        if fe:
+            pipeline_data["features_engenharia"] = fe
+    except Exception:
+        pass
 
     if metricas and "metricas" in metricas:
         pipeline_data.update(metricas)
@@ -458,6 +528,36 @@ def api_historico():
     return jsonify(listar_resultados_completo())
 
 
+@app.route("/api/exemplos/<int:resultado_id>")
+def api_exemplos(resultado_id: int):
+    """Exemplos individuais do dataset carregado nesta análise (para a Aba 4)."""
+    from biostatusia.database import buscar_resultado
+
+    dados = buscar_resultado(resultado_id)
+    if not dados:
+        return jsonify({"erro": f"Resultado {resultado_id} não encontrado"}), 404
+
+    pipeline = dados["pipeline"]
+    bio_list = pipeline.get("biomarcadores_sinal") or pipeline.get("biomarcadores") or []
+    familia = pipeline.get("familia", "")
+    tipo = pipeline.get("tipo_sinal", "")
+
+    exemplos = []
+    for i, r in enumerate(bio_list[:50]):
+        caminho = r.get("caminho", "")
+        nome = Path(caminho).name if caminho else f"exemplo_{i}"
+        exemplos.append({
+            "idx": i,
+            "nome": nome,
+            "categoria": r.get("categoria", ""),
+            "biomarcadores": r.get("biomarcadores", {}),
+            "familia": familia,
+            "tipo": tipo,
+        })
+
+    return jsonify(exemplos)
+
+
 # ── Via 1: Laudo Populacional (nível da base) ─────────────────────────────────
 
 @app.route("/laudo_populacional/<int:resultado_id>")
@@ -552,12 +652,29 @@ def laudo_amostra():
                 "especificidade": m.get("especificidade"),
                 "f1": m.get("f1"),
             }
-        # Anexa biomarcadores de sinal se existirem
-        bio_list = pipeline.get("biomarcadores_sinal", [])
+        # Anexa biomarcadores do exemplo selecionado (ou o primeiro, por padrão)
+        bio_list = pipeline.get("biomarcadores_sinal") or pipeline.get("biomarcadores") or []
+        exemplo_idx_str = request.form.get("exemplo_idx", "").strip()
+        exemplo_nome = ""
         if bio_list:
-            biomarcadores_ctx["exemplo_biomarcadores"] = bio_list[0].get("biomarcadores", {})
+            idx = 0
+            if exemplo_idx_str.isdigit() and 0 <= int(exemplo_idx_str) < len(bio_list):
+                idx = int(exemplo_idx_str)
+            exemplo = bio_list[idx]
+            biomarcadores_ctx["exemplo_biomarcadores"] = exemplo.get("biomarcadores", {})
+            biomarcadores_ctx["exemplo_idx"] = idx
+            caminho_ex = exemplo.get("caminho", "")
+            exemplo_nome = Path(caminho_ex).name if caminho_ex else f"exemplo_{idx}"
+            biomarcadores_ctx["exemplo_nome"] = exemplo_nome
+            biomarcadores_ctx["categoria_exemplo"] = exemplo.get("categoria", "")
 
-        descricao_selecao = f"Análise do resultado #{resultado_id} — {dados.get('dataset_path', '')}"
+        if exemplo_nome:
+            descricao_selecao = (
+                f"Exemplo '{exemplo_nome}' (#{biomarcadores_ctx.get('exemplo_idx', 0)}) "
+                f"do resultado #{resultado_id} — {dados.get('dataset_path', '')}"
+            )
+        else:
+            descricao_selecao = f"Análise do resultado #{resultado_id} — {dados.get('dataset_path', '')}"
 
     # ── Caso 2: upload de arquivo avulso ──────────────────────────────────
     elif arquivo and arquivo.filename:
