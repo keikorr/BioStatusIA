@@ -2,7 +2,7 @@
 
 ## O que é este projeto
 
-Sistema de Apoio à Decisão Clínica (CDSS) para análise automatizada de sinais biomédicos com foco em **3 famílias de sinal + dados tabulares** (áudio F2 e vídeo F5 foram **removidos do escopo** na v3). O pipeline é **flexível e detecta automaticamente o tipo de entrada** em escopo e adapta o processamento ao que for viável. Combina **radiômica e extração multi-domínio** (OpenCV/scikit-image/MNE/wfdb/pydicom/nibabel), **AutoML com 6 classificadores e avaliação enriquecida** (Sensibilidade, Especificidade, MCC, Kappa, ECE, McNemar, SHAP, balanceamento SMOTE/ADASYN), **IA Multi-Agente** (5 Crews CrewAI + Ollama) e uma **interface web Flask com 4 abas + laudo populacional e laudo individual**.
+Sistema de Apoio à Decisão Clínica (CDSS) para análise automatizada de sinais biomédicos com foco em **3 famílias de sinal + dados tabulares** (áudio F2 e vídeo F5 foram **removidos do escopo** na v3). O pipeline é **flexível e detecta automaticamente o tipo de entrada** em escopo e adapta o processamento ao que for viável. Combina **radiômica e extração multi-domínio** (OpenCV/scikit-image/MNE/wfdb/pydicom/nibabel), **AutoML com 6 classificadores e avaliação enriquecida** (Sensibilidade, Especificidade, MCC, Kappa, ECE, McNemar, SHAP, balanceamento SMOTE/ADASYN), **IA Multi-Agente** (5 Crews CrewAI + Ollama) e uma **interface web Flask** com design "clínico moderno" (prototipado no Stitch): tela de upload, tela de resultados em 4 abas (com laudo populacional e laudo de amostra) e página de histórico dedicada.
 
 ### Escopo v3 (F1/F3/F4 + tabular)
 
@@ -21,7 +21,7 @@ Contexto acadêmico: projeto de mestrado em IA na Saúde — Fortaleza, CE.
 
 > **O sistema aceita QUALQUER tipo de dado.** Sempre executa análise estatística sobre o que receber e adapta o pipeline ao que é viável.
 
-Existem **8 modos em escopo** detectados automaticamente em `app.py::detectar_estrutura()` (v3 — sem `audio_biomedico` nem `video_medico`):
+Existem **9 modos em escopo** detectados automaticamente em `app.py::detectar_estrutura()` (v3 — sem `audio_biomedico` nem `video_medico`; entradas fora de escopo caem em `invalido`):
 
 | Modo | O que é | Crew disparada |
 |---|---|---|
@@ -39,11 +39,11 @@ A análise estatística sempre roda. Treino de classificadores só ocorre com r�
 
 ---
 
-## 5 Famílias de Sinal (v2)
+## 3 Famílias de Sinal (v3)
 
 | Família | Tipos suportados | Biblioteca de leitura |
 |---|---|---|
-| **F1 — Sinais Temporais** | ECG, EEG, EMG, EOG, PPG, PA, Espirometria, PSG, Movimento | `mne`, `wfdb`, `scipy` |
+| **F1 — Sinais Temporais** | ECG, EEG, EMG, EOG, PPG, PA, Espirometria | `mne`, `wfdb`, `scipy` |
 | **F3 — Imagem DICOM 2D** | Raio-X, Mamografia, Ultrassom estático | `pydicom` |
 | **F4 — Volume 3D** | TC, RM, PET/SPECT | `nibabel`, `SimpleITK` |
 
@@ -53,7 +53,7 @@ A análise estatística sempre roda. Treino de classificadores só ocorre com r�
 @dataclass
 class SinalNormalizado:
     familia: str          # "F1" | "F3" | "F4"
-    tipo: str             # "ECG" | "EEG" | "Fonocardiograma" | ...
+    tipo: str             # "ECG" | "EEG" | "Raio-X" | "TC" | ...
     dados: np.ndarray     # array bruto
     taxa_amostragem: float
     canais: list[str]
@@ -84,9 +84,12 @@ Toda leitura passa por `pipeline/io_sinais.py::carregar_sinal()` que despacha pa
 | 9 tasks (`config/tasks.yaml`) | Feito |
 | 8 tools CrewAI (`tools/`) | Feito |
 | Banco SQLite com 3 tabelas + migração v2 | Feito |
-| Servidor Flask com rotas de análise + laudo populacional + laudo individual | Feito |
-| Tela 1 — upload (8 modos em escopo) | Feito |
-| Tela 2 — 4 abas + Laudo Interativo | Feito |
+| Servidor Flask com rotas de análise + laudo populacional + laudo individual + histórico | Feito |
+| Tela 1 — upload (9 modos em escopo) — design Stitch | Feito |
+| Tela 2 — 4 abas — design Stitch (Estatísticas/AutoML/Laudo em bento) | Feito |
+| Tela 3 — histórico de análises (`/historico`) — design Stitch | Feito (v3.1) |
+| Métricas clínicas completas no `treinar_vetores` (imagem/tabular) | Feito (v3.1) |
+| SDD em `docs/specs/` (constituição + spec/plan/tasks por página) | Feito (v3.1) |
 | Dashboard HTML estático CLI (`main.py`) | Mantido para retrocompatibilidade |
 
 ---
@@ -99,7 +102,7 @@ Toda leitura passa por `pipeline/io_sinais.py::carregar_sinal()` que despacha pa
         │
         ▼
 [detectar_estrutura()]     ←── app.py
-  8 modos: imagem_unica | imagens_soltas | dataset_rotulado | tabular |
+  9 modos: imagem_unica | imagens_soltas | dataset_rotulado | tabular |
            multimodal | sinal_temporal | imagem_dicom_2d |
            volume_3d | multimodal_expandido
   (validação de cabeçalho opcional via pipeline/ingestao.py — Pydantic)
@@ -137,9 +140,10 @@ Toda leitura passa por `pipeline/io_sinais.py::carregar_sinal()` que despacha pa
         ▼
 [Tela 2 — Resultados (4 abas)]
   Aba 1: Estatísticas + Biomarcadores
-  Aba 2: Pré-processamento + Estratégia
-  Aba 3: AutoML + Laudo IA (Markdown)
-  Aba 4: Laudo Interativo (seleção de ROI / trecho temporal / frame)
+  Aba 2: Pré-processamento + Estratégia + Engenharia de Features
+  Aba 3: AutoML (apenas — pódio, ROC, radar, matriz de confusão, McNemar)
+  Aba 4: Laudo (Dossiê Radiologista IA + Laudo Populacional lado a lado + Laudo de Amostra)
+  Tela 3: Histórico de análises (/historico) — página dedicada
 ```
 
 ---
@@ -166,29 +170,41 @@ Toda leitura passa por `pipeline/io_sinais.py::carregar_sinal()` que despacha pa
 
 Ao adicionar dependências: `uv add <pacote>` — nunca `pip install`.
 
-`MAX_CONTENT_LENGTH = 4 * 1024 * 1024 * 1024` (4 GB — necessário para volumes 3D e vídeos longos).
+`MAX_CONTENT_LENGTH = 4 * 1024 * 1024 * 1024` (4 GB — necessário para volumes 3D grandes, como TC/RM completos).
 
 ---
 
-## Estrutura de arquivos (v2)
+## Estrutura de arquivos (v3.1)
 
 ```
 BioStatusIA/
 ├── CLAUDE.md
 ├── README.md
 ├── docs/
-│   └── documentacao_notion.md       # Documentação completa no formato Notion
+│   ├── documentacao_notion.md       # Documentação completa no formato Notion
+│   ├── stitch_prompt.md             # Prompt mestre usado para gerar as telas no Stitch
+│   └── specs/                       # Spec-Driven Development (SDD) — fonte da verdade
+│       ├── README.md                #   índice + fluxo spec→plan→tasks
+│       ├── constitution.md          #   princípios invioláveis do projeto
+│       ├── templates/               #   modelos spec/plan/tasks
+│       ├── 001-tela-upload/         #   spec.md · plan.md · tasks.md
+│       ├── 002-tela-resultados/
+│       ├── 003-laudo-amostra/
+│       └── 004-laudo-populacional/
 ├── .env                              # MODEL, API_BASE, PYTHONUTF8 — não commitar
 ├── pyproject.toml
 ├── biostatusia.db                    # SQLite — não versionar
 ├── models/                           # Modelos .pkl treinados — não versionar
-├── dataset_teste/                    # Mini-BUSI (imagens)
+├── dataset_teste_busi/               # Mini-BUSI (imagens)
 ├── dataset_teste_csv/                # WBCD-50 (tabular)
+├── tests/                            # Scripts de validação + fixtures (test_platform_data)
+├── reports/                          # Saídas .md dos scripts de teste
+├── legacy/                           # HTMLs antigos sem uso no runtime
 │
 └── src/biostatusia/
     ├── app.py                        # Flask: detectar_estrutura, rotas, consolidação
     ├── main.py                       # Pipeline CLI (retrocompatibilidade)
-    ├── crew.py                       # 6 Crews CrewAI
+    ├── crew.py                       # 5 Crews CrewAI
     ├── database.py                   # SQLite: 3 tabelas + migração v2
     │
     ├── pipeline/                     # Funções puras (chamadas pelas tools)
@@ -200,7 +216,7 @@ BioStatusIA/
     │   ├── preprocessamento.py       # preprocessar + preprocessar_adaptativo
     │   ├── segmentacao.py
     │   ├── extracao.py               # extrair_todos (imagens + estratégia)
-    │   ├── classificador.py          # treinar() + treinar_vetores() (+persiste vencedor)
+    │   ├── classificador.py          # treinar() + treinar_vetores() — métricas clínicas completas (+persiste vencedor)
     │   ├── dados_tabulares.py        # CSV/TXT: schema, features, stats
     │   ├── avaliacao_modelos.py      # 6 modelos, CV, MCC/Kappa/ECE, SMOTE, SHAP, McNemar
     │   ├── inferencia.py             # (v3) Vencedor do pódio + previsão de exemplar único
@@ -232,9 +248,12 @@ BioStatusIA/
     │   └── runs/                     # Workspaces dos kickoffs — não versionar
     │
     └── templates/
-        ├── tela1_upload.html         # Upload com drag & drop (8 modos)
-        └── tela2_resultados.html     # 4 abas + Laudo Interativo
+        ├── tela1_upload.html         # Upload com drag & drop (9 modos) — design Stitch
+        ├── tela2_resultados.html     # Resultados — 4 abas — design Stitch
+        └── tela3_historico.html      # Histórico de análises — design Stitch
 ```
+
+> **Reorganização (v3.1):** scripts de teste na raiz foram movidos para `tests/` (caminhos re-ancorados na raiz do repo), suas saídas `.md` para `reports/`, e HTMLs legados sem uso no runtime para `legacy/`. O `main.py` (CLI) mantém na raiz os templates/relatórios que lê e gera. As telas foram reconstruídas no **design "clínico moderno"** prototipado no Stitch (`docs/stitch_prompt.md`).
 
 ---
 
@@ -272,26 +291,29 @@ Aceita três formas de entrada:
 
 **Rota**: `GET /resultados/<int:resultado_id>`
 
+Layout no **design "clínico moderno"** (Stitch): barra de topo teal com navegação (Dashboard/Histórico), banner ético âmbar, cabeçalho de contexto (dataset, família, amostras, badge do melhor modelo) e as 4 abas.
+
 | Aba | Conteúdo | Quando aparece |
 |---|---|---|
-| **Aba 1 — Pré-processamento** | Análise da base, estratégia adaptativa, justificativas | Modos com imagem |
-| **Aba 2 — Estatísticas** | Tabela de biomarcadores, boxplot, schema tabular | Sempre |
-| **Aba 3 — AutoML & Laudo** | Comparação 6 modelos, ROC, matriz confusão, laudo Markdown | Sempre; gráficos só se treinado |
-| **Aba 4 — Laudo Interativo** | Seleção de ROI/trecho/frame → laudo IA focado | Sempre (conteúdo varia por família) |
+| **Aba 1 — Estatísticas & Biomarcadores** | *Imagem/sinal* (bento): Biomarcadores por Amostra (tabela dinâmica em JS), boxplot por classe, Resumo do Dataset, estatísticas descritivas. *Tabular*: variáveis clínicas, 31 métricas univariadas, testes de normalidade/hipótese, heatmap de correlação | Sempre |
+| **Aba 2 — Pré-processamento & Engenharia de Features** | Análise da base, estratégia adaptativa, justificativas + seção **Engenharia de Features** (gráfico de importância + médias, com estado vazio quando não há features derivadas) | Sempre (seção de features sempre visível) |
+| **Aba 3 — AutoML** | Bento: pódio dos 6 modelos (tabela ranqueada com troféu), curva ROC, matriz de confusão em blocos, radar comparativo, teste A/B McNemar e cards de MCC/Kappa/ECE/latência. **Apenas AutoML** — sem laudo Markdown | Sempre; gráficos só se treinado |
+| **Aba 4 — Laudo** | **Dossiê do Radiologista IA** e **Laudo Populacional** lado a lado, + **Laudo de Amostra** (upload/seleção) abaixo | Sempre |
 
-### Aba 4 — Laudo Interativo (detalhe)
+### Aba 4 — Laudo (detalhe)
 
-| Família | Interface de seleção |
-|---|---|
-| F1 (sinal temporal) | Plotly com `dragmode: 'select'` + dropdown de canal |
-| F3 (DICOM 2D) | Canvas overlay com ROI retangular |
-| F4 (Volume 3D) | Slider de slice (chama `GET /slice/<id>/<idx>`) + canvas ROI |
-| Default (imagem comum) | Canvas overlay com ROI retangular |
+A Aba 4 concentra os laudos em duas linhas. Na primeira, lado a lado: o **Dossiê do Radiologista IA** (laudo Markdown da análise atual, com botão de impressão e Aviso Ético) e o **Laudo Populacional** (botão Gerar → relatório determinístico da base). Na segunda, o **Laudo de Amostra**: o usuário faz upload de um arquivo avulso (imagem, sinal, DICOM, volume) **ou** seleciona uma análise anterior do banco, e recebe um laudo focado do `radiologista_ia_interativo` (5 seções obrigatórias). O antigo bloco "Histórico do Prontuário (SQLite)" saiu da aba — agora há a **página dedicada `/historico`** (Tela 3). Não há seleção de ROI/slice/frame por família.
 
-Rotas novas em `app.py`:
-- `POST /laudo_interativo` — recebe JSON com seleção, dispara `BioStatusIACrewInterativo`, salva em `laudos_interativos`, retorna `{"laudo_html": ..., "laudo_id": ...}`
-- `GET /slice/<resultado_id>/<idx>` — retorna slice axial de volume 3D como `{"imagem_b64": ..., "n_slices": ...}`
-- `GET /frame/<resultado_id>/<idx>` — retorna frame de vídeo como `{"imagem_b64": ..., "frame_idx": ...}`
+Rotas de laudo em `app.py`:
+- `POST /laudo_amostra` — recebe `multipart` com `arquivo` (upload) **ou** `resultado_id` (análise existente), dispara `BioStatusIACrewInterativo`, salva em `laudos_interativos`, retorna `{"laudo_html": ..., "laudo_id": ...}`
+- `GET /laudo_populacional/<int:resultado_id>` — relatório determinístico do dataset (distribuição, correlações, pódio), montado a partir do `pipeline_json` sem LLM; retorna `{"laudo_html": ..., "laudo_md": ..., "podio": ...}`
+- `GET /api/historico` — últimos resultados para o seletor da Aba 4
+- `GET /api/exemplos/<int:resultado_id>` — exemplos individuais do dataset da análise
+
+Página de histórico (Tela 3):
+- `GET /historico` — renderiza `tela3_historico.html` com `listar_resultados_completo()` (tabela com busca, badges de categoria, atalho para reabrir cada resultado e cartões-resumo). Os links "Histórico" das telas apontam para cá.
+
+> **Nota:** as rotas `POST /laudo_interativo`, `GET /slice/<id>/<idx>` e `GET /frame/<id>/<idx>` de versões anteriores **não existem mais** — foram substituídas por `/laudo_amostra` e `/laudo_populacional`.
 
 ---
 
@@ -324,6 +346,10 @@ Rotas novas em `app.py`:
 ### Critério de seleção
 
 Melhor modelo = maior AUC, com preferência por `sensibilidade ≥ 0.8` (minimiza falso-negativo em contexto clínico).
+
+### Treinador padrão (`pipeline/classificador.py`)
+
+Os fluxos de **imagem** e **tabular** treinam via `treinar_vetores()` (holdout 80/20, sem CV/SMOTE/SHAP). Desde a v3.1 ele calcula o **mesmo conjunto de métricas clínicas** do AutoML por fold — acurácia, sensibilidade, especificidade, precisão, recall, F1, AUC, MCC, Kappa, ECE, latência e tempo de treino — de modo que a tabela do AutoML e o Laudo Populacional exibem todas as colunas. Métricas ausentes (análises salvas antes da v3.1) aparecem como `—` na UI e no laudo (`relatorios.py::_fmt_metrica`); reprocessar o dataset preenche tudo.
 
 ---
 
@@ -446,7 +472,7 @@ Migração v2 é idempotente (`_migrar_v2()` usa `try/except OperationalError` p
 - Stats globais: média, desvio, mediana, skewness, kurtosis, P5/P95, n_voxels_altos
 - GLCM por plano ortogonal (axial/coronal/sagital)
 - Morfologia 3D: volume da lesão (mm³), esfericidade, axes do bounding box
-- `slice_para_png_base64(volume, idx)` → base64 para a rota `/slice/`
+- `slice_para_png_base64(volume, idx)` → base64 de slice axial (helper de visualização; a antiga rota `/slice/` foi removida na v3)
 
 ---
 
@@ -507,7 +533,9 @@ Separador detectado automaticamente (`,`, `;`, `\t`, `|`). Encoding: UTF-8 com f
 - **Sem comentários** que expliquem o "o quê" — só o "por quê" quando não óbvio.
 - **Pipeline = funções puras**: cada etapa recebe e devolve dados, sem I/O.
 - Toda I/O (DB, HTML, arquivos) concentrada em `app.py` e `database.py`.
-- **Templates HTML são a fonte da verdade visual** — nunca editar HTML gerado em runtime.
+- **Templates HTML são a fonte da verdade visual** — nunca editar HTML gerado em runtime. Ao restilizar, preservar IDs e handlers usados pelo JS (ex.: `chart-radar`, `chart-roc`, `chart-boxplot`, `tbody-banco`, `btn-gerar-laudo-*`, `painel-laudo-*`).
+- **Design "clínico moderno"** (Stitch): paleta teal Material, fonte Inter, ícones Material Symbols, banner ético âmbar, badges clínicos. Referência em `docs/stitch_prompt.md`.
+- **SDD primeiro**: mudança de página/fluxo começa pela `spec.md` em `docs/specs/<feature>/`, passa por `plan.md`, vira `tasks.md` e só então vira código. Respeitar `docs/specs/constitution.md`.
 - **Pydantic** para schemas de ferramentas CrewAI.
 
 ---
@@ -532,18 +560,21 @@ PYTHONIOENCODING=utf-8
 - Não aumentar `max_iter` sem medir tempo de resposta.
 - Não adicionar ferramentas ao `radiologista_ia` nem ao `radiologista_ia_interativo`.
 - Não reintroduzir áudio (F2) nem vídeo (F5) — foram removidos do escopo na v3.
-- Manter os 8 modos em escopo em `detectar_estrutura()` (F1/F3/F4 + tabular + imagem comum).
+- Manter os 9 modos em escopo em `detectar_estrutura()` (F1/F3/F4 + tabular + imagem comum).
 - Não treinar classificadores fora do contexto rotulado.
 - Não reduzir `MAX_CONTENT_LENGTH` — volumes 3D precisam de 4 GB.
 - Não quebrar a `SinalNormalizado` — é o contrato entre leitores e extratores.
 - Não remover o Aviso Ético de nenhuma saída visual ou laudo.
+- Não reintroduzir os links "Pacientes" e "Relatórios" na navegação (removidos — só Dashboard/Histórico).
+- Não mover os templates/relatórios que o `main.py` (CLI) lê/gera na raiz sem atualizar os caminhos nele.
+- Não editar a skill em cache — mudanças de skill vão em Configurações; os artefatos SDD ficam em `docs/specs/`.
 
 ---
 
 ## Aviso ético obrigatório
 
 Este sistema é uma **ferramenta de suporte à decisão clínica**. Nenhuma mudança de código deve remover o aviso de que os laudos **não substituem a avaliação de um médico habilitado**. Esse aviso é obrigatório em:
-- Toda saída visual (Tela 2)
+- Toda saída visual (banner ético nas Telas 1, 2 e 3)
 - Todo laudo do `radiologista_ia`
 - Todo laudo do `radiologista_ia_interativo` (5ª seção obrigatória)
 - Todo laudo do `bioestatistico`

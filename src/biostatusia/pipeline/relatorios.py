@@ -69,15 +69,24 @@ def correlacoes_biomarcadores(vetores: list[list[float]], nomes: list[str],
     return sorted(pares, key=lambda p: abs(p["correlacao"]), reverse=True)[:15]
 
 
+def _fmt_metrica(v) -> str:
+    """Formata um valor de métrica: número → 3 casas; ausente → travessão."""
+    if v is None:
+        return "—"
+    if isinstance(v, (int, float)):
+        return f"{v:.3f}"
+    return str(v)
+
+
 def _tabela_podio(podio: list[dict]) -> str:
     linhas = ["| # | Modelo | AUC | Sensib. | Especif. | F1 | MCC | Kappa |",
               "|---|--------|-----|---------|----------|----|----|-------|"]
     for p in podio:
         marca = " 🏆" if p["campeao"] else ""
         linhas.append(
-            f"| {p['posicao']} | {p['modelo']}{marca} | {p['auc']} | "
-            f"{p['sensibilidade']} | {p['especificidade']} | {p['f1']} | "
-            f"{p['mcc']} | {p['kappa']} |"
+            f"| {p['posicao']} | {p['modelo']}{marca} | {_fmt_metrica(p['auc'])} | "
+            f"{_fmt_metrica(p['sensibilidade'])} | {_fmt_metrica(p['especificidade'])} | "
+            f"{_fmt_metrica(p['f1'])} | {_fmt_metrica(p['mcc'])} | {_fmt_metrica(p['kappa'])} |"
         )
     return "\n".join(linhas)
 

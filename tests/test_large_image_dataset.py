@@ -4,9 +4,9 @@ from pathlib import Path
 import kagglehub
 import shutil
 
-base_path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-if base_path not in sys.path:
-    sys.path.insert(0, base_path)
+RAIZ = Path(__file__).resolve().parent.parent  # raiz do repositório (pasta acima de tests/)
+if str(RAIZ) not in sys.path:
+    sys.path.insert(0, str(RAIZ))
 
 from src.biostatusia.pipeline.io_utils import criar_pasta_run
 from src.biostatusia.tools.analise_base_tool import FerramentaAnaliseBase
@@ -35,7 +35,9 @@ def run():
     
     pasta_run = criar_pasta_run()
     
-    with open("resultados_large_dataset.md", "w", encoding="utf-8") as f:
+    saida = RAIZ / "reports" / "resultados_large_dataset.md"
+    saida.parent.mkdir(exist_ok=True)
+    with open(saida, "w", encoding="utf-8") as f:
         f.write("# Resultados - Base de Imagens Completa (Kaggle)\n\n")
         f.write(f"Dataset localizado em: `{base_exames}`\n\n")
 
@@ -54,7 +56,7 @@ def run():
         res3 = FerramentaTreinarClassificador()._run(str(pasta_run))
         f.write("```\n" + str(res3) + "\n```\n")
 
-    print("Processamento concluído. Resultados salvos em resultados_large_dataset.md")
+    print(f"Processamento concluído. Resultados salvos em {saida}")
 
 if __name__ == "__main__":
     run()

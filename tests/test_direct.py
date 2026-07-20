@@ -3,9 +3,9 @@ import sys
 from pathlib import Path
 import json
 
-base_path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-if base_path not in sys.path:
-    sys.path.insert(0, base_path)
+RAIZ = Path(__file__).resolve().parent.parent  # raiz do repositório (pasta acima de tests/)
+if str(RAIZ) not in sys.path:
+    sys.path.insert(0, str(RAIZ))
 
 from src.biostatusia.pipeline.io_utils import criar_pasta_run
 from src.biostatusia.tools.analise_base_tool import FerramentaAnaliseBase
@@ -15,12 +15,14 @@ from src.biostatusia.tools.tabular_tool import FerramentaAnaliseTabular
 from src.biostatusia.tools.sinais_temporais_tool import FerramentaExtrairSinalTemporal
 
 def run():
-    with open("resultados_teste.md", "w", encoding="utf-8") as f:
+    saida = RAIZ / "reports" / "resultados_teste_direto.md"
+    saida.parent.mkdir(exist_ok=True)
+    with open(saida, "w", encoding="utf-8") as f:
         f.write("# Resultados dos Testes da Plataforma BioStatusIA (Execução Direta)\n\n")
-        
+
         # 1. Imagem
         f.write("## 1. Teste de Imagens (Câncer de Mama Dummy)\n")
-        img_path = Path("test_platform_data/image_test")
+        img_path = RAIZ / "tests" / "test_platform_data" / "image_test"
         if img_path.exists():
             pasta_run = criar_pasta_run()
             f.write("### Analisando Base (Engenheiro PDI)\n")
@@ -36,7 +38,7 @@ def run():
 
         # 2. Tabular
         f.write("## 2. Teste Tabular (WBCD-50 CSV)\n")
-        csv_path = Path("dataset_teste_csv/wbcd_50.csv")
+        csv_path = RAIZ / "dataset_teste_csv" / "wbcd_50.csv"
         if csv_path.exists():
             f.write("### Análise Tabular\n")
             res_tab = FerramentaAnaliseTabular()._run(str(csv_path))
@@ -45,7 +47,7 @@ def run():
 
         # 3. Sinal
         f.write("## 3. Teste de Sinal (ECG Dummy)\n")
-        sig_path = Path("test_platform_data/signal_test")
+        sig_path = RAIZ / "tests" / "test_platform_data" / "signal_test"
         if sig_path.exists():
             pasta_run2 = criar_pasta_run()
             f.write("### Extração de Sinal Temporal (Analista Sinais Fisiológicos)\n")

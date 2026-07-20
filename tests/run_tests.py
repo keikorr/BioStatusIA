@@ -5,9 +5,9 @@ import numpy as np
 from PIL import Image
 from pathlib import Path
 
-base_path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-if base_path not in sys.path:
-    sys.path.insert(0, base_path)
+RAIZ = Path(__file__).resolve().parent.parent  # raiz do repositório (pasta acima de tests/)
+if str(RAIZ) not in sys.path:
+    sys.path.insert(0, str(RAIZ))
 
 from src.biostatusia.crew import BioStatusIACrew, BioStatusIACrewTabular, BioStatusIACrewSinal
 from src.biostatusia.pipeline.io_utils import criar_pasta_run
@@ -16,7 +16,7 @@ os.environ.setdefault("PYTHONUTF8", "1")
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
 def generate_datasets():
-    test_dir = Path("test_platform_data")
+    test_dir = RAIZ / "tests" / "test_platform_data"
     test_dir.mkdir(exist_ok=True)
     
     # 1. Image
@@ -42,7 +42,7 @@ def generate_datasets():
         ecg = np.sin(2 * np.pi * 1.0 * t) + 0.1 * np.random.randn(1000)
         scipy.io.savemat(sig_path, {'val': ecg.reshape(1, -1)})
 
-    return img_path, sig_path, Path("dataset_teste_csv/wbcd_50.csv")
+    return img_path, sig_path, RAIZ / "dataset_teste_csv" / "wbcd_50.csv"
 
 def run():
     img_path, sig_path, tab_path = generate_datasets()
@@ -79,9 +79,11 @@ def run():
     except Exception as e:
         results_md += f"## Teste 3: Sinal\n**ERRO:** {e}\n\n"
 
-    with open("resultados_teste.md", "w", encoding="utf-8") as f:
+    saida = RAIZ / "reports" / "resultados_teste.md"
+    saida.parent.mkdir(exist_ok=True)
+    with open(saida, "w", encoding="utf-8") as f:
         f.write(results_md)
-    print("Testes concluídos. Resultados salvos em resultados_teste.md")
+    print(f"Testes concluídos. Resultados salvos em {saida}")
 
 if __name__ == '__main__':
     run()

@@ -229,8 +229,145 @@ def _consolidar_imagem(pasta_run: Path, modo: str) -> dict:
     return pipeline_data
 
 
+def _achatar_bio_nomeado(bio: dict, prefixo: str = "") -> dict:
+    """Achata um dicionário aninhado de biomarcadores em pares {nome: valor} escalares."""
+    plano: dict = {}
+    for grupo, conteudo in bio.items():
+        if isinstance(conteudo, dict):
+            for campo, val in conteudo.items():
+                if isinstance(val, bool):
+                    continue
+                if isinstance(val, (int, float)):
+                    plano[f"{campo}"] = float(val)
+        elif isinstance(conteudo, bool):
+            continue
+        elif isinstance(conteudo, (int, float)):
+            plano[grupo] = float(conteudo)
+    return plano
+
+
+def _estatisticas_sinal(bio_list: list, limite_campos: int = 24) -> dict:
+    """Agrega os biomarcadores escalares por categoria no mesmo formato que a
+    consolidação de imagem (`estatisticas`), permitindo reusar tabela e boxplot."""
+    import numpy as np
+
+    por_cat: dict = {}
+    for r in bio_list:
+        cat = r.get("categoria", "INDEFINIDO") or "INDEFINIDO"
+        plano = _achatar_bio_nomeado(r.get("biomarcadores", {}))
+        if plano:
+            por_cat.setdefault(cat, []).append(plano)
+
+    estatisticas: dict = {}
+    for cat, linhas in por_cat.items():
+        campos_todos: list = []
+        for p in linhas:
+            for k in p:
+                if k not in campos_todos:
+                    campos_todos.append(k)
+        campos_todos = campos_todos[:limite_campos]
+        entrada = {"n": len(linhas), "campos": {}}
+        for campo in campos_todos:
+            valores = [p[campo] for p in linhas if campo in p and np.isfinite(p[campo])]
+            if not valores:
+                continue
+            arr = np.array(valores, dtype=float)
+            entrada["campos"][campo] = {
+                "media": round(float(arr.mean()), 4),
+                "mediana": round(float(np.median(arr)), 4),
+                "desvio": round(float(arr.std()), 4),
+                "min": round(float(arr.min()), 4),
+                "max": round(float(arr.max()), 4),
+                "valores": arr.tolist(),
+            }
+        if entrada["campos"]:
+            estatisticas[cat] = entrada
+    return estatisticas
+
+
+def _features_engenharia_sinal(bio_list: list) -> dict | None:
+    """Ranqueia os biomarcadores escalares por importância (ANOVA se rotulado,
+    variância caso contrário) no formato consumido pela Aba 2."""
+    import numpy as np
+    from biostatusia.pipeline.preprocessamento import ranquear_features
+
+    mapa = {"BENIGNO": 0, "MALIGNO": 1}
+    planos, rotulos = [], []
+    nomes: list | None = None
+    for r in bio_list:
+        plano = _achatar_bio_nomeado(r.get("biomarcadores", {}))
+        if not plano:
+            continue
+        if nomes is None:
+            nomes = list(plano.keys())
+        planos.append([plano.get(k, 0.0) for k in nomes])
+        rotulos.append(mapa.get(r.get("categoria", "")))
+
+    if not planos or nomes is None:
+        return None
+
+    X = np.array(planos, dtype=float)
+    X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
+    y = None
+    if all(v is not None for v in rotulos) and len(set(rotulos)) >= 2:
+        y = np.array(rotulos)
+
+    ranking = ranquear_features(X, nomes, y)
+    medias = {nomes[i]: round(float(X[:, i].mean()), 4) for i in range(len(nomes))}
+    return {
+        "metodo": ranking["metodo"],
+        "ranking": ranking["ranking"],
+        "medias": medias,
+        "n_amostras": int(X.shape[0]),
+    }
+
+
+def _estrategia_preproc_sinal(familia: str, tipo: str) -> dict:
+    """Estratégia de pré-processamento adaptativa e honesta para sinais (não imagem)."""
+    if familia == "F1":
+        return {
+            "eh_sinal": True,
+            "filtragem": "Passa-banda 0.5–40 Hz + Notch 50/60 Hz",
+            "reamostragem": "Padronização da taxa de amostragem",
+            "normalizacao": "Z-score por canal",
+            "janela": "Segmentação em janelas com sobreposição",
+            "justificativas": [
+                "Filtragem passa-banda remove deriva de linha de base e ruído de alta frequência.",
+                "Filtro notch elimina interferência da rede elétrica (50/60 Hz).",
+                "Normalização z-score por canal harmoniza amplitudes entre derivações.",
+            ],
+        }
+    if familia == "F3":
+        return {
+            "eh_sinal": True,
+            "filtragem": "Janelamento HU (WindowCenter/Width do header DICOM)",
+            "reamostragem": "Reescala para pixel spacing uniforme",
+            "normalizacao": "Min-Max sobre a janela HU",
+            "janela": "ROI centralizada",
+            "justificativas": [
+                "Janelamento HU realça o tecido de interesse conforme metadados DICOM.",
+                "Normalização min-max sobre a janela preserva contraste diagnóstico.",
+            ],
+        }
+    if familia == "F4":
+        return {
+            "eh_sinal": True,
+            "filtragem": "Suavização 3D + clipping de percentis (P5–P95)",
+            "reamostragem": "Reamostragem isotrópica de voxels",
+            "normalizacao": "Z-score volumétrico",
+            "janela": "Recorte do bounding box da lesão",
+            "justificativas": [
+                "Reamostragem isotrópica torna as métricas morfológicas comparáveis.",
+                "Clipping de percentis reduz o efeito de voxels extremos (artefatos).",
+            ],
+        }
+    return {"eh_sinal": True, "justificativas": []}
+
+
 def _consolidar_sinal(pasta_run: Path, modo: str, familia: str) -> dict:
-    """Consolida JSONs das novas crews de sinal (F1–F5)."""
+    """Consolida JSONs das crews de sinal (F1/F3/F4) e enriquece com estatísticas
+    descritivas, engenharia de features e estratégia de pré-processamento — de modo
+    que as Abas 1 e 2 populem para qualquer família de sinal, não só imagem/tabular."""
     _mapa_json = {
         "F1": "biomarcadores_temporal.json",
         "F3": "biomarcadores_dicom.json",
@@ -239,13 +376,43 @@ def _consolidar_sinal(pasta_run: Path, modo: str, familia: str) -> dict:
     nome_json = _mapa_json.get(familia, "biomarcadores_temporal.json")
     payload = _ler_json(pasta_run, nome_json) or {}
 
+    bio_list = payload.get("biomarcadores", [])
+    tipo_sinal = payload.get("tipo", "")
+
     pipeline_data: dict = {
         "modo": modo,
         "familia": familia,
-        "tipo_sinal": payload.get("tipo", ""),
+        "tipo_sinal": tipo_sinal,
         "n_imagens": payload.get("n_processados", 0),
         "n_erros": payload.get("n_erros", 0),
-        "biomarcadores_sinal": payload.get("biomarcadores", []),
+        "biomarcadores_sinal": bio_list,
+    }
+
+    # ── Aba 1: estatísticas descritivas dos biomarcadores (tabela + boxplot) ──
+    try:
+        estatisticas = _estatisticas_sinal(bio_list)
+        if estatisticas:
+            pipeline_data["estatisticas"] = estatisticas
+    except Exception:
+        pass
+
+    # ── Aba 2: engenharia de features (ranking de importância) ────────────────
+    try:
+        fe = _features_engenharia_sinal(bio_list)
+        if fe:
+            pipeline_data["features_engenharia"] = fe
+    except Exception:
+        pass
+
+    # ── Aba 2: metadados da base + estratégia de pré-processamento de sinal ────
+    pipeline_data["estrategia_preproc"] = _estrategia_preproc_sinal(familia, tipo_sinal)
+    primeiro = bio_list[0] if bio_list else {}
+    pipeline_data["analise_base_sinal"] = {
+        "n_sinais": payload.get("n_processados", 0),
+        "n_erros": payload.get("n_erros", 0),
+        "tipo": tipo_sinal,
+        "taxa_amostragem": primeiro.get("taxa_amostragem", ""),
+        "n_canais": len(primeiro.get("canais", []) or []),
     }
 
     # Repassar métricas se treinou classificador
@@ -255,7 +422,6 @@ def _consolidar_sinal(pasta_run: Path, modo: str, familia: str) -> dict:
             pipeline_data[chave] = payload[chave]
 
     # Dados de visualização do primeiro sinal (downsampled)
-    bio_list = payload.get("biomarcadores", [])
     if bio_list and "dados_viz" in bio_list[0]:
         pipeline_data["dados_viz"] = bio_list[0]["dados_viz"]
     if bio_list and "canais" in bio_list[0]:
@@ -516,6 +682,24 @@ def tela2(resultado_id: int):
         pipeline_json=json.dumps(pipeline),
         laudo_html=laudo_html,
         historico=historico,
+    )
+
+
+# ── Rota: Página de Histórico de Análises ────────────────────────────────────
+
+@app.route("/historico")
+def historico():
+    """Página dedicada com a lista de análises anteriores (design Stitch)."""
+    from biostatusia.database import listar_resultados_completo
+
+    resultados = listar_resultados_completo(limite=200)
+    total = len(resultados)
+    familias = sorted({r["familia_sinal"] for r in resultados if r["familia_sinal"]})
+    return render_template(
+        "tela3_historico.html",
+        resultados=resultados,
+        total=total,
+        familias=familias,
     )
 
 
