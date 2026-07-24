@@ -798,7 +798,6 @@ def laudo_amostra():
       - Upload de nova amostra (arquivo de imagem, sinal, DICOM, etc.)
       - Seleção de análise anterior pelo resultado_id
     """
-    from biostatusia.crew import BioStatusIACrewInterativo
     from biostatusia.database import buscar_resultado, salvar_laudo_interativo
     import markdown as md_
 
@@ -945,6 +944,7 @@ def laudo_amostra():
         return jsonify({"erro": "Forneça resultado_id ou um arquivo para análise."}), 400
 
     # ── Chama o agente interativo ──────────────────────────────────────────
+    from biostatusia.crew import BioStatusIACrewInterativo
     try:
         crew_out = BioStatusIACrewInterativo().crew().kickoff(inputs={
             "dados_selecao": json.dumps({"descricao": descricao_selecao}, ensure_ascii=False),

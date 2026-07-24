@@ -323,16 +323,42 @@ Para volumes 3D (F4), datasets como BRATS são pesados demais para o KaggleHub �
 
 ## Testes
 
-Scripts de validação em `tests/` (não há suíte `pytest` — cada script roda o pipeline e grava um relatório em `reports/`). Rode nesta ordem:
+### Suíte automatizada (`pytest`) — 55 testes
 
-| Ordem | Comando | Requer | O que valida |
-|---|---|---|---|
-| 1 | *(subir o servidor e abrir `/`, `/historico`, `/resultados/<id>`)* | — | Rotas e renderização das telas |
-| 2 | `uv run python tests/test_direct.py` | — | Pipeline puro (análise base, extração, AutoML, tabular, sinal) — **sem LLM** |
-| 3 | `uv run python tests/run_tests.py` | Ollama | Crews completas ponta a ponta (imagem, tabular, sinal) |
-| 4 | `uv run python tests/test_large_image_dataset.py` | Internet / KaggleHub | Pipeline de imagem sobre dataset grande do Kaggle |
+Suíte rápida (~20s, **sem Ollama nem internet**) cobrindo as três camadas:
 
-Saídas ficam em `reports/resultados_teste_direto.md`, `reports/resultados_teste.md` e `reports/resultados_large_dataset.md`.
+```bash
+uv sync
+uv run pytest
+```
+
+| Camada | Arquivo | Cobertura |
+|---|---|---|
+| **Unit — pipeline** | `test_deteccao_modo.py` | os 9 modos de `detectar_estrutura()` + F2/F5 → `invalido` + predicados `io_utils` |
+| | `test_tabular.py` | schema por nome/fallback, separador, encoding, NaN |
+| | `test_classificador.py` | `treinar_vetores` com todas as métricas, campeão por AUC, guarda de <10 amostras, SMOTE seguro |
+| | `test_relatorios.py` | `_fmt_metrica(None)→—`, pódio ordenado, laudo determinístico, correlações |
+| | `test_inferencia.py` | achatar, roundtrip salvar/carregar, ajuste dimensional defensivo |
+| | `test_contrato_sinais.py` | `SinalNormalizado` por família (F1/F3/F4) |
+| **Integração — Flask** | `test_rotas.py` | rotas GET, 404/400, banco isolado, `/laudo_amostra` com crew mockada |
+| **Crews (sem LLM)** | `test_crews.py` | fiação das 5 crews + guardrails (radiologistas sem tools, `max_iter`) |
+| | `test_tools.py` | contrato de filesystem das tools (cadeia de JSONs) |
+| **Guardrails** | `test_guardrails.py` | aviso ético nas 3 telas, 5 seções do laudo, nav sem Pacientes/Relatórios |
+
+Testes que exigem Ollama/Kaggle podem ser marcados com `@pytest.mark.slow` e excluídos com `uv run pytest -m "not slow"`.
+
+### Scripts de validação manuais (`reports/`)
+
+Além da suíte, há scripts que rodam o pipeline de ponta a ponta e gravam relatórios:
+
+| Comando | Requer | O que valida |
+|---|---|---|
+| `uv run python tests/test_todos_tipos.py` | — | Leitura → extração → AutoML para **cada** tipo (imagem, tabular, F1, F3, F4) |
+| `uv run python tests/test_direct.py` | — | Pipeline puro (base, extração, AutoML, tabular, sinal) |
+| `uv run python tests/run_tests.py` | Ollama | Crews completas ponta a ponta |
+| `uv run python tests/test_large_image_dataset.py` | Internet / KaggleHub | Pipeline de imagem sobre dataset grande do Kaggle |
+
+Saídas em `reports/relatorio_tipos.md`, `reports/resultados_teste_direto.md`, `reports/resultados_teste.md` e `reports/resultados_large_dataset.md`.
 
 ---
 
