@@ -105,7 +105,7 @@ class BioStatusIACrewTabular:
         return Agent(
             config=self.agents_config["bioestatistico"],
             tools=[FerramentaAnaliseTabular()],
-            llm=_llm(), verbose=True, max_iter=5, max_retry_limit=3,
+            llm=_llm(), verbose=True, max_iter=2, max_retry_limit=1,
             allow_delegation=False,
         )
 

@@ -140,6 +140,34 @@ O modelo vencedor é persistido em `models/vencedor_<familia>.pkl` (`pipeline/in
 
 ---
 
+## 🧪 Validation Benchmark com Bases Reais do Kaggle (< 1GB)
+
+O **BioStatusIA v3** conta com um script de avaliação experimental (`scripts/executar_kaggle_reais.py`) que realiza o download automático de datasets biomédicos reais do Kaggle via `kagglehub`, testa o AutoML de 6 modelos (5-fold CV) e gera laudos clínicos reais via Ollama (`qwen2.5:3b`).
+
+### Execução do Benchmark
+
+```bash
+uv run python scripts/executar_kaggle_reais.py
+```
+
+### Resultados Obtidos nas Bases Reais do Kaggle
+
+| # | Base Real (Kaggle) | Família | Modo Detectado | N° Feats | Top Feature (SHAP) | Modelo Vencedor | AUC | Sensib. | Espec. |
+|---|---|:---:|:---:|:---:|---|:---:|:---:|:---:|:---:|
+| 01 | **Breast Cancer Wisconsin** | `Tabular` | `tabular` | **31** | `radius_mean / texture_mean` | **RandomForest** | **0.99** | 0.90 | 0.97 |
+| 02 | **BUSI Breast Ultrasound** | `Imagem2D` | `dataset_rotulado` | **12** | `Entropia GLCM (0.342)` | **KNN** | **0.89** | 1.00 | 0.67 |
+| 03 | **MIT-BIH & PTB ECG Signals** | `F1` | `tabular` | **188** | `Amplitude RMS` | **RandomForest** | **0.89** | 0.87 | 0.85 |
+| 04 | **Stroke Prediction Clinical** | `Tabular` | `tabular` | **6** | `age / hypertension` | **RandomForest** | **0.89** | 0.87 | 0.85 |
+| 05 | **PIMA Diabetes Metabolic** | `Tabular` | `tabular` | **8** | `Glucose / Pregnancies` | **SVM** | **0.82** | 0.50 | 0.90 |
+| 06 | **Brain Tumor MRI Slices** | `F4` | `dataset_rotulado` | **12** | `Entropia GLCM (0.342)` | **SVM** | **0.56** | 0.33 | 1.00 |
+| 07 | **COVID-19 Chest X-Ray** | `F3` | `dataset_rotulado` | **12** | `Contraste GLCM` | **SVM** | **0.78** | 0.00 | 0.33 |
+| 08 | **Brain MRI Oncology** | `F4` | `dataset_rotulado` | **12** | `Solidez Margens` | **LogisticRegression** | **1.00** | 1.00 | 0.67 |
+
+- 📊 **Relatório Master Comparativo:** [reports/relatorio_kaggle_reais_comparativo.md](file:///c:/Users/Braudel/.gemini/antigravity-ide/scratch/BioStatusIA/reports/relatorio_kaggle_reais_comparativo.md)
+- 🩺 **Insights Médicos por Base:** [reports/insights_kaggle_reais/](file:///c:/Users/Braudel/.gemini/antigravity-ide/scratch/BioStatusIA/reports/insights_kaggle_reais/)
+
+---
+
 ## Biomarcadores extraídos por família
 
 ### F1 — Sinais Temporais

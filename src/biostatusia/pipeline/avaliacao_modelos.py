@@ -1,6 +1,8 @@
 """
 Avaliação enriquecida de modelos — Fase 3 do plano de expansão.
-Protocolo: 5-fold CV estratificado + teste A/B (McNemar) + métricas clínicas.
+Protocolo: CV estratificada REPETIDA (5x3) + teste A/B (McNemar) + métricas clínicas.
+Sem vazamento: escala e balanceamento ajustados por partição (T1/T2);
+seleção com piso clínico de sensibilidade (T3); intervalos de confiança 95% (T4).
 """
 import time
 import warnings
@@ -14,7 +16,9 @@ from sklearn.metrics import (
     matthews_corrcoef, precision_score, recall_score, roc_auc_score, roc_curve,
     brier_score_loss,
 )
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import (
+    RepeatedStratifiedKFold, StratifiedKFold, train_test_split,
+)
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler, label_binarize
@@ -122,21 +126,35 @@ def avaliar_modelos(X: np.ndarray, y: np.ndarray, familia: str = "",
     if len(X) < 10 or len(set(y.tolist())) < 2:
         return {"aviso": f"Treino não executado: {len(X)} amostras, {len(set(y.tolist()))} classes."}
 
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_scaled, y, test_size=0.2, random_state=42, stratify=y
+    # T1 — split ANTES de qualquer escalonamento/balanceamento (sem vazamento).
+    X_train_raw, X_test_raw, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
     )
 
-    # Balanceamento aplicado SÓ no treino — evita vazamento para o teste.
-    X_train, y_train, info_balanceamento = balancear(X_train, y_train, metodo=balancear_treino)
+    # Scaler ajustado SÓ no treino; o teste é apenas transformado.
+    scaler = StandardScaler().fit(X_train_raw)
+    X_test = scaler.transform(X_test_raw)
 
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    # Treino final (compartilhado entre modelos): escala + balanceamento
+    # aplicados apenas ao treino — o teste permanece intocado.
+    X_train_scaled = scaler.transform(X_train_raw)
+    X_train_bal, y_train_bal, info_balanceamento = balancear(
+        X_train_scaled, y_train, metodo=balancear_treino
+    )
+
+    # T2/T4 — CV estratificada REPETIDA; escala e balanceamento reajustados
+    # DENTRO de cada fold, sobre a partição de treino do fold.
+    n_min = int(np.min(np.bincount(y_train)))
+    n_splits = max(2, min(5, n_min))
+    n_repeats = 3
+    rskf = RepeatedStratifiedKFold(
+        n_splits=n_splits, n_repeats=n_repeats, random_state=42
+    )
     resultado: dict = {
         "familia": familia,
         "n_amostras": len(X),
         "balanceamento": info_balanceamento,
+        "cv_protocolo": {"n_splits": n_splits, "n_repeats": n_repeats},
         "metricas": {},
         "metricas_cv": {},
         "roc_data": {},
@@ -149,19 +167,25 @@ def avaliar_modelos(X: np.ndarray, y: np.ndarray, familia: str = "",
     modelos_treinados: dict = {}
 
     for nome, modelo_base in _MODELOS.items():
-        # ── 5-fold CV ──────────────────────────────────────────────────────
+        # ── T2/T4 — CV repetida; escala e balanceamento POR fold ───────────
         cv_scores: dict = {k: [] for k in (
             "sensibilidade", "especificidade", "f1", "auc", "acuracia", "mcc", "kappa"
         )}
 
-        for fold_train, fold_val in skf.split(X_train, y_train):
+        for fold_train, fold_val in rskf.split(X_train_raw, y_train):
+            sc_fold = StandardScaler().fit(X_train_raw[fold_train])
+            Xf_tr = sc_fold.transform(X_train_raw[fold_train])
+            Xf_val = sc_fold.transform(X_train_raw[fold_val])
+            yf_tr = y_train[fold_train]
+            Xf_tr, yf_tr, _ = balancear(Xf_tr, yf_tr, metodo=balancear_treino)
+
             m = _clonar_modelo(nome)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                m.fit(X_train[fold_train], y_train[fold_train])
+                m.fit(Xf_tr, yf_tr)
             y_v = y_train[fold_val]
-            y_p = m.predict(X_train[fold_val])
-            y_pr = m.predict_proba(X_train[fold_val])[:, 1]
+            y_p = m.predict(Xf_val)
+            y_pr = m.predict_proba(Xf_val)[:, 1]
             tn, fp, fn, tp = confusion_matrix(y_v, y_p, labels=[0, 1]).ravel()
             cv_scores["sensibilidade"].append((tp / (tp + fn + 1e-8)))
             cv_scores["especificidade"].append((tn / (tn + fp + 1e-8)))
@@ -175,16 +199,17 @@ def avaliar_modelos(X: np.ndarray, y: np.ndarray, familia: str = "",
             k: {
                 "media": round(float(np.mean(v)), 4),
                 "desvio": round(float(np.std(v)), 4),
+                "ic95": _ic95(v),
             }
             for k, v in cv_scores.items()
         }
 
-        # ── Treino final + avaliação no teste ─────────────────────────────
+        # ── Treino final + avaliação no teste (treino escalado+balanceado) ─
         modelo_final = _clonar_modelo(nome)
         t0 = time.perf_counter()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            modelo_final.fit(X_train, y_train)
+            modelo_final.fit(X_train_bal, y_train_bal)
         t_treino = time.perf_counter() - t0
 
         t0 = time.perf_counter()
@@ -220,19 +245,24 @@ def avaliar_modelos(X: np.ndarray, y: np.ndarray, familia: str = "",
         resultado["roc_data"][nome] = {"fpr": fpr.tolist(), "tpr": tpr.tolist()}
         resultado["confusion_matrix"][nome] = cm.tolist()
 
-    # ── Critério de adoção: maior AUC (com sensibilidade mínima 0.8) ──────
+    # ── T3 — Critério clínico: maior AUC ENTRE modelos com sensibilidade
+    #    >= 0.8 (minimiza falso-negativo). Sem piso atingido, cai para maior AUC.
     candidatos = {
         n: m for n, m in resultado["metricas"].items()
-        if m["sensibilidade"] >= 0.8 or True  # relaxa para datasets pequenos
+        if m["sensibilidade"] >= 0.8
     }
     melhor = max(candidatos, key=lambda k: candidatos[k]["auc"]) if candidatos else max(
         resultado["metricas"], key=lambda k: resultado["metricas"][k]["auc"]
     )
     resultado["melhor_modelo"] = melhor
+    resultado["criterio_selecao"] = (
+        "maior AUC com sensibilidade>=0.8"
+        if candidatos else "maior AUC (nenhum modelo atingiu sensibilidade>=0.8)"
+    )
 
     # ── Interpretabilidade SHAP para o modelo vencedor ────────────────────
     resultado["shap"] = _shap_importancia(
-        modelos_treinados[melhor], X_train, X_test, feature_names, melhor
+        modelos_treinados[melhor], X_train_bal, X_test, feature_names, melhor
     )
 
     # ── Persistir o vencedor do pódio para inferência individual ──────────
@@ -256,6 +286,19 @@ def avaliar_modelos(X: np.ndarray, y: np.ndarray, familia: str = "",
         )
 
     return resultado
+
+
+def _ic95(valores: list[float]) -> list[float]:
+    """Intervalo de confiança 95% (t-Student) da média das métricas por fold — T4."""
+    v = np.asarray(valores, dtype=float)
+    n = len(v)
+    if n < 2:
+        return [round(float(v.mean()), 4), round(float(v.mean()), 4)] if n else [0.0, 0.0]
+    from scipy.stats import t as t_dist
+    media = float(v.mean())
+    erro = float(v.std(ddof=1) / np.sqrt(n))
+    margem = float(t_dist.ppf(0.975, df=n - 1)) * erro
+    return [round(media - margem, 4), round(media + margem, 4)]
 
 
 def _calibration_error(y_true: np.ndarray, y_prob: np.ndarray, n_bins: int = 10) -> float:

@@ -77,11 +77,16 @@ def treinar_vetores(X: np.ndarray, y: np.ndarray, scaling: str = "standard",
     else:
         scaler = None
 
-    X_scaled = scaler.fit_transform(X) if scaler is not None else X
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_scaled, y, test_size=0.2, random_state=42, stratify=y
+    # T1 — split ANTES do escalonamento; scaler ajustado só no treino (sem vazamento).
+    X_train_raw, X_test_raw, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
     )
+    if scaler is not None:
+        scaler.fit(X_train_raw)
+        X_train = scaler.transform(X_train_raw)
+        X_test = scaler.transform(X_test_raw)
+    else:
+        X_train, X_test = X_train_raw, X_test_raw
 
     modelos = {
         "LogisticRegression": LogisticRegression(random_state=42, max_iter=2000),

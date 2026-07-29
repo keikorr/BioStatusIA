@@ -124,7 +124,7 @@ Toda leitura passa por `pipeline/io_sinais.py::carregar_sinal()` que despacha pa
         │
         ▼
 [avaliacao_modelos.py]   ←── quando há rótulos e ≥10 amostras
-  6 classificadores, 5-fold CV, métricas enriquecidas (MCC, Kappa, ECE),
+  6 classificadores, CV estratificada repetida (5×3) sem vazamento, métricas enriquecidas (MCC, Kappa, ECE),
   balanceamento SMOTE/ADASYN, McNemar A/B, SHAP no vencedor
         │
         ▼
@@ -343,13 +343,19 @@ Página de histórico (Tela 3):
 - Compara os dois melhores modelos (maior AUC)
 - Retorna: chi², p-value, `diferenca_significativa` (p < 0.05)
 
+### Protocolo de validação (v3.2 — sem vazamento)
+
+- Split 80/20 **antes** de qualquer escala/balanceamento; `StandardScaler` ajustado **só no treino** (T1).
+- CV **estratificada repetida** `RepeatedStratifiedKFold(5×3)`; escala e `balancear()` (SMOTE/ADASYN) reajustados **dentro de cada fold** (T2).
+- `metricas_cv[modelo][metrica]` traz `media`, `desvio` e **`ic95`** (IC 95% t-Student) (T4).
+
 ### Critério de seleção
 
-Melhor modelo = maior AUC, com preferência por `sensibilidade ≥ 0.8` (minimiza falso-negativo em contexto clínico).
+Melhor modelo = **maior AUC entre os modelos com `sensibilidade ≥ 0.8`** (minimiza falso-negativo em contexto clínico); sem nenhum atingir o piso, cai para o de maior AUC. O critério efetivo é exposto no campo `criterio_selecao` (T3).
 
 ### Treinador padrão (`pipeline/classificador.py`)
 
-Os fluxos de **imagem** e **tabular** treinam via `treinar_vetores()` (holdout 80/20, sem CV/SMOTE/SHAP). Desde a v3.1 ele calcula o **mesmo conjunto de métricas clínicas** do AutoML por fold — acurácia, sensibilidade, especificidade, precisão, recall, F1, AUC, MCC, Kappa, ECE, latência e tempo de treino — de modo que a tabela do AutoML e o Laudo Populacional exibem todas as colunas. Métricas ausentes (análises salvas antes da v3.1) aparecem como `—` na UI e no laudo (`relatorios.py::_fmt_metrica`); reprocessar o dataset preenche tudo.
+Os fluxos de **imagem** e **tabular** treinam via `treinar_vetores()` (holdout 80/20, sem CV/SMOTE/SHAP; desde a v3.2 o `scaler` é ajustado **só no treino** para eliminar vazamento — T1). Desde a v3.1 ele calcula o **mesmo conjunto de métricas clínicas** do AutoML por fold — acurácia, sensibilidade, especificidade, precisão, recall, F1, AUC, MCC, Kappa, ECE, latência e tempo de treino — de modo que a tabela do AutoML e o Laudo Populacional exibem todas as colunas. Métricas ausentes (análises salvas antes da v3.1) aparecem como `—` na UI e no laudo (`relatorios.py::_fmt_metrica`); reprocessar o dataset preenche tudo.
 
 ---
 
