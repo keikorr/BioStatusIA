@@ -1,6 +1,8 @@
 """
 Avaliação enriquecida de modelos — Fase 3 do plano de expansão.
-Protocolo: 5-fold CV estratificado + teste A/B (McNemar) + métricas clínicas.
+Protocolo: CV estratificada REPETIDA (5x3) + teste A/B (McNemar) + métricas clínicas.
+Sem vazamento: escala e balanceamento ajustados por partição (T1/T2);
+seleção com piso clínico de sensibilidade (T3); intervalos de confiança 95% (T4).
 """
 import time
 import warnings
@@ -10,16 +12,17 @@ import numpy as np
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
-    accuracy_score, confusion_matrix, f1_score,
-    precision_score, recall_score, roc_auc_score, roc_curve,
+    accuracy_score, cohen_kappa_score, confusion_matrix, f1_score,
+    matthews_corrcoef, precision_score, recall_score, roc_auc_score, roc_curve,
     brier_score_loss,
 )
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import (
+    RepeatedStratifiedKFold, StratifiedKFold, train_test_split,
+)
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler, label_binarize
 from sklearn.svm import SVC
-from scipy.stats import chi2_contingency
 
 
 _MODELOS = {
@@ -32,70 +35,181 @@ _MODELOS = {
 }
 
 
-def avaliar_modelos(X: np.ndarray, y: np.ndarray, familia: str = "") -> dict:
+# ── Balanceamento de classes (SMOTE / ADASYN) ─────────────────────────────────
+
+def balancear(X: np.ndarray, y: np.ndarray, metodo: str = "smote") -> tuple[np.ndarray, np.ndarray, dict]:
+    """
+    Reamostra o conjunto de treino para equilibrar as classes.
+    Só aplica se houver desbalanceamento e amostras suficientes (SMOTE precisa
+    de ao menos k_neighbors+1 exemplos na classe minoritária). Falha de forma
+    segura devolvendo os dados originais.
+    """
+    info = {"aplicado": False, "metodo": metodo}
+    classes, contagens = np.unique(y, return_counts=True)
+    if len(classes) < 2:
+        info["motivo"] = "classe única"
+        return X, y, info
+
+    minoria = int(contagens.min())
+    info["distribuicao_original"] = {int(c): int(n) for c, n in zip(classes, contagens)}
+    if contagens.max() == contagens.min():
+        info["motivo"] = "já balanceado"
+        return X, y, info
+
+    k = min(5, minoria - 1)
+    if k < 1:
+        info["motivo"] = f"classe minoritária com {minoria} amostras — insuficiente para reamostragem"
+        return X, y, info
+
+    try:
+        if metodo == "adasyn":
+            from imblearn.over_sampling import ADASYN
+            sampler = ADASYN(random_state=42, n_neighbors=k)
+        else:
+            from imblearn.over_sampling import SMOTE
+            sampler = SMOTE(random_state=42, k_neighbors=k)
+        X_bal, y_bal = sampler.fit_resample(X, y)
+        cls_b, cont_b = np.unique(y_bal, return_counts=True)
+        info["aplicado"] = True
+        info["distribuicao_balanceada"] = {int(c): int(n) for c, n in zip(cls_b, cont_b)}
+        return X_bal, y_bal, info
+    except Exception as e:
+        info["erro"] = str(e)
+        return X, y, info
+
+
+# ── Seleção de features (RFE / PCA) ───────────────────────────────────────────
+
+def selecionar_features(X: np.ndarray, y: np.ndarray, metodo: str = "rfe",
+                        n_features: int | None = None):
+    """
+    Reduz a dimensionalidade por importância (RFE) ou variância (PCA).
+    Retorna (X_reduzido, transformador_ou_None, info). Segura para datasets pequenos.
+    """
+    info = {"metodo": metodo, "aplicado": False, "n_original": X.shape[1]}
+    n_alvo = n_features or max(2, min(X.shape[1], X.shape[0] // 3, 20))
+    if X.shape[1] <= n_alvo:
+        info["motivo"] = "dimensionalidade já baixa"
+        return X, None, info
+
+    try:
+        if metodo == "pca":
+            from sklearn.decomposition import PCA
+            transf = PCA(n_components=n_alvo, random_state=42)
+            X_red = transf.fit_transform(X)
+            info["variancia_explicada"] = round(float(transf.explained_variance_ratio_.sum()), 4)
+        else:
+            from sklearn.feature_selection import RFE
+            transf = RFE(RandomForestClassifier(n_estimators=50, random_state=42),
+                         n_features_to_select=n_alvo)
+            X_red = transf.fit_transform(X, y)
+            info["mascara_selecionadas"] = transf.support_.tolist()
+        info["aplicado"] = True
+        info["n_selecionadas"] = n_alvo
+        return X_red, transf, info
+    except Exception as e:
+        info["erro"] = str(e)
+        return X, None, info
+
+
+def avaliar_modelos(X: np.ndarray, y: np.ndarray, familia: str = "",
+                    balancear_treino: str = "smote",
+                    feature_names: list[str] | None = None,
+                    persistir_vencedor: bool = True) -> dict:
     """
     Avalia todos os modelos via 5-fold CV + conjunto de teste 20%.
-    Retorna métricas completas incluindo sensibilidade, especificidade,
-    latência de inferência e calibração (ECE).
+    Retorna métricas completas: sensibilidade, especificidade, precisão, recall,
+    F1, AUC, MCC (Matthews), Kappa (Cohen), ECE, latência e tempo de treino.
+    Aplica balanceamento (SMOTE/ADASYN) apenas no conjunto de treino, e calcula
+    importância de features por SHAP para o modelo vencedor.
     """
     if len(X) < 10 or len(set(y.tolist())) < 2:
         return {"aviso": f"Treino não executado: {len(X)} amostras, {len(set(y.tolist()))} classes."}
 
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_scaled, y, test_size=0.2, random_state=42, stratify=y
+    # T1 — split ANTES de qualquer escalonamento/balanceamento (sem vazamento).
+    X_train_raw, X_test_raw, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
     )
 
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    # Scaler ajustado SÓ no treino; o teste é apenas transformado.
+    scaler = StandardScaler().fit(X_train_raw)
+    X_test = scaler.transform(X_test_raw)
+
+    # Treino final (compartilhado entre modelos): escala + balanceamento
+    # aplicados apenas ao treino — o teste permanece intocado.
+    X_train_scaled = scaler.transform(X_train_raw)
+    X_train_bal, y_train_bal, info_balanceamento = balancear(
+        X_train_scaled, y_train, metodo=balancear_treino
+    )
+
+    # T2/T4 — CV estratificada REPETIDA; escala e balanceamento reajustados
+    # DENTRO de cada fold, sobre a partição de treino do fold.
+    n_min = int(np.min(np.bincount(y_train)))
+    n_splits = max(2, min(5, n_min))
+    n_repeats = 3
+    rskf = RepeatedStratifiedKFold(
+        n_splits=n_splits, n_repeats=n_repeats, random_state=42
+    )
     resultado: dict = {
         "familia": familia,
         "n_amostras": len(X),
+        "balanceamento": info_balanceamento,
+        "cv_protocolo": {"n_splits": n_splits, "n_repeats": n_repeats},
         "metricas": {},
         "metricas_cv": {},
         "roc_data": {},
         "confusion_matrix": {},
         "comparacao_ab": {},
+        "shap": {},
     }
 
     predicoes_teste: dict = {}
+    modelos_treinados: dict = {}
 
     for nome, modelo_base in _MODELOS.items():
-        # ── 5-fold CV ──────────────────────────────────────────────────────
+        # ── T2/T4 — CV repetida; escala e balanceamento POR fold ───────────
         cv_scores: dict = {k: [] for k in (
-            "sensibilidade", "especificidade", "f1", "auc", "acuracia"
+            "sensibilidade", "especificidade", "f1", "auc", "acuracia", "mcc", "kappa"
         )}
 
-        for fold_train, fold_val in skf.split(X_train, y_train):
+        for fold_train, fold_val in rskf.split(X_train_raw, y_train):
+            sc_fold = StandardScaler().fit(X_train_raw[fold_train])
+            Xf_tr = sc_fold.transform(X_train_raw[fold_train])
+            Xf_val = sc_fold.transform(X_train_raw[fold_val])
+            yf_tr = y_train[fold_train]
+            Xf_tr, yf_tr, _ = balancear(Xf_tr, yf_tr, metodo=balancear_treino)
+
             m = _clonar_modelo(nome)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                m.fit(X_train[fold_train], y_train[fold_train])
+                m.fit(Xf_tr, yf_tr)
             y_v = y_train[fold_val]
-            y_p = m.predict(X_train[fold_val])
-            y_pr = m.predict_proba(X_train[fold_val])[:, 1]
+            y_p = m.predict(Xf_val)
+            y_pr = m.predict_proba(Xf_val)[:, 1]
             tn, fp, fn, tp = confusion_matrix(y_v, y_p, labels=[0, 1]).ravel()
             cv_scores["sensibilidade"].append((tp / (tp + fn + 1e-8)))
             cv_scores["especificidade"].append((tn / (tn + fp + 1e-8)))
             cv_scores["f1"].append(f1_score(y_v, y_p, zero_division=0))
             cv_scores["auc"].append(roc_auc_score(y_v, y_pr) if len(set(y_v)) > 1 else 0.0)
             cv_scores["acuracia"].append(accuracy_score(y_v, y_p))
+            cv_scores["mcc"].append(matthews_corrcoef(y_v, y_p))
+            cv_scores["kappa"].append(cohen_kappa_score(y_v, y_p))
 
         resultado["metricas_cv"][nome] = {
             k: {
                 "media": round(float(np.mean(v)), 4),
                 "desvio": round(float(np.std(v)), 4),
+                "ic95": _ic95(v),
             }
             for k, v in cv_scores.items()
         }
 
-        # ── Treino final + avaliação no teste ─────────────────────────────
+        # ── Treino final + avaliação no teste (treino escalado+balanceado) ─
         modelo_final = _clonar_modelo(nome)
         t0 = time.perf_counter()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            modelo_final.fit(X_train, y_train)
+            modelo_final.fit(X_train_bal, y_train_bal)
         t_treino = time.perf_counter() - t0
 
         t0 = time.perf_counter()
@@ -104,6 +218,7 @@ def avaliar_modelos(X: np.ndarray, y: np.ndarray, familia: str = "") -> dict:
         latencia_ms = round((time.perf_counter() - t0) * 1000, 2)
 
         predicoes_teste[nome] = y_pred
+        modelos_treinados[nome] = modelo_final
 
         tn, fp, fn, tp = confusion_matrix(y_test, y_pred, labels=[0, 1]).ravel()
         sensib = tp / (tp + fn + 1e-8)
@@ -121,6 +236,8 @@ def avaliar_modelos(X: np.ndarray, y: np.ndarray, familia: str = "") -> dict:
             "recall": round(float(recall_score(y_test, y_pred, zero_division=0)), 4),
             "f1": round(float(f1_score(y_test, y_pred, zero_division=0)), 4),
             "auc": round(float(auc), 4),
+            "mcc": round(float(matthews_corrcoef(y_test, y_pred)), 4),
+            "kappa": round(float(cohen_kappa_score(y_test, y_pred)), 4),
             "ece": round(float(ece), 4),
             "latencia_inferencia_ms": latencia_ms,
             "tempo_treino_s": round(t_treino, 3),
@@ -128,15 +245,34 @@ def avaliar_modelos(X: np.ndarray, y: np.ndarray, familia: str = "") -> dict:
         resultado["roc_data"][nome] = {"fpr": fpr.tolist(), "tpr": tpr.tolist()}
         resultado["confusion_matrix"][nome] = cm.tolist()
 
-    # ── Critério de adoção: maior AUC (com sensibilidade mínima 0.8) ──────
+    # ── T3 — Critério clínico: maior AUC ENTRE modelos com sensibilidade
+    #    >= 0.8 (minimiza falso-negativo). Sem piso atingido, cai para maior AUC.
     candidatos = {
         n: m for n, m in resultado["metricas"].items()
-        if m["sensibilidade"] >= 0.8 or True  # relaxa para datasets pequenos
+        if m["sensibilidade"] >= 0.8
     }
     melhor = max(candidatos, key=lambda k: candidatos[k]["auc"]) if candidatos else max(
         resultado["metricas"], key=lambda k: resultado["metricas"][k]["auc"]
     )
     resultado["melhor_modelo"] = melhor
+    resultado["criterio_selecao"] = (
+        "maior AUC com sensibilidade>=0.8"
+        if candidatos else "maior AUC (nenhum modelo atingiu sensibilidade>=0.8)"
+    )
+
+    # ── Interpretabilidade SHAP para o modelo vencedor ────────────────────
+    resultado["shap"] = _shap_importancia(
+        modelos_treinados[melhor], X_train_bal, X_test, feature_names, melhor
+    )
+
+    # ── Persistir o vencedor do pódio para inferência individual ──────────
+    if persistir_vencedor:
+        from biostatusia.pipeline.inferencia import salvar_modelo_vencedor
+        resultado["modelo_persistido"] = salvar_modelo_vencedor(
+            nome=melhor, modelo=modelos_treinados[melhor], scaler=scaler,
+            familia=familia, feature_names=feature_names,
+            metricas=resultado["metricas"][melhor],
+        )
 
     # ── Teste A/B: McNemar entre melhor e baseline (primeiro modelo) ──────
     baseline = list(predicoes_teste.keys())[0]
@@ -150,6 +286,19 @@ def avaliar_modelos(X: np.ndarray, y: np.ndarray, familia: str = "") -> dict:
         )
 
     return resultado
+
+
+def _ic95(valores: list[float]) -> list[float]:
+    """Intervalo de confiança 95% (t-Student) da média das métricas por fold — T4."""
+    v = np.asarray(valores, dtype=float)
+    n = len(v)
+    if n < 2:
+        return [round(float(v.mean()), 4), round(float(v.mean()), 4)] if n else [0.0, 0.0]
+    from scipy.stats import t as t_dist
+    media = float(v.mean())
+    erro = float(v.std(ddof=1) / np.sqrt(n))
+    margem = float(t_dist.ppf(0.975, df=n - 1)) * erro
+    return [round(media - margem, 4), round(media + margem, 4)]
 
 
 def _calibration_error(y_true: np.ndarray, y_prob: np.ndarray, n_bins: int = 10) -> float:
@@ -192,3 +341,39 @@ def _clonar_modelo(nome: str):
     """Instância fresca (evita contaminação entre folds)."""
     from sklearn.base import clone
     return clone(_MODELOS[nome])
+
+
+def _shap_importancia(modelo, X_train: np.ndarray, X_test: np.ndarray,
+                      feature_names: list[str] | None, nome_modelo: str) -> dict:
+    """
+    Importância global de features via SHAP para o modelo vencedor.
+    Usa TreeExplainer para modelos de árvore e KernelExplainer (amostrado) como
+    fallback. Falha de forma segura devolvendo {'disponivel': False}.
+    """
+    resultado = {"disponivel": False, "modelo": nome_modelo}
+    n_feat = X_test.shape[1]
+    nomes = feature_names if (feature_names and len(feature_names) == n_feat) \
+        else [f"f{i}" for i in range(n_feat)]
+    try:
+        import shap
+
+        if nome_modelo in ("RandomForest", "GradientBoosting"):
+            explainer = shap.TreeExplainer(modelo)
+            valores = explainer.shap_values(X_test)
+            if isinstance(valores, list):          # binário → lista por classe
+                valores = valores[1]
+        else:
+            fundo = shap.sample(X_train, min(50, len(X_train)), random_state=42)
+            explainer = shap.KernelExplainer(lambda d: modelo.predict_proba(d)[:, 1], fundo)
+            valores = explainer.shap_values(X_test[:min(30, len(X_test))], nsamples=100)
+
+        importancia = np.abs(np.array(valores)).mean(axis=0).ravel()
+        ranking = sorted(zip(nomes, importancia.tolist()), key=lambda kv: kv[1], reverse=True)
+        resultado.update({
+            "disponivel": True,
+            "importancia_media_abs": {n: round(float(v), 5) for n, v in ranking},
+            "top_features": [n for n, _ in ranking[:10]],
+        })
+    except Exception as e:
+        resultado["motivo"] = str(e)
+    return resultado

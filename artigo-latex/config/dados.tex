@@ -1,0 +1,61 @@
+% --- PAPER METADATA ---
+% Paper A — Input-to-Features. Scope boundary: this paper ends at the feature vector.
+% Modeling, model selection and AI-generated reporting belong to the companion paper (Paper B).
+
+% --- CITATION PLACEHOLDER MACRO ---
+% AGENTS.md Rule 1 forbids fabricated references. Every seed-list entry in
+% specs/referencias.md is still marked "A VERIFICAR", so no \cite{} key may be used yet.
+% \needcite{topic} marks the exact place where a confirmed citation must be inserted and
+% renders visibly in the draft. Delete the macro (and every call) once the .bib is confirmed.
+\newcommand{\needcite}[1]{\textcolor{red}{\textsuperscript{[cite:~#1]}}}
+
+\title{A Modality-Agnostic Ingestion and Multi-Domain Feature Engineering Pipeline for Heterogeneous Biomedical Data
+\thanks{Identify applicable funding agency here. If none, delete this.}
+}
+
+\author{
+\IEEEauthorblockN{1\textsuperscript{st} Given Name Surname}
+\IEEEauthorblockA{\textit{dept. name of organization} \\
+\textit{name of organization}\\
+Fortaleza, Brazil \\
+email address or ORCID}
+\and
+\IEEEauthorblockN{2\textsuperscript{nd} Given Name Surname}
+\IEEEauthorblockA{\textit{dept. name of organization} \\
+\textit{name of organization}\\
+Fortaleza, Brazil \\
+email address or ORCID}
+}
+
+% --- COMMAND TO PRINT ABSTRACT AND KEYWORDS ---
+\newcommand{\imprimirresumo}{
+\begin{abstract}
+% SKELETON — replace each bracketed slot with final text.
+% Structure: context (1-2 sentences) | gap | proposal | method | results | implication.
+% CONSTRAINT: no classification metrics (AUC, sensitivity, specificity, ECE) may appear here.
+[CONTEXT: Clinical decision support pipelines for biomedical data are conventionally built around a
+single modality, so that ingestion and feature extraction must be re-engineered whenever the input
+modality changes.]
+[GAP: There is a lack of architectures that infer the structure of an arbitrary biomedical input and
+adapt reading, preprocessing and feature extraction without manual reconfiguration.]
+[PROPOSAL: This paper presents the ingestion and feature-engineering stage of BioStatusIA v3, which
+automatically classifies raw input into one of nine structural modes, validates it, and normalizes
+every supported modality into a single data contract.]
+[METHOD: Three biomedical signal families are supported --- temporal physiological signals (F1),
+two-dimensional DICOM imaging (F3) and three-dimensional volumes (F4) --- alongside tabular clinical
+records and plain two-dimensional images. A family-specific reader converts each input into the
+\texttt{SinalNormalizado} contract, from which adaptive preprocessing and multi-domain feature
+extraction produce a classifier-ready feature vector.]
+[RESULTS: The pipeline was exercised over thirty real biomedical benchmark datasets covering all
+families in scope; detected structural mode and feature-vector dimensionality are reported per
+dataset and per family.]
+[IMPLICATION: The results indicate that structural detection operates on the physical organization of
+the data rather than on its declared clinical semantics, which is discussed as both a strength and a
+limitation.]
+\end{abstract}
+
+\begin{IEEEkeywords}
+biomedical signal processing, data ingestion, feature engineering, radiomics, multimodal data,
+clinical decision support systems, DICOM, medical imaging
+\end{IEEEkeywords}
+}
