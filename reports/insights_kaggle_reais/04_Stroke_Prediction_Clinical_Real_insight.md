@@ -14,44 +14,45 @@
 * **F1-Score:** 0.8800 | **MCC:** 0.7500 | **ECE:** 0.0400
 
 ## 🩺 Parecer dos Agentes IA
-### Parecer Bioestatístico Preliminar
+```markdown
+# Laudo Preliminar: Dataset de Predição de Cerebroacidente (Cerebroacidente vs Não Cerebroacidente)
 
-#### Introdução
+## Resumo do Dataset
+- **Nº de amostras**: 5110
+- **Nº de features numéricas**: 6
 
-Este parecer foi elaborado para analisar as conclusões preliminares do dataset '04_Stroke_Prediction_Clinical_Real' da plataforma Kaggle. Este conjunto de dados contém histórico clínico real de 5110 pacientes, focando no risco de AVC (Acidente Vascular Cerebral). O modelo AutoML vencedor foi o RandomForest, com uma área sob a curva (AUC) de 0,8900, sensibilidade de 0,8700 e especificidade de 0,8500.
+## Features Mais Discriminativas
 
-#### Detalhes do Dataset
+| Feature | Média (Média) | Média (Mediana) | Desvio | Min | Max |
+|---|---|---|---|---|---|
+| id | 36517.83 | 36932.0 | 21159.65 | 67.0 | 72940.0 |
+| age | 43.23 | 45.0 | 22.61 | 0.08 | 82.0 |
+| hypertension | 0.0975 | 0.0 | 0.2966 | 0.0 | 1.0 |
+| heart_disease | 0.054 | 0.0 | 0.226 | 0.0 | 1.0 |
+| avg_glucose_level | 106.15 | 91.89 | 45.28 | 55.12 | 271.74 |
+| stroke | 0.0487 | 0.0 | 0.2153 | 0.0 | 1.0 |
 
-O dataset está estruturado em cinco colunas principais:
+### Observações
+- A feature mais discriminativa é `avg_glucose_level` com uma média de 106.15 e um desvio padrão de 45.28, indicando uma grande variação entre os valores.
+- A feature `age` também é discriminativa, com uma média de 43.23.
+- A feature `heart_disease` tem uma média muito baixa (0.054), indicando que a maioria dos pacientes não tem doença cardíaca.
+- A feature `hypertension` tem uma média de 0.0975, indicando que cerca de 10% dos pacientes têm hipertensão.
+- A feature `stroke` tem uma média muito baixa (0.0487), indicando que a maioria dos pacientes não tem histórico de cerebroacidente.
 
-1. **ID**: Código único para cada paciente.
-2. **Gender** (Gênero): Representado por valores binários, sendo '0' para feminino e '1' para masculino.
-3. **Age**: Idade dos pacientes com intervalos em anos.
-4. **Hypertension** (Hipertensão): Medido como valor binário onde '0' indica não hipertenso e '1' é hipertenso.
-5. **Heart_Disease** (Doença Cardíaca): Similar ao gênero, representado por valores de binários: '0' para sem doença cardíaca e '1' para com doença cardíaca.
+## Interpretação Preliminar
 
-#### Resultados do Modelo
+- A feature `avg_glucose_level` é a mais discriminativa, indicando que a média de glicose no sangue pode ser um bom indicador para predição de cerebroacidente.
+- A feature `age` também é importante, pois a idade pode ser um fator de risco para o desenvolvimento de cerebroacidente.
+- A feature `heart_disease` e `hypertension` são fatores de risco conhecidos para cerebroacidente e devem ser considerados em qualquer análise.
+- A feature `stroke` é muito baixa, indicando que a maioria dos pacientes não tem histórico de cerebroacidente.
 
-O modelo vencedor foi o RandomForest, mostrando uma AUC de 0,8900, que é um bom resultado que sugere boa capacidade de discriminar entre pacientes riscos de AVC e não-riscos. A sensibilidade de 0,8700 indica que aproximadamente 87% dos pacientes reais com AVC foram identificados como tal pelo modelo. Por outro lado, a especificidade de 0,8500 revela que cerca de 85% dos pacientes sem AVC também foram correctamente classificados como não riscos.
+## Conclusão
 
-#### Discussão
+Os dados sugerem que a média de glicose no sangue (`avg_glucose_level`) e a idade (`age`) são os principais fatores de risco para o desenvolvimento de cerebroacidente. A presença de doença cardíaca (`heart_disease`) e hipertensão (`hypertension`) também é um fator de risco. No entanto, é importante notar que a presença de histórico de cerebroacidente (`stroke`) é muito baixa, indicando que a maioria dos pacientes não tem histórico de cerebroacidente.
 
-A Hipertensão e Doença Cardíaca são fatores conhecidos de alto impacto na previsão do AVC. O modelo RandomForest foi capaz de capturar significativamente essas duas variáveis, o que reflete a importância desses fatores nas condições pré-existentes.
+### Aviso Ético
+Este laudo preliminar não substitui a avaliação médica. As informações fornecidas devem ser consideradas em conjunto com a avaliação clínica e outros testes para uma decisão de tratamento adequada.
+```
 
-Um ponto importante é notar as altas taxas de sensibilidade e especificidade, o que sugere que o modelo tem bom desempenho tanto em detectar pacientes riscos quanto não riscos. No entanto, os perfis do gênero masculino mostraram tendência mais alta ao AVC, corroborando a literatura médica conhecida.
-
-#### Limitações
-
-O uso de um modelo RandomForest não permite explorar as interações entre variáveis (por exemplo, idade e hipertensão). Além disso, o dataset apresenta desigualdades na distribuição dos casos de AVC em comparação com pacientes sem AVC, o que pode influenciar a validação do modelo.
-
-#### AVISO ÉTICO
-
-A aplicação deste modelo clínico para prever riscos de AVC deve ser realizada com cuidado. Considerações éticas incluem garantir a privacidade dos dados e evitar discriminação por gênero ou raça. A implementação precisa levar em conta o contexto cultural, social e econômico do paciente.
-
-É crucial validar os resultados do modelo em uma amostra independente para confirmar as descobertas iniciais. Também é importante considerar outros fatores de risco não incorporados neste dataset (por exemplo, histórico familiar de AVC, estilo de vida, etc.) antes da implantação deste modelo em um ambiente clínico.
-
-Em conclusão, o modelo vencedor RandomForest apresentou boas características e pode ser útil para identificar pacientes com alto risco de AVC no contexto do dataset fornecido. No entanto, as interpretações devem ser feitas cuidadosamente considerando as limitações e os fatores socioeconômicos envolvidos.
-
-#### Conclusão
-
-Este parecer serve como um ponto de partida para uma análise aprofundada dos dados e da aplicação do modelo. Seu uso futuro deve ser guiado por diretrizes éticas rigorosas, validando-se sempre em novas amostras de pacientes.
+### Aviso Ético
+Este laudo preliminar não substitui a avaliação médica. As informações fornecidas devem ser consideradas em conjunto com a avaliação clínica e outros testes para uma decisão de tratamento adequada.

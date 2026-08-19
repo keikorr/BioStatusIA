@@ -8,14 +8,13 @@ Este relatório apresenta os resultados comparativos do teste experimental do **
 
 | # | Base Real (Kaggle) | Família | Modo Detectado | N° Feats | Principais Biomarcadores | Feature Relevante (SHAP) | Modelo Vencedor | AUC | Sensib. | Espec. | ECE | Latência |
 |---|---|:---:|:---:|:---:|---|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| 01 | **01_Breast_Cancer_Wisconsin_Real** | `Tabular` | `tabular` | **31** | id, diagnosis, radius_mean, texture_mean... | `id (Top Correlação)` | **RandomForest** | 0.99 | 0.90 | 0.97 | 0.059 | 0.1ms |
-| 02 | **02_BUSI_Breast_Ultrasound_Real** | `Imagem2D` | `dataset_rotulado` | **12** | Entropia GLCM, Contraste GLCM, Solidez, ... | `Entropia GLCM (0.342)` | **KNN** | 0.89 | 1.00 | 0.67 | 0.200 | 0.1ms |
+| 01 | **01_Breast_Cancer_Wisconsin_Real** | `Tabular` | `tabular` | **31** | id, diagnosis, radius_mean, texture_mean... | `id (Top Correlação)` | **RandomForest** | 1.00 | 0.91 | 1.00 | 0.094 | 0.1ms |
+| 02 | **02_BUSI_Breast_Ultrasound_Real** | `Imagem2D` | `dataset_rotulado` | **9** | circularidade, solidez, contraste, homog... | `circularidade (Top)` | **RandomForest** | 0.89 | 0.67 | 0.67 | 0.192 | 2.7ms |
 | 03 | **03_MITBIH_PTB_ECG_Signals_Real** | `F1` | `tabular` | **188** | 1.000000000000000000e+00, 7.582644820213... | `1.000000000000000000e+00` | **RandomForest** | 0.89 | 0.87 | 0.85 | 0.040 | 1.4ms |
 | 04 | **04_Stroke_Prediction_Clinical_Real** | `Tabular` | `tabular` | **6** | id, gender, age, hypertension, heart_dis... | `id` | **RandomForest** | 0.89 | 0.87 | 0.85 | 0.040 | 1.4ms |
-| 05 | **05_PIMA_Diabetes_Metabolic_Real** | `Tabular` | `tabular` | **8** | Pregnancies, Glucose, BloodPressure, Ski... | `Pregnancies (Top Correlação)` | **SVM** | 0.82 | 0.50 | 0.90 | 0.132 | 0.0ms |
-| 06 | **06_Brain_Tumor_MRI_Real** | `F4` | `dataset_rotulado` | **12** | Entropia GLCM, Contraste GLCM, Solidez, ... | `Entropia GLCM (0.342)` | **SVM** | 0.56 | 0.33 | 1.00 | 0.362 | 0.2ms |
-| 07 | **07_COVID19_ChestXRay_Real** | `F3` | `dataset_rotulado` | **12** | Entropia GLCM, Contraste GLCM, Solidez, ... | `Entropia GLCM (0.342)` | **SVM** | 0.78 | 0.00 | 0.33 | 0.273 | 0.0ms |
-| 08 | **08_Brain_MRI_Oncology_Real** | `F4` | `dataset_rotulado` | **12** | Entropia GLCM, Contraste GLCM, Solidez, ... | `Entropia GLCM (0.342)` | **LogisticRegression** | 1.00 | 1.00 | 0.67 | 0.207 | 0.0ms |
+| 06 | **06_Brain_Tumor_MRI_Real** | `F4` | `dataset_rotulado` | **9** | circularidade, solidez, contraste, homog... | `circularidade (Top)` | **LogisticRegression** | 1.00 | 1.00 | 1.00 | 0.225 | 0.4ms |
+| 07 | **07_COVID19_ChestXRay_Real** | `F3` | `dataset_rotulado` | **9** | circularidade, solidez, contraste, homog... | `circularidade (Top)` | **LogisticRegression** | 0.78 | 0.33 | 0.67 | 0.390 | 0.3ms |
+| 08 | **08_Brain_MRI_Oncology_Real** | `F4` | `dataset_rotulado` | **9** | circularidade, solidez, contraste, homog... | `circularidade (Top)` | **LogisticRegression** | 0.56 | 1.00 | 0.00 | 0.420 | 0.3ms |
 
 
 ---

@@ -26,14 +26,17 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 import kagglehub
-from crewai import LLM
 from biostatusia.app import detectar_estrutura
+from biostatusia.crew import (
+    BioStatusIACrew, BioStatusIACrewTabular, BioStatusIACrewSinal, BioStatusIACrewImagem3D
+)
 from biostatusia.pipeline.dados_tabulares import (
     carregar_csv, detectar_schema, extrair_features, analisar_tabular,
     decidir_estrategia_tabular, preprocessar_tabular_amostras
 )
 from biostatusia.pipeline.classificador import treinar_vetores
 from biostatusia.pipeline.analise_base import decidir_estrategia
+from biostatusia.pipeline.extracao import extrair_todos
 from biostatusia.pipeline.io_utils import listar_imagens
 
 KAGGLE_DIR = BASE_DIR / "dataset_kaggle_reais"
@@ -44,8 +47,10 @@ KAGGLE_DIR.mkdir(parents=True, exist_ok=True)
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 INSIGHTS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Inicializa o cliente Ollama LLM local
-llm_client = LLM(model="ollama/qwen2.5:3b", base_url="http://localhost:11434")
+def criar_pasta_run(nome_base):
+    pasta_run = REPORTS_DIR / "runs_kaggle" / nome_base
+    pasta_run.mkdir(parents=True, exist_ok=True)
+    return str(pasta_run)
 
 print("=" * 80)
 print("  BIOSTATUSIA v3 — BENCHMARK COMPLETO COM 10 BASES REAIS DO KAGGLE (< 1GB)")
@@ -265,20 +270,20 @@ def processar_base_real(ds: dict) -> dict:
             tempo_treino_s = 0.35
             feature_importante = f"{principais_biomarcadores[0] if principais_biomarcadores else 'Signal_RMS'}"
 
-        prompt = (
-            f"Você é um Bioestatístico Clínico sênior do sistema BioStatusIA.\n"
-            f"Analise o dataset real do Kaggle '{nome}' ({ds['desc']}).\n"
-            f"Amostras: {n_amostras_orig}, Atributos: {n_features}.\n"
-            f"Biomarcadores: {', '.join(principais_biomarcadores)}.\n"
-            f"Modelo AutoML vencedor: {melhor_modelo} (AUC={auc:.4f}, Sensibilidade={sensibilidade:.4f}, Especificidade={especificidade:.4f}).\n"
-            f"Redija um parecer bioestatístico preliminar com tom profissional, interpretando os achados e incluindo o AVISO ÉTICO de suporte à decisão."
-        )
         try:
-            print(f"   [LLM REAL OLLAMA] Gerando parecer médico via qwen2.5:3b para {nome}...")
-            response = llm_client.call([{"role": "user", "content": prompt}])
-            laudo_llm = str(response)
+            print(f"   [LLM CREW] Executando arquitetura multiagente para {nome}...")
+            pasta_run = criar_pasta_run(nome)
+            if ds["fam"] == "F1" or modo_detectado == "sinal":
+                crew_out = BioStatusIACrewSinal().crew().kickoff(inputs={
+                    "caminho_dataset": str(pasta_base),
+                    "pasta_run": pasta_run,
+                    "tipo_sinal": "Sinal Fisiológico / Clínico",
+                })
+            else:
+                crew_out = BioStatusIACrewTabular().crew().kickoff(inputs={"caminho_csv": str(csv_file)})
+            laudo_llm = str(crew_out)
         except Exception as e:
-            print(f"   [LLM AVISO] {e}")
+            print(f"   [AVISO LLM] {e}")
             laudo_llm = f"**Síntese Bioestatística:** O dataset real '{nome}' apresentou {n_amostras_orig} amostras e {n_features} atributos. Classificador **{melhor_modelo}** (AUC={auc:.2f})."
 
     # ── IMAGENS REAIS (F3, F4, IMAGEM 2D) ────────────────────────────────────
@@ -286,41 +291,65 @@ def processar_base_real(ds: dict) -> dict:
         imgs = listar_imagens(pasta_base)
         n_imgs = len(imgs)
         
-        n_features = 12
-        principais_biomarcadores = ["Entropia GLCM", "Contraste GLCM", "Solidez", "Circularidade", "SNR"]
         est_pdi = decidir_estrategia({"ruido_medio": 0.04, "outliers_pct": 5.0, "contraste_medio": 45, "tamanhos_heterogeneos": False})
         estrategia_preproc = f"Filtro: {est_pdi.get('denoising', 'gaussian')}, Norm: {est_pdi.get('normalizacao', 'minmax')}, Equalização: {est_pdi.get('equalizacao', 'none')}"
         
-        X_mock = np.random.randn(max(n_imgs, 30), n_features)
-        y_mock = np.array([0, 1] * (len(X_mock)//2))
+        X_list = []
+        y_list = []
+        principais_biomarcadores = []
         
-        res_clf = treinar_vetores(X_mock, y_mock)
-        melhor_modelo = res_clf["melhor_modelo"]
-        metr = res_clf["metricas"].get(melhor_modelo, {})
-        acuracia = metr.get("acuracia", 0.90)
-        auc = metr.get("auc", 0.94)
-        sensibilidade = metr.get("sensibilidade", 0.91)
-        especificidade = metr.get("especificidade", 0.89)
-        f1 = metr.get("f1", 0.90)
-        mcc = metr.get("mcc", 0.81)
-        ece = metr.get("ece", 0.03)
-        latencia_ms = metr.get("latencia_inferencia_ms", 2.1)
-        tempo_treino_s = metr.get("tempo_treino_s", 0.62)
-        feature_importante = "Entropia GLCM (0.342)"
+        # Extrair features reais das imagens (removendo o mock fake)
+        for img_info in imgs:
+            bio = extrair_todos(img_info["caminho"], estrategia=est_pdi)
+            if bio is not None:
+                feat_dict = {**bio["morfologia"], **bio["textura_glcm"], **bio["distribuicao_intensidade"]}
+                X_list.append(list(feat_dict.values()))
+                lbl = img_info.get("label")
+                y_list.append(lbl if lbl is not None else 0)
+                if not principais_biomarcadores:
+                    principais_biomarcadores = list(feat_dict.keys())
         
-        prompt = (
-            f"Você é um Especialista em Radiologia e PDI Médico do sistema BioStatusIA.\n"
-            f"Analise o exame de imagem real do Kaggle '{nome}' ({ds['desc']}).\n"
-            f"Biomarcadores radiômicos extraídos: Entropia GLCM, Contraste GLCM, Solidez, Circularidade.\n"
-            f"Modelo AutoML vencedor: {melhor_modelo} (AUC={auc:.4f}, Sensibilidade={sensibilidade:.4f}, Especificidade={especificidade:.4f}).\n"
-            f"Redija um parecer radiológico preliminar com interpretação clínica morfológica e aviso ético obrigatório."
-        )
+        X_real = np.array(X_list) if X_list else np.empty((0, 0))
+        y_real = np.array(y_list) if y_list else np.empty(0)
+        n_features = X_real.shape[1] if X_real.shape[0] > 0 else 0
+        
+        melhor_modelo = "N/A"
+        acuracia = auc = sensibilidade = especificidade = f1 = mcc = ece = latencia_ms = tempo_treino_s = 0.0
+        feature_importante = "N/A"
+        
+        if X_real.shape[0] >= 10 and len(set(y_real)) >= 2:
+            # Treina os modelos nas features radiômicas extraídas
+            res_clf = treinar_vetores(X_real, y_real)
+            melhor_modelo = res_clf["melhor_modelo"]
+            metr = res_clf["metricas"].get(melhor_modelo, {})
+            acuracia = metr.get("acuracia", 0.0)
+            auc = metr.get("auc", 0.0)
+            sensibilidade = metr.get("sensibilidade", 0.0)
+            especificidade = metr.get("especificidade", 0.0)
+            f1 = metr.get("f1", 0.0)
+            mcc = metr.get("mcc", 0.0)
+            ece = metr.get("ece", 0.0)
+            latencia_ms = metr.get("latencia_inferencia_ms", 0.0)
+            tempo_treino_s = metr.get("tempo_treino_s", 0.0)
+            
+            shap_info = res_clf.get("shap_top_features", [])
+            if shap_info:
+                feature_importante = f"{shap_info[0]['feature']} ({shap_info[0]['importancia']:.3f})"
+            elif principais_biomarcadores:
+                feature_importante = f"{principais_biomarcadores[0]} (Top)"
+        
         try:
-            print(f"   [LLM REAL OLLAMA] Gerando parecer radiológico via qwen2.5:3b para {nome}...")
-            response = llm_client.call([{"role": "user", "content": prompt}])
-            laudo_llm = str(response)
+            print(f"   [LLM CREW] Executando arquitetura multiagente para {nome}...")
+            pasta_run = criar_pasta_run(nome)
+            # Utiliza a BioStatusIACrew original pois os arquivos Kaggle são imagens JPG/PNG padrão,
+            # e não arquivos DICOM ou volumes .nii.gz nativos.
+            crew_out = BioStatusIACrew().crew().kickoff(inputs={
+                "caminho_dataset": str(pasta_base),
+                "pasta_run": pasta_run,
+            })
+            laudo_llm = str(crew_out)
         except Exception as e:
-            print(f"   [LLM AVISO] {e}")
+            print(f"   [AVISO LLM] {e}")
             laudo_llm = f"**Laudo Radiômico de Imagem Real:** Processada imagem real da base '{nome}'. Modelo **{melhor_modelo}** (AUC={auc:.2f})."
 
     tempo_total = time.time() - t0

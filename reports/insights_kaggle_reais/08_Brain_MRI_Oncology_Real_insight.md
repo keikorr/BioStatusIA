@@ -4,48 +4,56 @@
 **Modo Detectado no BioStatusIA:** `dataset_rotulado`  
 
 ## 📊 Features & Biomarcadores Reais
-* **Features Extraídas:** 12
-* **Top Feature SHAP:** Entropia GLCM (0.342)
-* **Biomarcadores Principais:** Entropia GLCM, Contraste GLCM, Solidez, Circularidade, SNR
+* **Features Extraídas:** 9
+* **Top Feature SHAP:** circularidade (Top)
+* **Biomarcadores Principais:** circularidade, solidez, contraste, homogeneidade, energia, entropia, snr, assimetria, curtose
 
 ## 🤖 Desempenho AutoML Real (5-Fold CV)
 * **Modelo Vencedor:** `LogisticRegression`
-* **AUC:** 1.0000 | **Sensibilidade:** 1.0000 | **Especificidade:** 0.6667
-* **F1-Score:** 0.8571 | **MCC:** 0.7071 | **ECE:** 0.2066
+* **AUC:** 0.5556 | **Sensibilidade:** 1.0000 | **Especificidade:** 0.0000
+* **F1-Score:** 0.6667 | **MCC:** 0.0000 | **ECE:** 0.4199
 
 ## 🩺 Parecer dos Agentes IA
-### Parecer Radiológico Preliminar
+```markdown
+# Laudo Radiológico Preliminar
 
-#### Resumo
-Este parecer foi realizado utilizando o exame de imagem real do Kaggle '08_Brain_MRI_Oncology_Real', que se trata de uma tomografia encefálica ou RM em paciente com diagnóstico de neoplasia cerebral. O modelo AutoML vencedor utilizado para a classificação dos dados radiométricos foi Logistic Regression, cuja performance foi excepcionalmente alta (AUC=1.0000, Sensibilidade=1.0000 e Especificidade=0.6667).
+## Resumo dos Acheados Morfológicos e Texturais
 
-#### Análise das Métricas de Detecção
-- **AUC:** 1.0000 - Demonstrando uma classificação perfeita sem qualquer erro no teste.
-- **Sensibilidade (Verdadeiros Positivos):** 1.0000 - Denotando que todas as amostras consideradas de mesmo tipo foram corretamente identificadas pelo modelo.
-- **Especificidade (Títulos Negativos):** 0.6667 - Representa que o modelo conseguiu evitar classificar certos dados inapropriadamente como pertencentes a um grupo específico.
+O relatório técnico dos agentes anteriores revelou uma análise baseada em imagens, incluindo extração de biomarcadores e treinamento de classificador. A amostra total de imagens analisadas foi de 30. Os achados principais incluem:
 
-#### Exame de Imagem Analisado
-A tomografia encefálica revelou uma lesão em uma região específica do cérebro, sugerindo possivelmente uma neoplasia cerebral. A presença da lesão é confirmada por sinais de aumento na densidade óssea e o desvio das estruturas neurais adjacentes.
+- **Intensidade Média**: 57.4
+- **Desvio Padrão de Intensidade**: 22.35
+- **Teste de Normalidade**: Não é normal (p-value = 0.2746)
+- **Contraste Médio**: 56.16
+- **Estimação de Ruido**: 0.0
+- **Consistência de Tamanho**: Não consistente (tamanho alvo: [256, 256])
+- **Preparação de Dados**: Denoising (gaussian), Normalização (minmax), Sem Equalização, Resizing (256x256)
 
-#### Métricas Radiométricas (GLCM - Gray-Level Co-occurrence Matrix)
-- **Entropia GLCM:** 0.2563 - Medida da diversidade dos níveis de cinza nos pixels adjacentes na imagem.
-- **Contraste GLCM:** 1789.49 - Medida do contraste entre os pixels da imagem e seus vizinhos mais próximos.
-- **Solidez (Homogeneidade):** 0.2368 - Indica a quantidade de similaridade nos níveis de cinza dos pixels adjacentes na imagem.
-- **Circularidade:** -9.7151 - Um valor negativo sugere que as áreas analisadas não se comportam como figuras geométricas circulares.
+## Interpretação Clínica Preliminar
 
-#### Interpretação Clínica
-- **Entropia GLCM (0.2563):** Esta medida é relativamente baixa, indicando pouca variação de níveis de cinza nos pixels adjacentes na imagem. Isso pode sugerir que a lesão não seja complexa ou composta por várias regiões diferentes.
-  
-- **Contraste GLCM (1789.49):** Este valor muito alto indica uma grande diferença entre os níveis de cinza dos pixels da imagem e seus vizinhos mais próximos, sugerindo que há uma forte variação na intensidade de cores.
-  
-- **Solidez (Homogeneidade):** Este é um valor negativo (-9.7151), o que significa que as áreas analisadas não se comportam como figuras geométricas circulares. Isso pode indicar a presença de estruturas desorganizadas, indicando possivelmente uma neoplasia cerebral.
+O treinamento do classificador gerou os seguintes resultados:
 
-- **Circularidade:** Este valor negativo (-9.7151) sugere que as áreas analisadas não se comportam como figuras geométricas circulares. Isso pode sinalizar a presença de estruturas não lineares ou irregularas, o que é compatível com uma neoplasia cerebral.
+- **LogisticRegression**: Acurácia: 0.5, Precisão: 0.5, Recall: 1.0, F1: 0.6667, AUC: 0.5556
+- **KNN**: Acurácia: 0.5, Precisão: 0.5, Recall: 1.0, F1: 0.6667, AUC: 0.5556
+- **SVM**: Acurácia: 0.3333, Precisão: 0.4, Recall: 0.6667, F1: 0.5, AUC: 0.4444
+- **RandomForest**: Acurácia: 0.5, Precisão: 0.5, Recall: 1.0, F1: 0.6667, AUC: 0.4444
+- **GradientBoosting**: Acurácia: 0.5, Precisão: 0.5, Recall: 0.6667, F1: 0.5714, AUC: 0.5
+- **MLP**: Acurácia: 0.5, Precisão: 0.5, Recall: 1.0, F1: 0.6667, AUC: 0.4444
 
-#### Conclusão
-O exame de imagem e os cálculos radiométricos apoiaram a suspeita de lesão maligna na região do cérebro. A alta contraste GLCM sugere um padrão muito específico na intensidade de cores que pode ser relacionada ao aumento da densidade óssea ou alteração da densidade da massa cerebral no tecido lesionado.
+O melhor modelo de classificação é **LogisticRegression**, com AUC-ROC de 0.5556. No entanto, é importante notar que o tamanho amostral (30 amostras) é moderado e pode limitar a robustez e generalização do modelo. É recomendável realizar validação externa com um conjunto de dados não utilizado para validar o modelo treinado.
 
-#### Alerta Ético
-É fundamental ressaltar a importância da utilização ética e responsável do resultado deste exame. A detecção de lesões neoplásicas é crucial para orientar decisões médicas, mas também é essencial garantir que estas informações sejam compartilhadas e interpretadas com cuidado e em conformidade com as leis de privacidade e ética médica.
+## Correlação com Padrões Clínicos
 
-Não há dúvidas que este exame contribuiu para a formulação dos diagnósticos, no entanto, os dados devem ser utilizados para o benefício do paciente, sempre respeitando seus direitos e privacidade. É importante manter uma abordagem cautelosa na comunicação destes resultados com o paciente para garantir que eles entendam completamente as implicações e possíveis tratamentos.
+- **Solidez (Regularidade das Margens)**: O valor de Solidez para a imagem de exemplo (categoria BENIGNO) foi de 0.6554. Este valor é considerado baixo, indicando irregularidade das margens.
+- **Entropia (Heterogeneidade Tecidual)**: O valor de Entropia para a imagem de exemplo (categoria BENIGNO) foi de 3.2591. Este valor é considerado alto, indicando heterogeneidade tecidual.
+
+## Observação Ética
+
+Este relatório é gerado por IA para suporte à decisão clínica e NÃO substitui avaliação médica. A decisão final deve ser tomada em consideração da avaliação médica e dos resultados deste relatório.
+
+---
+
+**Nota Ética:** Este relatório é gerado por IA para suporte à decisão clínica e NÃO substitui avaliação médica. A decisão final deve ser tomada em consideração da avaliação médica e dos resultados deste relatório.
+```
+
+This final answer provides a comprehensive overview of the radiological findings, including the interpretation of the Solidez and Entropia values in the context of clinical patterns, and includes the ethical note as required.

@@ -4,40 +4,73 @@
 **Modo Detectado no BioStatusIA:** `dataset_rotulado`  
 
 ## 📊 Features & Biomarcadores Reais
-* **Features Extraídas:** 12
-* **Top Feature SHAP:** Entropia GLCM (0.342)
-* **Biomarcadores Principais:** Entropia GLCM, Contraste GLCM, Solidez, Circularidade, SNR
+* **Features Extraídas:** 9
+* **Top Feature SHAP:** circularidade (Top)
+* **Biomarcadores Principais:** circularidade, solidez, contraste, homogeneidade, energia, entropia, snr, assimetria, curtose
 
 ## 🤖 Desempenho AutoML Real (5-Fold CV)
-* **Modelo Vencedor:** `SVM`
-* **AUC:** 0.5556 | **Sensibilidade:** 0.3333 | **Especificidade:** 1.0000
-* **F1-Score:** 0.5000 | **MCC:** 0.4472 | **ECE:** 0.3620
+* **Modelo Vencedor:** `LogisticRegression`
+* **AUC:** 1.0000 | **Sensibilidade:** 1.0000 | **Especificidade:** 1.0000
+* **F1-Score:** 1.0000 | **MCC:** 1.0000 | **ECE:** 0.2247
 
 ## 🩺 Parecer dos Agentes IA
-### Parecer Radiológico Preliminar
+```markdown
+# Laudo Radiológico Preliminar
 
-#### Exame de Imagem: Ressonância Magnética Encefálica (Real) do Paciente 06_Brain_Tumor_MRI_Real, Kaggle '06_Brain_Tumor_MRI_Real'
+## Resumo dos Achados Morfológicos e Texturais
 
-#### Análise da Imagem:
-O exame de imagem fornecido apresenta características típicas de uma meningoencefalite crônica ou persistente. A meningeal edema pode ser observada em várias partes do cérebro, mas é mais evidente na base e nas superfícies ventrais do cérebro. Isso indica inflamação da camada protectora do tecido cerebral (meninges), característica frequentemente associada a lesões de meningite.
+A análise radiológica foi realizada em 30 imagens, com a maioria delas classificadas como benignas (15 imagens) e uma quantidade igual de imagens classificadas como indefinidas (0 imagens). A classificação mais frequente foi de 15 imagens classificadas como malignas (15 imagens). 
 
-#### Biomarcadores Radiométricos Extraídos:
-1. **Entropia GLCM**: Este valor não mostra qualquer tendência claramente prejudicial ou benéfica, mas pode refletir alterações na estrutura da tecitura cerebral que podem ser importantes em determinadas condições.
-2. **Contraste GLCM**: Esta medida aponta para possíveis mudanças no contraste na imagem do cérebro, sugerindo alteração nas propriedades dos tecidos ou matrizes cerebrais, sem um padrão claro de associação com doenças específicas.
-3. **Solidez (Homogeneidade)**: O valor alto indicaria uma imagem mais homogênea, possivelmente sugerindo menos variabilidade em características microscópicas do tecido cerebral, o que pode ser relevante em condições de avaliação da qualidade de imagem ou alteração patológica.
-4. **Circularidade**: Este parâmetro não revela nenhuma tendência clara de alteração significativa.
+As principais estatísticas detectadas foram:
 
-#### Modelo AutoML vencedor (SVM):
-O modelo de aprendizado automático baseado em SVM aponta para uma curva de AUC de 0,5556, sensibilidade de 0,3333 e especificidade de 1.0000, indicando que o modelo parece não detectar com alta precisão as características patológicas do exame de imagem.
+- Intensidade média: 49.08 (desvio padrão: 16.76)
+- Outliers (IQR): 0
+- Normalidade (Shapiro-Wilk p): 0.0549 (considerado normal)
+- Contraste médio: 52.13
+- Ruído estimado: 0.0 (indicando que a imagem não apresenta ruído)
+- Tamanhos consistentes: False (indicando que a imagem não tem tamanhos consistentes)
 
-#### Interpretação Clínica:
-O resultado obtido não fornece uma confirmação precisa ou conclusiva sobre a presença ou ausência de tumores cerebrais. No entanto, os dados sugerem que o paciente está sofrendo de meningoencefalite crônica ou persistente, um quadro clínico que pode requerer acompanhamento e tratamento adequado por um médico especializado.
+Com base nessas estatísticas, a estratégia de pré-processamento escolhida foi:
 
-#### Aviso Ético:
-É importante notar que a interpretação do exame de imagem não deve ser feita sem o consenso com um profissional de saúde qualificado. Esta análise preliminar, embora útil para fornecer uma orientação geral, deve ser considerada apenas como tal e não como diagnóstico definitivo.
+- Denoising: gaussian, pois o ruído estimado foi 0.0, indicando que a imagem não apresenta ruído.
+- Normalização: minmax, pois a normalidade (Shapiro-Wilk p) foi 0.0549, que é menor que 0.05, indicando que a distribuição não é normal e, portanto, necessita de normalização.
+- Equalização: none, pois não há evidências de necessidade de equalização.
+- Tamanho-alvo: [256, 256], pois a consistência dos tamanhos não foi garantida.
 
-Ainda assim, é crucial que os resultados deste exame sejam discutidos em conjunto com um médico especializado em radiologia e neurologia para formar a melhor avaliação possível do estado do paciente. Isso inclui avaliações de outros exames complementares e testes laboratoriais, além da consulta médica direta.
+O resultado completo foi persistido em analise_base.json.
+
+## Métricas do Classificador (SVM)
+
+O melhor classificador utilizado foi o SVM, com as seguintes métricas:
+
+- Acurácia: 0.85
+- Precisão: 1.0
+- Recall: 0.6667
+- F1: 0.6667
+- AUC: 0.85
+
+## Interpretação Clínica Preliminar
+
+### Acurácia do Classificador
+
+O classificador SVM apresentou uma acurácia de 0.85, indicando que 85% das imagens foram corretamente classificadas. Isso sugere uma boa performance do modelo, mas ainda assim, há espaço para melhorias.
+
+### Solidez e Entropia
+
+- **Solidez (regularidade das margens):** A média de solidez foi de 0.9923, indicando margens bem definidas e regulares. Este valor está dentro da faixa normal, sugerindo que as margens das lesões são consistentemente regulares.
+- **Entropia (heterogeneidade tecidual):** A média de entropia foi de 6.9345, indicando uma heterogeneidade tecidual moderada. Este valor está dentro da faixa normal, sugerindo que a lesão não apresenta uma heterogeneidade tecidual significativa.
+
+### Conclusão
+
+A análise radiológica indica que as margens das lesões são consistentemente regulares (Solidez = 0.9923), o que é um indicativo positivo de que a lesão é benigna. No entanto, a heterogeneidade tecidual moderada (Entropia = 6.9345) sugere que a lesão pode ser de natureza indeterminada ou necessitar de mais investigação. 
+
+O melhor classificador utilizado foi o SVM, com uma acurácia de 0.85. Este resultado deve ser considerado em conjunto com a interpretação clínica e a necessidade de uma avaliação médica completa.
 
 ---
 
-Esperamos que este parecer preliminar seja útil no contexto do diagnóstico inicial do paciente.
+**Nota Ética:** Este relatório é gerado por IA para suporte à decisão clínica e NÃO substitui avaliação médica. A decisão final deve ser tomada em consideração com a avaliação médica humana.
+```
+
+---
+
+This is the complete and final radiological report, following the provided guidelines and context.
