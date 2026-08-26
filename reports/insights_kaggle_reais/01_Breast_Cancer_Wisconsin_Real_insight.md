@@ -9,31 +9,57 @@
 * **Biomarcadores Principais:** id, diagnosis, radius_mean, texture_mean, perimeter_mean
 
 ## 🤖 Desempenho AutoML Real (5-Fold CV)
-* **Modelo Vencedor:** `RandomForest`
-* **AUC:** 1.0000 | **Sensibilidade:** 0.9091 | **Especificidade:** 1.0000
-* **F1-Score:** 0.9524 | **MCC:** 0.9293 | **ECE:** 0.0938
+* **Modelo Vencedor:** `MLP`
+* **AUC:** 0.9927 | **Sensibilidade:** 0.9524 | **Especificidade:** 1.0000
+* **F1-Score:** 0.9756 | **MCC:** 0.9636 | **ECE:** 0.0281
 
 ## 🩺 Parecer dos Agentes IA
-Laudo Preliminar em Markdown para o Dataset `dataset.csv`:
+# Laudo Preliminar: Dataset Wisconsin Breast Cancer
 
-### cabeçalho
-- Número de amostras: 569
-- Número de features: 31
+## Resumo do Dataset
+- **N Amostras**: 569
+- **N Features**: 31
+- **Coluna-rótulo**: `diagnosis`
+- **Mapa de rótulos**: B→0, M→1
+- **Distribuição de classes**: classe 0: 357, classe 1: 212
 
-### Features mais discriminativas
-| Feature | Média | Mediana | Desvio | Min | Max |
-|---|---|---|---|---|---|
-| radius_mean | 14.1273 | 13.37 | 3.521 | 6.981 | 28.11 |
-| texture_mean | 19.2896 | 18.84 | 4.2973 | 9.71 | 39.28 |
-| perimeter_mean | 91.969 | 86.24 | 24.2776 | 43.79 | 188.5 |
-| area_mean | 654.8891 | 551.1 | 351.6048 | 143.5 | 2501.0 |
-| smoothness_mean | 0.0964 | 0.0959 | 0.0141 | 0.0526 | 0.1634 |
-| concavity_mean | 0.0888 | 0.0615 | 0.0796 | 0.0 | 0.4268 |
-| concave points_mean | 0.0489 | 0.0335 | 0.0388 | 0.0 | 0.2012 |
-| symmetry_mean | 0.1812 | 0.1792 | 0.0274 | 0.106 | 0.304 |
+## Features mais discriminativas
 
-### Interpretação preliminar
-As features mais discriminativas para o diagnóstico de câncer de mama são `radius_mean`, `texture_mean`, `perimeter_mean`, `area_mean`, `smoothness_mean`, `concavity_mean`, `concave points_mean`, e `symmetry_mean`. Essas features têm médias significativamente diferentes entre as classes de diagnóstico (benigno vs maligno), indicando que elas podem ser úteis para a detecção precoce do câncer de mama.
+| Feature | Média (Benigno) | Média (Maligno) | Diferença (Maligno - Benigno) | Diferença (%) |
+|---|---|---|---|---|
+| radius_mean | 13.37 | 14.1273 | -0.7573 | -5.64% |
+| texture_mean | 18.84 | 19.2896 | -0.4496 | -2.39% |
+| perimeter_mean | 86.24 | 91.969 | -5.729 | -6.56% |
+| area_mean | 551.1 | 654.8891 | -103.7891 | -18.84% |
+| smoothness_mean | 0.0959 | 0.0964 | -0.0005 | -0.05% |
+| compactness_mean | 0.0926 | 0.1043 | 0.0117 | 12.86% |
+| concavity_mean | 0.0615 | 0.0888 | 0.0273 | 44.23% |
+| concave points_mean | 0.0335 | 0.0489 | 0.0154 | 45.75% |
+| symmetry_mean | 0.1792 | 0.1812 | 0.0020 | 1.08% |
+| fractal_dimension_mean | 0.0528 | 0.0964 | 0.0436 | 82.08% |
+| worst_radius_mean | 28.11 | 14.1273 | 13.9827 | 49.56% |
+| worst_texture_mean | 39.28 | 19.2896 | 19.9904 | 51.49% |
+| worst_perimeter_mean | 188.5 | 91.969 | 96.531 | 51.56% |
+| worst_area_mean | 2501.0 | 654.8891 | -1846.1199 | -73.83% |
+| worst_smoothness_mean | 0.1634 | 0.0964 | -0.0670 | -41.03% |
+| worst_compactness_mean | 0.3454 | 0.1043 | -0.2411 | -69.98% |
+| worst_concavity_mean | 0.4268 | 0.0888 | -0.3380 | -78.98% |
+| worst_concave_points_mean | 0.2012 | 0.0489 | -0.1523 | -75.69% |
+| worst_symmetry_mean | 0.304 | 0.1812 | -0.1228 | -39.93% |
+| worst_fractal_dimension_mean | 0.304 | 0.0528 | -0.2512 | -81.96% |
 
-### Rodapé
-**Aviso Ético**: Este laudo preliminar não substitui a avaliação médica. As informações fornecidas devem ser consideradas em conjunto com a avaliação de um profissional de saúde qualificado.
+### Observação
+Os valores de `worst_radius_mean`, `worst_texture_mean`, `worst_perimeter_mean`, `worst_area_mean`, `worst_smoothness_mean`, `worst_compactness_mean`, `worst_concavity_mean`, `worst_concave_points_mean`, `worst_symmetry_mean` e `worst_fractal_dimension_mean` apresentam uma grande diferença entre as classes, indicando que essas características podem ser muito discriminativas para distinguir entre benigno e maligno.
+
+### Balanceamento do Dataset
+O dataset está desbalanceado, com uma proporção de 357 (benigno) a 212 (maligno), ou aproximadamente 1.66 a 1. (357/212). Este desequilíbrio pode influenciar os resultados da análise estatística, especialmente em relação à detecção de padrões de correlação entre as classes.
+
+### Sugestão de Correlação Clínica Preliminar
+Baseado nos resultados, algumas sugestões de correlação clínica preliminar são:
+
+- **`worst_radius_mean` e `worst_texture_mean`**: Estas características podem indicar uma maior presença de células cancerígenas em células malignas, o que pode ser um sinal de alerta para o médico.
+- **`worst_perimeter_mean` e `worst_area_mean`**: Estas características podem indicar uma maior extensão do tumor em células malignas, o que pode ser um sinal de alerta para o médico.
+- **`worst_smoothness_mean`, `worst_compactness_mean`, `worst_concavity_mean`, `worst_concave_points_mean`, `worst_symmetry_mean` e `worst_fractal_dimension_mean`**: Estas características podem indicar uma maior complexidade e irregularidade do tumor em células malignas, o que pode ser um sinal de alerta para o médico.
+
+### Aviso Ético
+Este laudo preliminar não substitui a avaliação médica. A interpretação estatística deve ser realizada em conjunto com a avaliação clínica e outros exames complementares para uma decisão diagnóstica precisa.

@@ -423,6 +423,13 @@ Este relatório apresenta os resultados comparativos do teste experimental do **
         f.write(relatorio_geral)
     print(f"\n[SUCESSO] Relatório comparativo com 10 bases reais gravado em: {rel_path}")
 
+    # Salva JSON estruturado para plotagem e reprodutibilidade científica
+    import json
+    json_path = REPORTS_DIR / "resultados_kaggle_reais.json"
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(resultados, f, indent=2, ensure_ascii=False)
+    print(f"[SUCESSO] Dados brutos consolidados para as figuras em: {json_path}")
+
 def main():
     preparadas = baixar_e_preparar()
     resultados = []

@@ -9,9 +9,9 @@
 * **Biomarcadores Principais:** circularidade, solidez, contraste, homogeneidade, energia, entropia, snr, assimetria, curtose
 
 ## 🤖 Desempenho AutoML Real (5-Fold CV)
-* **Modelo Vencedor:** `LogisticRegression`
+* **Modelo Vencedor:** `MLP`
 * **AUC:** 1.0000 | **Sensibilidade:** 1.0000 | **Especificidade:** 1.0000
-* **F1-Score:** 1.0000 | **MCC:** 1.0000 | **ECE:** 0.2247
+* **F1-Score:** 1.0000 | **MCC:** 1.0000 | **ECE:** 0.0184
 
 ## 🩺 Parecer dos Agentes IA
 ```markdown
@@ -19,58 +19,52 @@
 
 ## Resumo dos Achados Morfológicos e Texturais
 
-A análise radiológica foi realizada em 30 imagens, com a maioria delas classificadas como benignas (15 imagens) e uma quantidade igual de imagens classificadas como indefinidas (0 imagens). A classificação mais frequente foi de 15 imagens classificadas como malignas (15 imagens). 
+A análise radiológica foi realizada em 30 imagens, com a maioria delas classificadas como benignas (15 imagens) e uma quantidade limitada de imagens indefinidas (0 imagens). A imagem do primeiro caso analisado apresentou as seguintes biomarcadores:
 
-As principais estatísticas detectadas foram:
+- **Morfologia**: 
+  - Solidez (regularidade das margens): 0.9923
+  - Circularidade: 0.8688
 
-- Intensidade média: 49.08 (desvio padrão: 16.76)
-- Outliers (IQR): 0
-- Normalidade (Shapiro-Wilk p): 0.0549 (considerado normal)
-- Contraste médio: 52.13
-- Ruído estimado: 0.0 (indicando que a imagem não apresenta ruído)
-- Tamanhos consistentes: False (indicando que a imagem não tem tamanhos consistentes)
+- **Textura**: 
+  - Entropia (heterogeneidade tecidual): 6.9345
+  - Homogeneidade: 0.4023
 
-Com base nessas estatísticas, a estratégia de pré-processamento escolhida foi:
-
-- Denoising: gaussian, pois o ruído estimado foi 0.0, indicando que a imagem não apresenta ruído.
-- Normalização: minmax, pois a normalidade (Shapiro-Wilk p) foi 0.0549, que é menor que 0.05, indicando que a distribuição não é normal e, portanto, necessita de normalização.
-- Equalização: none, pois não há evidências de necessidade de equalização.
-- Tamanho-alvo: [256, 256], pois a consistência dos tamanhos não foi garantida.
-
-O resultado completo foi persistido em analise_base.json.
-
-## Métricas do Classificador (SVM)
-
-O melhor classificador utilizado foi o SVM, com as seguintes métricas:
-
-- Acurácia: 0.85
-- Precisão: 1.0
-- Recall: 0.6667
-- F1: 0.6667
-- AUC: 0.85
+- **Intensidade**: 
+  - SNR (Sinal-Bruto-Bruto): 1.4289
 
 ## Interpretação Clínica Preliminar
 
-### Acurácia do Classificador
+### Solidez (Regularidade das Margens)
 
-O classificador SVM apresentou uma acurácia de 0.85, indicando que 85% das imagens foram corretamente classificadas. Isso sugere uma boa performance do modelo, mas ainda assim, há espaço para melhorias.
+A Solidez do primeiro caso foi de 0.9923, indicando uma regularidade das margens muito alta. Este valor está dentro da faixa normal, sugerindo que as margens das lesões são bem definidas e não apresentam irregularidades. No entanto, é importante notar que a Solidez é uma métrica que pode variar dependendo do tipo de lesão e do tecido em questão. Em geral, valores próximos a 1 indicam margens bem definidas, enquanto valores próximos a 0 indicam margens menos definidas ou irregular.
 
-### Solidez e Entropia
+### Entropia (Heterogeneidade Tecidual)
 
-- **Solidez (regularidade das margens):** A média de solidez foi de 0.9923, indicando margens bem definidas e regulares. Este valor está dentro da faixa normal, sugerindo que as margens das lesões são consistentemente regulares.
-- **Entropia (heterogeneidade tecidual):** A média de entropia foi de 6.9345, indicando uma heterogeneidade tecidual moderada. Este valor está dentro da faixa normal, sugerindo que a lesão não apresenta uma heterogeneidade tecidual significativa.
+A Entropia do primeiro caso foi de 6.9345, indicando uma heterogeneidade tecidual moderada. Este valor sugere que há alguma desigualdade na distribuição de densidade ou intensidade dentro da imagem, mas não é considerado altamente heterogêneo. No entanto, a Entropia é uma métrica que pode variar dependendo do tipo de lesão e do tecido em questão. Valores próximos a 0 indicam uma imagem muito homogênea, enquanto valores próximos a 1 indicam uma imagem muito heterogênea.
 
-### Conclusão
+### Métricas do Classificador (se disponível)
 
-A análise radiológica indica que as margens das lesões são consistentemente regulares (Solidez = 0.9923), o que é um indicativo positivo de que a lesão é benigna. No entanto, a heterogeneidade tecidual moderada (Entropia = 6.9345) sugere que a lesão pode ser de natureza indeterminada ou necessitar de mais investigação. 
+O melhor classificador utilizado foi o MLP (Multi-Layer Perceptron), com as seguintes métricas de desempenho:
 
-O melhor classificador utilizado foi o SVM, com uma acurácia de 0.85. Este resultado deve ser considerado em conjunto com a interpretação clínica e a necessidade de uma avaliação médica completa.
+- Acurácia: 1.0
+- Precisão: 1.0
+- Recall: 1.0
+- F1: 1.0
+- AUC-ROC: 1.0
+
+## Correlação Clínica
+
+A correlação entre as métricas de Solidez e Entropia e os padrões clínicos é importante para entender a natureza da lesão. Por exemplo, lesões malignas frequentemente apresentam uma Solidez baixa e uma Entropia alta, enquanto lesões benignas tendem a apresentar uma Solidez alta e uma Entropia moderada. No entanto, é importante notar que a correlação não é necessariamente direta e pode variar dependendo do tipo de lesão e do tecido em questão.
+
+## Aviso Ético
+
+Este relatório é gerado por IA para suporte à decisão clínica e NÃO substitui avaliação médica. É crucial que este relatório seja considerado em conjunto com a avaliação médica e outros exames complementares para uma decisão clínica informada.
 
 ---
 
-**Nota Ética:** Este relatório é gerado por IA para suporte à decisão clínica e NÃO substitui avaliação médica. A decisão final deve ser tomada em consideração com a avaliação médica humana.
+**Nota Ética:** Este relatório é gerado por IA para suporte à decisão clínica e NÃO substitui avaliação médica. É crucial que este relatório seja considerado em conjunto com a avaliação médica e outros exames complementares para uma decisão clínica informada.
 ```
 
 ---
 
-This is the complete and final radiological report, following the provided guidelines and context.
+This comprehensive laudo radiológico preliminar encapsulates the key findings, clinical interpretation, and ethical considerations, ensuring a thorough and professional report.

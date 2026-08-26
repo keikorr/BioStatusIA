@@ -1,101 +1,64 @@
-% =====================================================================
-% SEÇÃO 3 — RESULTADOS E DISCUSSÕES
-% Estilo de Alto Rigor Acadêmico (Padrão IEEE / Gabriel Vidal Gaspar)
-% =====================================================================
-
-\section{Resultados e Discussões}
+\section{Results and Discussion}
 \label{sec:resultados}
 
-Esta seção apresenta a avaliação experimental empírica do pipeline BioStatusIA. O protocolo de testes submeteu o sistema a **30 bases de dados biomédicas de benchmark reais**, cobrindo exaustivamente todas as 5 famílias em escopo (F1 Sinais Temporais, F3 DICOM 2D, F4 Volume 3D, Tabular Clínico e Imagem Comum 2D).
-
-\subsection{Protocolo Experimental e Bases de Dados Reais}
-\label{subsec:protocolo_bases}
-
-As 30 bases de dados selecionadas incluem datasets consolidados na literatura médica mundial, tais como PTB-XL, MIT-BIH, NIH ChestXray14, CBIS-DDSM, RSNA Pneumonia, BraTS Brain MRI, LIDC-IDRI, Breast Cancer Wisconsin, BUSI e HAM10000. 
-
-A Tabela~\ref{tab:resultados_30_bases} consolida o desempenho quantitativo de ingestão, o modo estrutural atribuído, a dimensionalidade das features extraídas, os biomarcadores dominantes e as métricas de latência para a totalidade das 30 bases testadas.
+\subsection{Benchmark composition}
+To assess ingestion robustness and feature extraction consistency, the pipeline was evaluated on a benchmark comprising 30 authentic biomedical datasets. As summarized in Table \ref{tab:benchmark_30}, the benchmark includes six datasets for each of the five primary modalities in scope: temporal physiological signals (F1), two-dimensional DICOM studies (F3), three-dimensional volumetric scans (F4), tabular clinical records, and standard two-dimensional images.
 
 \begin{table*}[htbp]
-\caption{Resultados Empíricos do Benchmark Experimental em 30 Bases de Dados Biomédicas Reais}
-\begin{center}
-\scriptsize
-\begin{tabular}{|c|l|c|c|c|p{4.2cm}|c|c|}
-\hline
-\textbf{\#} & \textbf{Base de Dados} & \textbf{Família} & \textbf{Modo Detectado} & \textbf{Nº Feats} & \textbf{Principais Biomarcadores Extraídos} & \textbf{Latência Ingestão} & \textbf{Status Taxonomia} \\
-\hline
-01 & PTB-XL ECG & F1 & \texttt{sinal\_temporal} & 18 & FC\_bpm, RMSSD, SDNN, pNN50, PSD Bandas & 0.1 ms & Sucesso ($100\%$) \\
-02 & MIT-BIH Arrhythmia & F1 & \texttt{sinal\_temporal} & 18 & Variabilidade RR, RMSSD, Picos R & 1.1 ms & Sucesso ($100\%$) \\
-03 & CHB-MIT EEG & F1 & \texttt{sinal\_temporal} & 18 & Bandas $\alpha, \beta, \theta, \delta$, Potência Espectral & 1.6 ms & Sucesso ($100\%$) \\
-04 & EMG Physical Action & F1 & \texttt{tabular} & 18 & Envelope RMS, Skewness, Kurtosis & 0.0 ms & Atribuição Física \\
-05 & CAP Sleep PSG & F1 & \texttt{sinal\_temporal} & 18 & Densidade Espectral, Amplitude Peak-to-Peak & 0.1 ms & Sucesso ($100\%$) \\
-06 & Spirometry COPD & F1 & \texttt{tabular} & 18 & FVC, FEV1, FEV1/FVC Ratio, PEF & 0.0 ms & Atribuição Física \\
-\hline
-07 & NIH ChestXray14 & F3 & \texttt{imagem\_dicom\_2d} & 14 & HU Range, Densidade Alta ($HU>100$), Gradiente & 1.4 ms & Sucesso ($100\%$) \\
-08 & CBIS-DDSM Mammo & F3 & \texttt{imagem\_dicom\_2d} & 14 & HU Range, Contraste Tecidual, Gradiente Espacial & 0.0 ms & Sucesso ($100\%$) \\
-09 & CheXpert Chest & F3 & \texttt{imagem\_dicom\_2d} & 14 & Densidade Alta (\%), HU Média, Gradiente & 0.0 ms & Sucesso ($100\%$) \\
-10 & RSNA Pneumonia & F3 & \texttt{imagem\_dicom\_2d} & 14 & Opacidade Pulmonar (HU), Densidade Tecidual & 0.0 ms & Sucesso ($100\%$) \\
-11 & INbreast Mammo & F3 & \texttt{imagem\_dicom\_2d} & 14 & Microcalcificações (HU), Gradiente Espacial & 0.0 ms & Sucesso ($100\%$) \\
-12 & VinDr CXR & F3 & \texttt{imagem\_dicom\_2d} & 14 & Densidade Alta (\%), HU Média & 0.0 ms & Sucesso ($100\%$) \\
-\hline
-13 & BraTS Brain MRI 3D & F4 & \texttt{volume\_3d} & 22 & Volume Lesão ($mm^3$), Esfericidade 3D, GLCM 3D & 0.0 ms & Sucesso ($100\%$) \\
-14 & LIDC-IDRI Lung CT & F4 & \texttt{volume\_3d} & 22 & Volume Nódulo ($mm^3$), Esfericidade 3D, GLCM 3D & 0.1 ms & Sucesso ($100\%$) \\
-15 & LiTS Liver CT 3D & F4 & \texttt{volume\_3d} & 22 & Volume Tumoral ($mm^3$), Esfericidade 3D, GLCM 3D & 0.0 ms & Sucesso ($100\%$) \\
-16 & IXI Brain MRI 3D & F4 & \texttt{volume\_3d} & 22 & Volume Cerebral ($mm^3$), Esfericidade 3D, GLCM 3D & 1.0 ms & Sucesso ($100\%$) \\
-17 & OASIS3 PET 3D & F4 & \texttt{volume\_3d} & 22 & Volume ROI ($mm^3$), Esfericidade 3D, GLCM 3D & 0.0 ms & Sucesso ($100\%$) \\
-18 & ProstateX MRI 3D & F4 & \texttt{volume\_3d} & 22 & Volume Prostático ($mm^3$), Esfericidade 3D, GLCM & 0.0 ms & Sucesso ($100\%$) \\
-\hline
-19 & UCI Heart Disease & Tabular & \texttt{tabular} & 6 & age, sex, cp, trestbps, chol, thalach & 0.0 ms & Sucesso ($100\%$) \\
-20 & Breast Cancer Wisc & Tabular & \texttt{tabular} & 30 & Radius, Texture, Perimeter, Area, Smoothness & 0.0 ms & Sucesso ($100\%$) \\
-21 & PIMA Diabetes & Tabular & \texttt{tabular} & 6 & Glucose, BloodPressure, SkinThickness, Insulin & 0.1 ms & Sucesso ($100\%$) \\
-22 & Parkinsons Biomarkers& Tabular & \texttt{tabular} & 16 & Medidas Vocais (vocal\_0 a vocal\_15) & 0.0 ms & Sucesso ($100\%$) \\
-23 & Chronic Kidney & Tabular & \texttt{tabular} & 5 & bp, sg, al, bgr, hemo & 0.0 ms & Sucesso ($100\%$) \\
-24 & Stroke Prediction & Tabular & \texttt{tabular} & 5 & age, hypertension, heart\_disease, avg\_glucose & 0.7 ms & Sucesso ($100\%$) \\
-\hline
-25 & BUSI Breast US & Imagem2D & \texttt{dataset\_rotulado} & 12 & GLCM Entropia, Contraste, Solidez, Circularidade & 1.1 ms & Sucesso ($100\%$) \\
-26 & HAM10000 Dermato & Imagem2D & \texttt{dataset\_rotulado} & 12 & Entropia GLCM, Contraste, Solidez, Asimetria & 0.0 ms & Sucesso ($100\%$) \\
-27 & BreakHis Histo & Imagem2D & \texttt{dataset\_rotulado} & 12 & Textura GLCM (Entropia, Energia), Circularidade & 0.0 ms & Sucesso ($100\%$) \\
-28 & DRIVE Retinal & Imagem2D & \texttt{imagens\_soltas} & 12 & Textura GLCM, Solidez, Gradiente Espacial & 0.1 ms & Atribuição Física \\
-29 & BCCD Blood Cells & Imagem2D & \texttt{dataset\_rotulado} & 12 & Morfologia Celular, Entropia GLCM, Solidez & 0.0 ms & Sucesso ($100\%$) \\
-30 & COVID19 Radiography & Imagem2D & \texttt{dataset\_rotulado} & 12 & Opacidade Radiológica, Textura GLCM, Solidez & 0.0 ms & Sucesso ($100\%$) \\
-\hline
+\caption{Empirical Ingestion and Feature Extraction Benchmark Across 30 Authentic Biomedical Datasets}
+\label{tab:benchmark_30}
+\centering
+\begin{tabular}{@{}rlllc@{}}
+\toprule
+\textbf{\#} & \textbf{Dataset Name} & \textbf{Target Family} & \textbf{Detected Structural Mode} & \textbf{Feature Count} \\ \midrule
+01 & PTB\_XL\_ECG & F1 (Temporal) & \texttt{sinal\_temporal} & 18 \\
+02 & MIT\_BIH\_Arrhythmia & F1 (Temporal) & \texttt{sinal\_temporal} & 18 \\
+03 & CHB\_MIT\_EEG & F1 (Temporal) & \texttt{sinal\_temporal} & 18 \\
+04 & EMG\_Physical\_Action & F1 (Temporal) & \texttt{tabular} & 18 \\
+05 & CAP\_Sleep\_PSG & F1 (Temporal) & \texttt{sinal\_temporal} & 18 \\
+06 & Spirometry\_COPD & F1 (Temporal) & \texttt{tabular} & 18 \\ \midrule
+07 & NIH\_ChestXray14 & F3 (2D DICOM) & \texttt{imagem\_dicom\_2d} & 14 \\
+08 & CBIS\_DDSM\_Mammography & F3 (2D DICOM) & \texttt{imagem\_dicom\_2d} & 14 \\
+09 & CheXpert\_Chest & F3 (2D DICOM) & \texttt{imagem\_dicom\_2d} & 14 \\
+10 & RSNA\_Pneumonia & F3 (2D DICOM) & \texttt{imagem\_dicom\_2d} & 14 \\
+11 & INbreast\_Mammography & F3 (2D DICOM) & \texttt{imagem\_dicom\_2d} & 14 \\
+12 & VinDr\_CXR & F3 (2D DICOM) & \texttt{imagem\_dicom\_2d} & 14 \\ \midrule
+13 & BraTS\_Brain\_MRI\_3D & F4 (3D Volume) & \texttt{volume\_3d} & 22 \\
+14 & LIDC\_IDRI\_Lung\_CT\_3D & F4 (3D Volume) & \texttt{volume\_3d} & 22 \\
+15 & LiTS\_Liver\_CT\_3D & F4 (3D Volume) & \texttt{volume\_3d} & 22 \\
+16 & IXI\_Brain\_MRI\_3D & F4 (3D Volume) & \texttt{volume\_3d} & 22 \\
+17 & OASIS3\_Brain\_PET\_3D & F4 (3D Volume) & \texttt{volume\_3d} & 22 \\
+18 & ProstateX\_MRI\_3D & F4 (3D Volume) & \texttt{volume\_3d} & 22 \\ \midrule
+19 & UCI\_Heart\_Disease & Tabular & \texttt{tabular} & 6 \\
+20 & Breast\_Cancer\_Wisconsin & Tabular & \texttt{tabular} & 30 \\
+21 & PIMA\_Diabetes & Tabular & \texttt{tabular} & 6 \\
+22 & Parkinsons\_Biomarkers & Tabular & \texttt{tabular} & 16 \\
+23 & Chronic\_Kidney\_Disease & Tabular & \texttt{tabular} & 5 \\
+24 & Stroke\_Prediction & Tabular & \texttt{tabular} & 5 \\ \midrule
+25 & BUSI\_Breast\_Ultrasound & 2D Image & \texttt{dataset\_rotulado} & 12 \\
+26 & HAM10000\_Dermatology & 2D Image & \texttt{dataset\_rotulado} & 12 \\
+27 & BreakHis\_Histopathology & 2D Image & \texttt{dataset\_rotulado} & 12 \\
+28 & DRIVE\_Retinal\_Fundus & 2D Image & \texttt{imagens\_soltas} & 12 \\
+29 & BCCD\_Blood\_Cells & 2D Image & \texttt{dataset\_rotulado} & 12 \\
+30 & COVID19\_Radiography & 2D Image & \texttt{dataset\_rotulado} & 12 \\ \bottomrule
 \end{tabular}
-\label{tab:resultados_30_bases}
-\end{center}
 \end{table*}
 
-\subsection{Análise do Desempenho de Detecção Automática}
-\label{subsec:analise_deteccao}
+\subsection{Ingestion robustness and structural detection analysis}
+All 30 benchmark datasets were processed without encountering unhandled runtime exceptions. Across the evaluated modalities, the automatic detection engine accurately identified the physical organization of the incoming directories and archives.
 
-O algoritmo \texttt{detectar\_estrutura()} alcançou uma taxa de sucesso de $100\%$ no processamento sem exceções não tratadas em todas as 30 bases de dados de estresse.
+Regarding the detected operational modes, the structural detector operates strictly on the physical layout and file format of the input rather than on declared clinical semantics. This distinction is clearly illustrated in datasets 04 (\texttt{EMG\_Physical\_Action}) and 06 (\texttt{Spirometry\_COPD}); although both represent physiological signals (Family F1) from a clinical perspective, they are distributed as CSV matrices. Consequently, the detector classified them as \texttt{tabular} at the ingestion stage, successfully passing the numerical tables to the feature extraction modules.
 
-Uma análise aprofundada revelou divergências informativas entre a semântica declarada e o modo físico detectado em 3 bases específicas:
-\begin{enumerate}
-    \item \textbf{Bases 04 (EMG) e 06 (Espirometria):} Embora sejam sinais temporais (F1) sob a ótica clínica, estes datasets foram distribuídos originalmente na forma de tabelas de amplitudes em arquivos \texttt{.csv}. O classificador determinístico atribuiu corretamente o modo físico \texttt{tabular}.
-    \item \textbf{Base 28 (DRIVE Retinal):} Devido à ausência de subpastas nomeadas por classe no repositório de origem, a base foi classificada como \texttt{imagens\_soltas} em vez de \texttt{dataset\_rotulado}.
-\end{enumerate}
+Similarly, dataset 28 (\texttt{DRIVE\_Retinal\_Fundus}) was classified as \texttt{imagens\_soltas} rather than \texttt{dataset\_rotulado} because the source archive contains images in a flat folder hierarchy without subdirectories designated for binary classes. The pipeline processed the flat structure correctly, verifying that lack of directory categorization does not cause pipeline failure.
 
-Essa constatação comprova uma propriedade fundamental da arquitetura: **a detecção opera estritamente sobre a organização física do dado, e não sobre a semântica clínica declarada pelo usuário**.
-
-\subsection{Constância Dimensional e Cobertura de Features por Família}
-\label{subsec:constancia_dimensional}
-
-Um dos principais achados deste trabalho é a **constância dimensional invariante por família biomédica**. Como demonstrado na Tabela~\ref{tab:resultados_30_bases}:
+\subsection{Feature coverage and dimensional consistency}
+A critical empirical finding is that the dimensionality of the generated feature vector is constant within each signal family across heterogeneous sources:
 \begin{itemize}
-    \item **Sinais Temporais (F1):** Produzem exatamente **18 features** numéricas em todas as bases processadas via leitor F1.
-    \item **DICOM 2D (F3):** Produzem exatamente **14 features** radiológicas por instância.
-    \item **Volume 3D (F4):** Produzem exatamente **22 features** radiômicas tridimensionais.
-    \item **Imagem Comum 2D:** Produzem exatamente **12 features** de textura e morfologia.
+    \item \textbf{Temporal signals (F1):} Yielded exactly 18 descriptors across all six benchmark datasets, encompassing statistical moments, RMS amplitude, frequency-band power distributions, and HRV indices.
+    \item \textbf{2D DICOM studies (F3):} Produced 14 descriptors across all six radiological cohorts, combining GLCM textural parameters, morphological geometry, and DICOM-specific metadata attributes.
+    \item \textbf{3D volumetric scans (F4):} Generated 22 descriptors across all six MRI, CT, and PET datasets, integrating 3D GLCM texture matrices, volumetric sphericity, and spatial intensity histograms.
+    \item \textbf{Plain 2D images:} Consistently produced 12 descriptors covering 2D GLCM textures, edge density, and shape solidity.
+    \item \textbf{Tabular cohorts:} Feature dimensionality ranged from 5 to 30 variables, reflecting the intrinsic schema of each clinical registry.
 \end{itemize}
 
-O vetor tabular varia ($5$ a $30$ features) por depender diretamente da cardinalidade de atributos da tabela original. A constância dimensional por família comprova que a representação intermediária gerada pelo contrato \texttt{SinalNormalizado} é invariante à base de dados específica, sendo função direta da **família biomédica**.
-
-\subsection{Estrutura de Gráficos e Desempenho de Latência}
-\label{subsec:estrutura_graficos}
-
-Para visualização dos resultados de latência e robustez, recomendam-se dois gráficos estruturados:
-\begin{enumerate}
-    \item \textbf{Gráfico de Barras de Latência Média por Família (Figura 2):} Demonstra que a ingestão de sinais F1 e dados DICOM 2D/Tabulares ocorre na escala sub-milissegunda ($0.0 \text{ ms} - 1.6 \text{ ms}$ por amostra), enquanto a reconstrução volumétrica 3D (F4) consome a maior parcela do tempo de CPU devido ao cálculo de GLCM tridirecional.
-    \item \textbf{Gráfico de Pizza de Distribuição de Modos Detectados (Figura 3):} Ilustra a cobertura proporcional dos 9 modos estruturais ao longo do benchmark experimental.
-\end{enumerate}
-
-Os testes em bases secundárias confirmaram que a arquitetura BioStatusIA mantém alta estabilidade e tempo de resposta predizível, tornando-se viável para integração em sistemas clínicos reais de tempo de execução restrito.
+This structural invariance supports the validity of the unified data contract (\texttt{SinalNormalizado}); by mapping heterogeneous inputs into family-specific representations, the system ensures that downstream machine learning models receive consistent input dimensions regardless of the original file format.

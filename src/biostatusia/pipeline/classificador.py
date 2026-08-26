@@ -36,6 +36,7 @@ def _ece(y_true: np.ndarray, y_prob: np.ndarray, n_bins: int = 10) -> float:
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.svm import SVC
+from biostatusia.pipeline.avaliacao_modelos import calcular_score_clinico
 
 MODEL_DIR = Path(__file__).parent.parent.parent.parent / "models"
 
@@ -134,16 +135,24 @@ def treinar_vetores(X: np.ndarray, y: np.ndarray, scaling: str = "standard",
             "latencia_inferencia_ms": latencia_ms,
             "tempo_treino_s": round(t_treino, 3),
         }
-        resultado["roc_data"][nome] = {"fpr": fpr.tolist(), "tpr": tpr.tolist()}
-        resultado["confusion_matrix"][nome] = cm.tolist()
+        score_clin = calcular_score_clinico(resultado["metricas"][nome])
+        resultado["metricas"][nome]["score_clinico"] = round(float(score_clin), 4)
 
         with open(MODEL_DIR / f"modelo_{nome.lower()}.pkl", "wb") as f:
             pickle.dump({"modelo": modelo, "scaler": scaler}, f)
 
-    melhor = max(
-        resultado["metricas"], key=lambda k: resultado["metricas"][k]["auc"]
+    # Seleção Convencional vs Seleção Multiobjetivo Clínica
+    melhor_convencional = max(
+        resultado["metricas"], key=lambda k: (resultado["metricas"][k]["auc"], resultado["metricas"][k]["acuracia"])
     )
+    melhor_clinico = max(
+        resultado["metricas"], key=lambda k: resultado["metricas"][k]["score_clinico"]
+    )
+    melhor = melhor_clinico
     resultado["melhor_modelo"] = melhor
+    resultado["melhor_modelo_clinico"] = melhor_clinico
+    resultado["melhor_modelo_convencional"] = melhor_convencional
+    resultado["selecao_divergente"] = (melhor_clinico != melhor_convencional)
 
     # Persistir o vencedor do pódio para inferência individual (Aba 4 / Laudo Individual).
     try:

@@ -1,86 +1,23 @@
-% =====================================================================
-% SECTION 1 — INTRODUCTION AND RELATED WORK
-% Integrated Scope: Introduction, Literature Review, Contributions, Scope Boundary
-% IEEE Style — BioStatusIA Paper A
-% =====================================================================
-
-\section{Introduction and Related Work}
+\section{Introduction}
 \label{sec:introducao}
 
-Clinical Decision Support Systems (CDSS) are increasingly required to operate over heterogeneous biomedical data generated across healthcare institutions, ranging from physiological bedside recordings to volumetric imaging acquisitions and structured electronic health records \cite{albuquerque2020iomt}. However, existing research primarily focuses on downstream modeling—comparing machine learning algorithms or neural architectures—while ignoring the crucial ingestion and feature engineering phase that precedes classification \cite{holanda2021multimodal}. Before any model can execute inference, raw biomedical files must be recognized, validated, cleaned, and transformed into standardized numerical representations. Any design rigidities introduced at this early stage constrain the versatility and scalability of the entire clinical pipeline \cite{polyzotis2018data}.
+Clinical Decision Support Systems (CDSS) are increasingly incorporated into healthcare environments to assist medical practitioners in patient triage, diagnostic evaluation, and therapeutic planning \cite{albuquerque2020iomt, reboucas2019landmark, holanda2021multimodal}. In clinical practice, patient data are inherently multimodal, encompassing one-dimensional electrophysiological recordings (such as electrocardiography and electroencephalography), two-dimensional radiographic projections (DICOM X-rays and mammographies), three-dimensional volumetric acquisitions (computed tomography and magnetic resonance imaging), and tabular electronic health records. Despite this clinical heterogeneity, conventional diagnostic software pipelines remain predominantly mono-modal; each pipeline is constructed specifically for a single data type, requiring custom input parsing, bespoke feature extraction routines, and dedicated preprocessing steps \cite{polyzotis2018data, holanda2021multimodal}.
 
-\subsection{Context and Problem Statement}
-\label{subsec:contexto}
+When a clinical institution seeks to process multiple diagnostic modalities, this mono-modal design incurs recurring engineering costs. Ingestion logic must be rewritten for each new data source, and feature extraction modules remain tightly coupled to specific file formats and proprietary data containers. Furthermore, variations in physical storage formats (such as raw binary files, hierarchical DICOM trees, NIfTI archives, or delimited text files) necessitate manual configuration by domain experts before any automated analysis can proceed \cite{albuquerque2021covid, albuquerque2018ecg}.
 
-In practical deployment, biomedical ingestion pipelines remain overwhelmingly mono-modal. Feature extraction modules are hand-crafted for a single data modality—such as electrocardiography (ECG), chest radiography, or tabular clinical registries—requiring custom parsing, per-modality preprocessing, and distinct feature descriptors \cite{albuquerque2021covid}. Consequently, when an institution acquires multi-modal patient data spanning physiological signals, two-dimensional DICOM instances, three-dimensional volumes, and tabular registries, it pays a recurring software engineering cost per data family, obtaining disjoint feature spaces with no shared intermediate contract.
+To address these architectural limitations, there is a clear need for an ingestion and feature-engineering framework that can automatically infer the structural organization of arbitrary biomedical inputs, decouple file reading from feature computation, and map diverse modalities into a unified data representation \cite{polyzotis2018data}.
 
-Furthermore, supporting a new modality typically requires modifying core pipeline control flow rather than updating a configuration contract. This structural limitation stems from conflating the \emph{clinical semantics} of a recording with its \emph{physical encoding} \cite{reboucas2019landmark}. For instance, a 12-lead ECG is semantically a temporal signal, yet physically it may be stored as a WFDB record, a European Data Format (EDF) container, or a comma-separated CSV file.
+This paper presents the ingestion and multi-domain feature engineering stage of the BioStatusIA system. The proposed pipeline automatically detects the physical structure of raw input files or directories across nine predefined operational modes, validates input integrity via formal data schemas, normalizes each input into a single data contract (\texttt{SinalNormalizado}), and extracts standardized multi-domain feature vectors without requiring manual intervention.
 
-To resolve this limitation, this work addresses the ingestion and representation stage, asking the primary research question:
-\begin{quote}
-\emph{How can a biomedical pipeline automatically infer the physical structure of arbitrary input data and adapt reading, validation, preprocessing, and multi-domain feature extraction without manual pipeline re-engineering or modality branching leaking into downstream extractors?}
-\end{quote}
-
-\subsection{Related Work and Literature Background}
-\label{subsec:related_work}
-
-Extensive literature has addressed domain-specific feature extraction across individual biomedical modalities. In medical image analysis, Radiomics has emerged as a standard paradigm to quantify tissue heterogeneity and morphology through handcrafted descriptors \cite{lambin2012radiomics}. Standardized systems, such as PyRadiomics \cite{vanGriethuysen2017pyradiomics}, systematically extract second-order textural features using Gray-Level Co-occurrence Matrices (GLCM) \cite{haralick1973glcm}, alongside shape and intensity metrics. However, these toolkits assume that image modal types and regions of interest are pre-specified, addressing the stage \emph{after} modality ingestion.
-
-In physiological signal processing, standardized toolkits such as PhysioNet/WFDB \cite{goldberger2000physionet} enable robust extraction of time-domain, spectral, and non-linear dynamics. Heart Rate Variability (HRV) metrics derived from ECG interbeat intervals \cite{taskforce1996hrv}, alongside electroencephalographic (EEG) spectral power bands and electromyographic (EMG) root-mean-square envelopes, provide well-established diagnostic biomarkers. Nonetheless, physiological signal frameworks operate in isolation from imaging and tabular infrastructure.
-
-Recent advancements by Albuquerque et al. \cite{albuquerque2020iomt, holanda2021multimodal} have highlighted the necessity of unified Internet of Medical Things (IoMT) architectures for intelligent healthcare decision support. Their work demonstrated automated pattern recognition and multi-modal diagnostic frameworks in smart healthcare systems \cite{reboucas2019landmark}, emphasizing that automated feature extraction is vital for real-time clinical workflows \cite{albuquerque2021covid}. Building upon these foundations, our work introduces a modality-agnostic ingestion engine that unifies physiological signals, DICOM 2D, 3D volumes, non-DICOM images, and tabular data into a common data contract.
-
-\subsection{Objectives}
-\label{subsec:objetivos}
-
-The general objective of this study is to design, implement, and empirically evaluate a modality-agnostic ingestion and multi-domain feature extraction pipeline (BioStatusIA) that automatically detects input structure, validates schemas, normalizes data into a single contract, and produces a classifier-ready feature vector.
-
-The specific objectives are:
-\begin{itemize}
-    \item Formalize a deterministic input structure detection engine covering nine input modes, coupled with schema validation before processing.
-    \item Define a unified data contract (\texttt{SinalNormalizado}) that decouples family-specific readers from extractors across five biomedical data families (Table~\ref{tab:familias}).
-    \item Implement an adaptive preprocessing module that executes data-driven operations with automated machine-generated rationales.
-    \item Evaluate ingestion robustness, feature coverage, and dimensional consistency across thirty real-world biomedical benchmark datasets.
-\end{itemize}
-
-\begin{table}[htbp]
-\caption{Biomedical Data Families Within Scope and Associated Readers}
-\begin{center}
-\footnotesize
-\begin{tabular}{|c|p{3.2cm}|p{2.6cm}|}
-\hline
-\textbf{Family} & \textbf{Data Types / Semantics} & \textbf{Reference Readers} \\
-\hline
-F1 & ECG, EEG, EMG, PPG, Spirometry & \texttt{mne}, \texttt{wfdb}, \texttt{scipy} \\
-\hline
-F3 & DICOM 2D (Radiography, Mammography) & \texttt{pydicom} \\
-\hline
-F4 & 3D Volumes (CT, MRI, PET/SPECT) & \texttt{nibabel}, \texttt{SimpleITK} \\
-\hline
-Tabular & Structured Clinical Registries & Custom Schema Parser \\
-\hline
-Image 2D & Raster Images (PNG, JPEG, TIFF) & \texttt{OpenCV}, \texttt{scikit-image} \\
-\hline
-\end{tabular}
-\label{tab:familias}
-\end{center}
-\end{table}
-
-\subsection{Main Contributions}
-\label{subsec:contribuicoes}
-
-The main contributions of this paper are summarized as follows:
+The specific objectives of this work are defined as follows:
 \begin{enumerate}
-    \item \textbf{Deterministic 9-Mode Structure Detection:} A rule-based classification algorithm that infers file/folder organization across nine structural modes without user annotation.
-    \item \textbf{Unified Data Contract (\texttt{SinalNormalizado}):} A single intermediate data structure that decouples readers from feature extractors, ensuring architectural modularity.
-    \item \textbf{Data-Driven Adaptive Preprocessing:} A dynamic preprocessing module that selects operations based on quantitative metrics, appending human-auditable justifications.
-    \item \textbf{Multi-Domain Feature Convergence:} Harmonized extraction of time, frequency, GLCM texture, 3D radiomics, and tabular descriptors into a standardized feature vector.
-    \item \textbf{Empirical Multi-Dataset Benchmark:} Robustness evaluation across 30 real-world biomedical datasets, validating $100\%$ ingestion success and dimensional stability.
+    \item Formalize an automatic input-structure detection mechanism that categorizes arbitrary inputs into nine structural modes and validates them against schema definitions (SO-1).
+    \item Define a unified data contract (\texttt{SinalNormalizado}) that decouples family-specific data readers from feature extractors across temporal signals, 2D DICOM images, 3D volumetric scans, plain images, and tabular cohorts (SO-2).
+    \item Specify an adaptive preprocessing stage whose filtering and normalization strategies are selected dynamically based on measurable properties of the input data (SO-3).
+    \item Characterize the multi-domain feature sets produced across data families, including temporal descriptors, spectral estimates, Gray-Level Co-occurrence Matrix (GLCM) texture metrics, morphological attributes, and 3D volumetric radiomics (SO-4).
+    \item Empirically evaluate the ingestion robustness and dimensional consistency of the pipeline across 30 authentic biomedical benchmark datasets spanning all supported data families (SO-5).
 \end{enumerate}
 
-\subsection{Scope Boundary and Article Structure}
-\label{subsec:escopo_organizacao}
+Regarding the scope of this investigation, the boundary of this paper concludes at the consolidation of the classifier-ready feature vector. Downstream classifier training, hyperparameter optimization, probabilistic calibration, and automated clinical reporting belong to the modeling stage (Paper B) and are excluded from the empirical analysis presented herein.
 
-This work strictly terminates at the generation of the unified feature vector. Downstream classifier training, AutoML model selection, probability calibration, and automated report generation belong to a companion study (Paper B).
-
-The remainder of this paper is organized as follows: Section~\ref{sec:metodologia} details the proposed system architecture and feature extraction pipeline; Section~\ref{sec:resultados} presents the experimental setup, case studies, and empirical benchmark results; Section~\ref{sec:desafios} discusses technological limitations and computational bottlenecks; and Section~\ref{sec:conclusao} concludes the paper and outlines future directions.
+The remainder of this paper is organized as follows: Section \ref{sec:metodologia} describes the pipeline architecture, input detection criteria, unified data contract, and mathematical formulations of the extracted features; Section \ref{sec:resultados} reports the experimental benchmark across 30 authentic datasets and discusses structural detection behaviors; and Section \ref{sec:conclusao} summarizes our findings, outlines system limitations, and suggests directions for future research.

@@ -242,22 +242,32 @@ def avaliar_modelos(X: np.ndarray, y: np.ndarray, familia: str = "",
             "latencia_inferencia_ms": latencia_ms,
             "tempo_treino_s": round(t_treino, 3),
         }
+        # Score clínico multiobjetivo para o modelo
+        score_clin = calcular_score_clinico(resultado["metricas"][nome])
+        resultado["metricas"][nome]["score_clinico"] = round(float(score_clin), 4)
         resultado["roc_data"][nome] = {"fpr": fpr.tolist(), "tpr": tpr.tolist()}
         resultado["confusion_matrix"][nome] = cm.tolist()
 
-    # ── T3 — Critério clínico: maior AUC ENTRE modelos com sensibilidade
-    #    >= 0.8 (minimiza falso-negativo). Sem piso atingido, cai para maior AUC.
-    candidatos = {
-        n: m for n, m in resultado["metricas"].items()
-        if m["sensibilidade"] >= 0.8
-    }
-    melhor = max(candidatos, key=lambda k: candidatos[k]["auc"]) if candidatos else max(
-        resultado["metricas"], key=lambda k: resultado["metricas"][k]["auc"]
+    # ── Seleção Convencional (Critério Clássico: Maior Acurácia / AUC Bruta) ────
+    melhor_convencional = max(
+        resultado["metricas"], key=lambda k: (resultado["metricas"][k]["auc"], resultado["metricas"][k]["acuracia"])
     )
+
+    # ── Seleção BioStatusIA: Função de Otimização Multiobjetivo Clinicamente Orientada ──
+    # Combina AUROC (0.40) + MCC (0.40) - ECE (0.20) com penalização severa se Sensibilidade < S_min (0.80)
+    melhor_clinico = max(
+        resultado["metricas"], key=lambda k: resultado["metricas"][k]["score_clinico"]
+    )
+
+    melhor = melhor_clinico
     resultado["melhor_modelo"] = melhor
+    resultado["melhor_modelo_clinico"] = melhor_clinico
+    resultado["melhor_modelo_convencional"] = melhor_convencional
+    resultado["selecao_divergente"] = (melhor_clinico != melhor_convencional)
     resultado["criterio_selecao"] = (
-        "maior AUC com sensibilidade>=0.8"
-        if candidatos else "maior AUC (nenhum modelo atingiu sensibilidade>=0.8)"
+        f"Multiobjetivo Clínico [Score={resultado['metricas'][melhor]['score_clinico']:.4f} | "
+        f"AUROC={resultado['metricas'][melhor]['auc']:.2f}, MCC={resultado['metricas'][melhor]['mcc']:.2f}, "
+        f"ECE={resultado['metricas'][melhor]['ece']:.3f}, Sens={resultado['metricas'][melhor]['sensibilidade']:.2f}]"
     )
 
     # ── Interpretabilidade SHAP para o modelo vencedor ────────────────────
@@ -286,6 +296,35 @@ def avaliar_modelos(X: np.ndarray, y: np.ndarray, familia: str = "",
         )
 
     return resultado
+
+
+def calcular_score_clinico(metricas: dict, s_min: float = 0.80,
+                           w_auc: float = 0.40, w_mcc: float = 0.40,
+                           w_ece: float = 0.20, penalty_lambda: float = 1.0) -> float:
+    """
+    Função de Seleção AutoML Clinicamente Orientada (BioStatusIA).
+    Equilibra capacidade discriminatória (AUROC), robustez contra desbalanceamento (MCC)
+    e confiabilidade probabilística (ECE), aplicando penalidade para modelos que falham
+    no piso de sensibilidade clínica exigido para triagem / screening (S_min).
+    """
+    auc = metricas.get("auc", 0.0)
+    mcc = metricas.get("mcc", 0.0)
+    ece = metricas.get("ece", 0.0)
+    sens = metricas.get("sensibilidade", 0.0)
+
+    # Normaliza MCC de [-1, 1] para [0, 1]
+    mcc_norm = max(0.0, (mcc + 1.0) / 2.0)
+    # ECE é penalizado (menor é melhor)
+    ece_penalty = min(1.0, max(0.0, ece))
+
+    # Score base multiobjetivo
+    score_base = (w_auc * auc) + (w_mcc * mcc_norm) - (w_ece * ece_penalty)
+
+    # Penalidade por déficit de sensibilidade mínima
+    deficit_sens = max(0.0, s_min - sens)
+    penalidade = penalty_lambda * (deficit_sens ** 1.5)
+
+    return float(score_base - penalidade)
 
 
 def _ic95(valores: list[float]) -> list[float]:

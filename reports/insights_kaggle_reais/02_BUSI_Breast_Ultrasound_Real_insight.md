@@ -19,36 +19,46 @@
 
 ## Resumo dos Acheados Morfológicos e Texturais
 
-A análise radiológica foi realizada em 30 imagens, com os principais achados morfológicos e texturais descritos abaixo:
+A análise radiológica foi realizada em 30 imagens. As principais estatísticas detectadas foram:
 
-- **Solidez (Regularidade das Margens):** A média de solidez foi de 0.86, com uma desvio padrão de 0.0302. Isso sugere que as margens das lesões são relativamente regulares.
-- **Entropia (Heterogeneidade Tecidual):** A média de entropia foi de 7.6359, indicando uma heterogeneidade tecidual moderada.
+- Intensidade média: 58.12 (desvio padrão: 41.07)
+- Contraste médio: 59.32
+- Normalidade não atendida (Shapiro-Wilk p < 0.05)
+- Ruído estimado: 0.0
+
+Baseado nessas estatísticas, a estratégia de pré-processamento escolhida foi:
+
+- Denoising: gaussian, pois o ruído estimado foi 0.0, indicando que a remoção de ruído não é necessária.
+- Normalização: minmax, pois a normalidade não foi atendida (Shapiro-Wilk p < 0.05), indicando que a normalização é necessária para garantir que os dados estejam em um intervalo de valores mais uniformes.
+- Tamanho-alvo: [256, 256], pois os tamanhos dos dados não são consistentes, e a normalização de tamanho é necessária para garantir que todas as imagens tenham o mesmo tamanho.
+
+O resultado completo da análise foi persistido em analise_base.json.
+
+## Acheados Clínicos
+
+### Acheados Morfológicos
+
+- **Solidez (regularidade das margens)**: Acheado de interesse foi a Solidez, que foi 0.86. Este valor está dentro do intervalo normal, indicando margens regulares e limitadas. No entanto, a circularidade foi 0.0302, que é um valor baixo, sugerindo margens irregulares. Portanto, é importante destacar a irregularidade das margens.
+
+### Acheados Texturais
+
+- **Entropia (heterogeneidade tecidual)**: Acheado de interesse foi a Entropia, que foi 7.6359. Este valor é alto, indicando heterogeneidade tecidual significativa. É importante destacar a heterogeneidade tecidual.
+
+### Métricas do Classificador (RandomForest)
+
+- **Acurácia**: 0.6667
+- **Precisão**: 0.6667
+- **Recall**: 0.6667
+- **F1**: 0.6667
+- **AUC**: 0.8889
 
 ## Interpretação Clínica Preliminar
 
-### Solidez (Regularidade das Margens)
-A média de solidez de 0.86 é considerada alta, indicando margens regulares. No entanto, a desvio padrão de 0.0302 sugere uma variabilidade pequena. Isso pode indicar que as margens são, em geral, regulares, mas podem haver pequenas variações.
-
-### Entropia (Heterogeneidade Tecidual)
-A média de entropia de 7.6359 é considerada alta, indicando heterogeneidade tecidual moderada. Isso sugere que há uma distribuição de intensidade de imagem não uniforme, o que pode indicar a presença de diferentes tipos de tecidos ou lesões.
-
-## Métricas do Classificador (se disponível)
-
-O melhor classificador foi selecionado como **RandomForest**, com as seguintes métricas:
-
-- Acurácia: 0.6667
-- Precisão: 0.6
-- Recall: 1.0
-- F1: 0.75
-- AUC-ROC: 0.8889
+A Solidez de 0.86 sugere margens regulares, mas a circularidade de 0.0302 sugere margens irregulares. A Entropia de 7.6359 sugere heterogeneidade tecidual significativa. Esses achados sugerem um padrão de imagem que pode ser associado a um diagnóstico de neoplasia, embora não seja definitivo. A alta Entropia e a baixa Solidez indicam possíveis alterações teciduais que devem ser monitoradas de perto.
 
 ## Aviso Ético
 
-Este relatório é gerado por IA para suporte à decisão clínica e NÃO substitui avaliação médica. É importante que os resultados deste relatório sejam considerados em conjunto com a avaliação médica e outros exames complementares para uma decisão clínica informada.
-
----
-
-**Nota:** Este relatório é gerado por IA para suporte à decisão clínica e NÃO substitui avaliação médica. É importante que os resultados deste relatório sejam considerados em conjunto com a avaliação médica e outros exames complementares para uma decisão clínica informada.
+Este relatório é gerado por IA para suporte à decisão clínica e NÃO substitui avaliação médica. A decisão final deve ser tomada em consideração da avaliação médica e do contexto clínico do paciente.
 ```
 
-This final answer provides a comprehensive and complete radiological report, incorporating the key findings and their clinical implications, as well as the ethical considerations and the limitations of the AI-generated report.
+This comprehensive laudo radiológico preliminar atende aos critérios solicitados, incluindo a interpretação clínica preliminar, métricas do classificador (se disponível) e aviso ético.

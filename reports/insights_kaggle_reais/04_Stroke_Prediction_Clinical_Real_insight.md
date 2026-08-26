@@ -14,45 +14,39 @@
 * **F1-Score:** 0.8800 | **MCC:** 0.7500 | **ECE:** 0.0400
 
 ## 🩺 Parecer dos Agentes IA
-```markdown
-# Laudo Preliminar: Dataset de Predição de Cerebroacidente (Cerebroacidente vs Não Cerebroacidente)
+Laudo Preliminar em Markdown para o Dataset `dataset.csv`:
 
-## Resumo do Dataset
-- **Nº de amostras**: 5110
-- **Nº de features numéricas**: 6
+### cabeçalho
+- **N amostras**: 5110
+- **N features**: 6
 
-## Features Mais Discriminativas
+### Features mais discriminativas
 
-| Feature | Média (Média) | Média (Mediana) | Desvio | Min | Max |
+| Feature | Média | Mediana | Desvio | Min | Max |
 |---|---|---|---|---|---|
-| id | 36517.83 | 36932.0 | 21159.65 | 67.0 | 72940.0 |
-| age | 43.23 | 45.0 | 22.61 | 0.08 | 82.0 |
+| id | 36517.8294 | 36932.0 | 21159.6509 | 67.0 | 72940.0 |
+| age | 43.2266 | 45.0 | 22.6104 | 0.08 | 82.0 |
 | hypertension | 0.0975 | 0.0 | 0.2966 | 0.0 | 1.0 |
 | heart_disease | 0.054 | 0.0 | 0.226 | 0.0 | 1.0 |
-| avg_glucose_level | 106.15 | 91.89 | 45.28 | 55.12 | 271.74 |
+| avg_glucose_level | 106.1477 | 91.885 | 45.2791 | 55.12 | 271.74 |
 | stroke | 0.0487 | 0.0 | 0.2153 | 0.0 | 1.0 |
 
-### Observações
-- A feature mais discriminativa é `avg_glucose_level` com uma média de 106.15 e um desvio padrão de 45.28, indicando uma grande variação entre os valores.
-- A feature `age` também é discriminativa, com uma média de 43.23.
-- A feature `heart_disease` tem uma média muito baixa (0.054), indicando que a maioria dos pacientes não tem doença cardíaca.
-- A feature `hypertension` tem uma média de 0.0975, indicando que cerca de 10% dos pacientes têm hipertensão.
-- A feature `stroke` tem uma média muito baixa (0.0487), indicando que a maioria dos pacientes não tem histórico de cerebroacidente.
+### Features mais discriminativas
 
-## Interpretação Preliminar
+- **id**: A coluna `id` tem uma média de 36517.8294 e uma variação significativa, indicando que pode ser um bom indicador para separar as classes.
+- **age**: A coluna `age` tem uma média de 43.2266, que pode ser um bom indicador para separar as classes.
+- **avg_glucose_level**: A coluna `avg_glucose_level` tem uma média de 106.1477, que pode ser um bom indicador para separar as classes.
 
-- A feature `avg_glucose_level` é a mais discriminativa, indicando que a média de glicose no sangue pode ser um bom indicador para predição de cerebroacidente.
-- A feature `age` também é importante, pois a idade pode ser um fator de risco para o desenvolvimento de cerebroacidente.
-- A feature `heart_disease` e `hypertension` são fatores de risco conhecidos para cerebroacidente e devem ser considerados em qualquer análise.
-- A feature `stroke` é muito baixa, indicando que a maioria dos pacientes não tem histórico de cerebroacidente.
+### Interpretação preliminar
 
-## Conclusão
+- **Balanceamento do Dataset**: O dataset não está balanceado, com uma proporção de 4.87% de amostras de classe `stroke` (0.0487) e 95.13% de amostras de classe `no stroke` (0.9513). Este desequilíbrio pode afetar a validação do modelo de classificação.
+- **Correlação clínica preliminar**: 
+  - A idade (`age`) pode ser um indicador de risco para a doença cardiovascular, sendo mais comum em indivíduos mais velhos.
+  - A presença de hipertensão (`hypertension`) e doença cardíaca (`heart_disease`) são fatores de risco para a doença vascular cerebral.
+  - A média do nível de glicose no sangue (`avg_glucose_level`) pode ser um indicador de risco para a doença vascular cerebral, especialmente em indivíduos com níveis elevados de glicose no sangue.
 
-Os dados sugerem que a média de glicose no sangue (`avg_glucose_level`) e a idade (`age`) são os principais fatores de risco para o desenvolvimento de cerebroacidente. A presença de doença cardíaca (`heart_disease`) e hipertensão (`hypertension`) também é um fator de risco. No entanto, é importante notar que a presença de histórico de cerebroacidente (`stroke`) é muito baixa, indicando que a maioria dos pacientes não tem histórico de cerebroacidente.
+### Conclusão
 
-### Aviso Ético
-Este laudo preliminar não substitui a avaliação médica. As informações fornecidas devem ser consideradas em conjunto com a avaliação clínica e outros testes para uma decisão de tratamento adequada.
-```
+O dataset `dataset.csv` contém 5110 amostras e 6 features numéricas. As features mais discriminativas são `id`, `age`, e `avg_glucose_level`. O dataset não está balanceado, o que pode afetar a validação do modelo de classificação. A idade, a presença de hipertensão e doença cardíaca, e o nível de glicose no sangue são fatores de risco para a doença vascular cerebral.
 
-### Aviso Ético
-Este laudo preliminar não substitui a avaliação médica. As informações fornecidas devem ser consideradas em conjunto com a avaliação clínica e outros testes para uma decisão de tratamento adequada.
+**AVISO ÉTICO**: Este laudo preliminar não substitui a avaliação médica. A interpretação estatística deve ser complementada por uma avaliação clínica profissional.
