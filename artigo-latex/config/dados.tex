@@ -1,0 +1,82 @@
+% --- PAPER METADATA ---
+% Paper A — Input-to-Features. Scope boundary: this paper ends at the feature vector.
+% Modeling, model selection and AI-generated reporting belong to the companion paper (Paper B).
+
+\title{A Modality-Agnostic Ingestion and Multi-Domain Feature Engineering Pipeline for Heterogeneous Biomedical Data}
+
+\author{
+\IEEEauthorblockN{%
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+1\textsuperscript{st}Kaio Emanuel Lima de Matos
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+2\textsuperscript{nd}Francisco Soares da Silva J{\'u}nior
+\end{minipage}
+}
+\vspace{0.1cm}
+
+\IEEEauthorblockA{%
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\textit{Programa de P{\'o}s-Gradua{\c{c}}{\~a}o em Engenharia El{\'e}trica (PPGEE)}\\
+\textit{Universidade Federal do Cear{\'a} (UFC)}\\
+Fortaleza, Cear{\'a}, Brazil\\
+kaio.emanuel@alu.ufc.br 
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\textit{Programa de P{\'o}s-Gradua{\c{c}}{\~a}o em Engenharia El{\'e}trica (PPGEE)}\\
+\textit{Universidade Federal do Cear{\'a} (UFC)}\\
+Fortaleza, Cear{\'a}, Brazil\\
+juniorsoares@alu.ufc.br
+\end{minipage}
+}
+
+\vspace{0.4cm}
+
+\IEEEauthorblockN{%
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+3\textsuperscript{rd}Daniel Santos da Silva
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+4\textsuperscript{th}Victor Hugo C. de Albuquerque
+\end{minipage}
+}
+\vspace{0.1cm}
+
+\IEEEauthorblockA{%
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\textit{Departamento de Engenharia de Teleinform{\'a}tica (DETI)}\\
+\textit{Universidade Federal do Cear{\'a} (UFC)}\\
+Fortaleza, Brazil\\
+danielssilva@alu.ufc.br
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\textit{Departamento de Engenharia de Teleinform{\'a}tica (DETI)}\\
+\textit{Universidade Federal do Cear{\'a} (UFC)}\\
+Fortaleza, Brazil\\
+victor.albuquerque@ieee.org
+\end{minipage}
+}
+}
+
+% --- COMMAND TO PRINT ABSTRACT AND KEYWORDS ---
+\newcommand{\imprimirresumo}{
+\begin{abstract}
+Clinical decision support systems for biomedical data are conventionally designed around a single modality, requiring ingestion and feature extraction pipelines to be re-engineered whenever input data formats change. This paper presents a modality-agnostic ingestion and multi-domain feature engineering pipeline implemented within the BioStatusIA engine. The proposed architecture automatically classifies raw inputs into one of nine structural modes, performs schema validation, and normalizes heterogeneous biomedical inputs into a unified data contract (\texttt{SinalNormalizado}). The framework supports temporal physiological signals (F1), two-dimensional DICOM studies (F3), three-dimensional volumetric scans (F4), tabular clinical records, and standard two-dimensional images. Modality-specific readers decouple ingestion from feature extraction, enabling adaptive preprocessing and automated calculation of temporal, spectral, textural (GLCM), morphological, and volumetric descriptors. The pipeline was evaluated across 30 authentic biomedical benchmark datasets spanning all supported modalities. Experimental evaluation confirmed that all 30 datasets were ingested without unhandled exceptions, producing fixed feature-vector dimensionalities per data family (18 descriptors for temporal signals, 14 for 2D DICOM, 22 for 3D volumes, and 12 for 2D images). These results demonstrate that deterministic structural detection operating on physical file organization provides a robust foundation for downstream clinical modeling without manual pipeline reconfiguration.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Biomedical signal processing, Data ingestion, Feature engineering, Radiomics, Multimodal data, Clinical decision support systems, DICOM, Medical imaging.
+\end{IEEEkeywords}
+}

@@ -5,14 +5,12 @@ from pathlib import Path
 EXT_IMAGENS   = (".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff")
 EXT_TABULARES = (".csv", ".txt", ".tsv")
 
-# ── Novas famílias de sinais biomédicos ───────────────────────────────────────
+# ── Famílias de sinais biomédicos (v3 — F1/F3/F4) ─────────────────────────────
 EXT_SINAIS_TEMPORAIS = frozenset({
     ".edf", ".bdf", ".dat", ".hea", ".atr",
     ".mat", ".cnt", ".eeg", ".rec", ".c3d", ".set", ".xml",
 })
-EXT_AUDIO_BIOMEDICO = frozenset({".wav", ".mp3", ".flac"})
 EXT_DICOM           = frozenset({".dcm"})
-EXT_VIDEO           = frozenset({".mp4", ".avi", ".mov"})
 # .nii.gz precisa de checagem dupla via Path.suffixes — veja eh_volumetrico()
 EXT_VOLUMETRICO_SIMPLES = frozenset({".nii", ".mha"})
 
@@ -36,10 +34,6 @@ def eh_sinal_temporal(arquivo: Path) -> bool:
     return arquivo.suffix.lower() in EXT_SINAIS_TEMPORAIS
 
 
-def eh_audio_biomedico(arquivo: Path) -> bool:
-    return arquivo.suffix.lower() in EXT_AUDIO_BIOMEDICO
-
-
 def eh_dicom(arquivo: Path) -> bool:
     return arquivo.suffix.lower() in EXT_DICOM
 
@@ -50,18 +44,12 @@ def eh_volumetrico(arquivo: Path) -> bool:
     return ext in EXT_VOLUMETRICO_SIMPLES or suffixes == [".nii", ".gz"]
 
 
-def eh_video(arquivo: Path) -> bool:
-    return arquivo.suffix.lower() in EXT_VIDEO
-
-
 def eh_sinal_novo(arquivo: Path) -> bool:
-    """True para qualquer extensão das 5 novas famílias."""
+    """True para qualquer extensão das famílias de sinal em escopo (F1/F3/F4)."""
     return (
         eh_sinal_temporal(arquivo)
-        or eh_audio_biomedico(arquivo)
         or eh_dicom(arquivo)
         or eh_volumetrico(arquivo)
-        or eh_video(arquivo)
     )
 
 
