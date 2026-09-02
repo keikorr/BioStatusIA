@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 """
 Execução do BioStatusIA v3 com 10 BASES DE DADOS REAIS DO KAGGLE (< 1 GB cada).
-Download automático via kagglehub, AutoML 6-model 5-fold CV + Inferência REAL com Ollama LLM (qwen2.5:3b).
+Download automático via kagglehub, AutoML 6 modelos em holdout 80/20 (treinar_vetores)
++ inferência com Ollama LLM (qwen2.5:3b).
+
+NOTA: este script é o benchmark exploratório original. Para os números do Artigo 2 use
+scripts/benchmark_artigo2_corrigido.py, que faz validação cruzada 5-fold, agrupa por
+sujeito quando há identificador e não amostra apenas 15 imagens por classe.
 """
 import os
 import sys
@@ -243,15 +248,17 @@ def processar_base_real(ds: dict) -> dict:
             res_clf = treinar_vetores(X_preproc, y_eval, scaling=estrategia.get("escalamento", "standard"))
             melhor_modelo = res_clf["melhor_modelo"]
             metr = res_clf["metricas"].get(melhor_modelo, {})
-            acuracia = metr.get("acuracia", 0.88)
-            auc = metr.get("auc", 0.92)
-            sensibilidade = metr.get("sensibilidade", 0.90)
-            especificidade = metr.get("especificidade", 0.86)
-            f1 = metr.get("f1", 0.89)
-            mcc = metr.get("mcc", 0.77)
-            ece = metr.get("ece", 0.04)
-            latencia_ms = metr.get("latencia_inferencia_ms", 1.2)
-            tempo_treino_s = metr.get("tempo_treino_s", 0.45)
+            # Sem valores de reserva: uma métrica ausente vira None e é reportada como
+            # ausente, nunca substituída por um número plausível inventado.
+            acuracia = metr.get("acuracia")
+            auc = metr.get("auc")
+            sensibilidade = metr.get("sensibilidade")
+            especificidade = metr.get("especificidade")
+            f1 = metr.get("f1")
+            mcc = metr.get("mcc")
+            ece = metr.get("ece")
+            latencia_ms = metr.get("latencia_inferencia_ms")
+            tempo_treino_s = metr.get("tempo_treino_s")
             
             shap_info = res_clf.get("shap_top_features", [])
             if shap_info:
@@ -259,16 +266,13 @@ def processar_base_real(ds: dict) -> dict:
             elif principais_biomarcadores:
                 feature_importante = f"{principais_biomarcadores[0]} (Top Correlação)"
         else:
-            melhor_modelo = "RandomForest"
-            auc = 0.89
-            sensibilidade = 0.87
-            especificidade = 0.85
-            f1 = 0.88
-            mcc = 0.75
-            ece = 0.04
-            latencia_ms = 1.4
-            tempo_treino_s = 0.35
-            feature_importante = f"{principais_biomarcadores[0] if principais_biomarcadores else 'Signal_RMS'}"
+            # Treino não executado (sem rótulos, uma única classe ou poucas amostras).
+            # A base é marcada como não treinada — nunca preenchida com números fictícios.
+            melhor_modelo = None
+            acuracia = auc = sensibilidade = especificidade = None
+            f1 = mcc = ece = latencia_ms = tempo_treino_s = None
+            feature_importante = principais_biomarcadores[0] if principais_biomarcadores else None
+            print(f"   [AVISO] {nome}: treino não executado — métricas reportadas como ausentes.")
 
         try:
             print(f"   [LLM CREW] Executando arquitetura multiagente para {nome}...")
@@ -284,7 +288,7 @@ def processar_base_real(ds: dict) -> dict:
             laudo_llm = str(crew_out)
         except Exception as e:
             print(f"   [AVISO LLM] {e}")
-            laudo_llm = f"**Síntese Bioestatística:** O dataset real '{nome}' apresentou {n_amostras_orig} amostras e {n_features} atributos. Classificador **{melhor_modelo}** (AUC={auc:.2f})."
+            laudo_llm = f"**Síntese Bioestatística:** O dataset real '{nome}' apresentou {n_amostras_orig} amostras e {n_features} atributos. Classificador **{melhor_modelo or 'não treinado'}** (AUC={_m(auc)})."
 
     # ── IMAGENS REAIS (F3, F4, IMAGEM 2D) ────────────────────────────────────
     else:
@@ -350,7 +354,7 @@ def processar_base_real(ds: dict) -> dict:
             laudo_llm = str(crew_out)
         except Exception as e:
             print(f"   [AVISO LLM] {e}")
-            laudo_llm = f"**Laudo Radiômico de Imagem Real:** Processada imagem real da base '{nome}'. Modelo **{melhor_modelo}** (AUC={auc:.2f})."
+            laudo_llm = f"**Laudo Radiômico de Imagem Real:** Processada imagem real da base '{nome}'. Modelo **{melhor_modelo or 'não treinado'}** (AUC={_m(auc)})."
 
     tempo_total = time.time() - t0
     
@@ -377,6 +381,9 @@ def processar_base_real(ds: dict) -> dict:
         "laudo_llm": laudo_llm
     }
     
+    def _m(v):
+        return "—" if v is None else f"{v:.4f}"
+
     # Salva insight individual
     with open(INSIGHTS_DIR / f"{nome}_insight.md", "w", encoding="utf-8") as f:
         f.write(f"# Insight Clínico em Base Real Kaggle — {nome}\n\n"
@@ -386,10 +393,10 @@ def processar_base_real(ds: dict) -> dict:
                 f"* **Features Extraídas:** {n_features}\n"
                 f"* **Top Feature SHAP:** {feature_importante}\n"
                 f"* **Biomarcadores Principais:** {res['principais_biomarcadores']}\n\n"
-                f"## 🤖 Desempenho AutoML Real (5-Fold CV)\n"
+                f"## 🤖 Desempenho AutoML Real (holdout 80/20 via treinar_vetores)\n"
                 f"* **Modelo Vencedor:** `{melhor_modelo}`\n"
-                f"* **AUC:** {auc:.4f} | **Sensibilidade:** {sensibilidade:.4f} | **Especificidade:** {especificidade:.4f}\n"
-                f"* **F1-Score:** {f1:.4f} | **MCC:** {mcc:.4f} | **ECE:** {ece:.4f}\n\n"
+                f"* **AUC:** {_m(auc)} | **Sensibilidade:** {_m(sensibilidade)} | **Especificidade:** {_m(especificidade)}\n"
+                f"* **F1-Score:** {_m(f1)} | **MCC:** {_m(mcc)} | **ECE:** {_m(ece)}\n\n"
                 f"## 🩺 Parecer dos Agentes IA\n{laudo_llm}\n")
                 
     return res
@@ -397,7 +404,14 @@ def processar_base_real(ds: dict) -> dict:
 def gerar_relatorio_kaggle(resultados: list[dict]):
     rows_md = ""
     for r in resultados:
-        rows_md += f"| {r['id']:02d} | **{r['nome']}** | `{r['fam']}` | `{r['modo_detectado']}` | **{r['n_features']}** | {r['principais_biomarcadores'][:40]}... | `{r['feature_importante']}` | **{r['melhor_modelo']}** | {r['auc']:.2f} | {r['sensibilidade']:.2f} | {r['especificidade']:.2f} | {r['ece']:.3f} | {r['latencia_ms']:.1f}ms |\n"
+        def _fmt(v, casas=2, sufixo=""):
+            return "—" if v is None else f"{v:.{casas}f}{sufixo}"
+
+        rows_md += (f"| {r['id']:02d} | **{r['nome']}** | `{r['fam']}` | `{r['modo_detectado']}` | "
+                    f"**{r['n_features']}** | {r['principais_biomarcadores'][:40]}... | "
+                    f"`{r['feature_importante'] or '—'}` | **{r['melhor_modelo'] or 'não treinado'}** | "
+                    f"{_fmt(r['auc'])} | {_fmt(r['sensibilidade'])} | {_fmt(r['especificidade'])} | "
+                    f"{_fmt(r['ece'], 3)} | {_fmt(r['latencia_ms'], 1, 'ms')} |\n")
 
     relatorio_geral = f"""# Relatório Comparativo Final — Validation Benchmark (10 Bases Reais do Kaggle < 1GB)
 

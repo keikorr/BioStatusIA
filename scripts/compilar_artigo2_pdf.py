@@ -1,5 +1,26 @@
 #!/usr/bin/env python
 """
+OBSOLETO - NÃO USAR PARA O ARTIGO 2.
+
+Este script contém valores numéricos fixos no código (tabelas e curvas escritas à mão),
+não derivados de nenhuma execução. Ele produziu a versão do manuscrito que o revisor
+apontou como não sustentada pelos experimentos.
+
+Substituído por:
+  * scripts/benchmark_artigo2_corrigido.py  - executa o benchmark de verdade
+  * scripts/baseline_flaml_artigo2.py       - baseline AutoML externo nos mesmos folds
+  * scripts/gerar_figuras_artigo2_reais.py  - figuras a partir de resultados.json
+  * scripts/preencher_artigo2.py            - preenche o .tex com os números medidos
+  * scripts/tex2pdf_artigo2.py              - compila o PDF a partir do .tex
+
+Mantido apenas como registro histórico.
+"""
+
+import sys
+print(__doc__)
+sys.exit(1)
+
+"""
 Humanized IEEE Article 2 PDF Generator (Compliant with humanizer_academic guidelines)
 2-column IEEE Conference layout, KaTeX math formulas, integrated 300 DPI figures.
 """

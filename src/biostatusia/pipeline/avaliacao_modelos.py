@@ -406,7 +406,16 @@ def _shap_importancia(modelo, X_train: np.ndarray, X_test: np.ndarray,
             explainer = shap.KernelExplainer(lambda d: modelo.predict_proba(d)[:, 1], fundo)
             valores = explainer.shap_values(X_test[:min(30, len(X_test))], nsamples=100)
 
-        importancia = np.abs(np.array(valores)).mean(axis=0).ravel()
+        valores = np.asarray(valores)
+        # shap>=0.45 devolve (n_amostras, n_features, n_classes) para classificação
+        # binária; sem selecionar a classe, o ravel() desalinha os nomes das features.
+        if valores.ndim == 3:
+            valores = valores[..., -1]
+        importancia = np.abs(valores).mean(axis=0).ravel()
+        if importancia.shape[0] != len(nomes):
+            resultado["motivo"] = (f"SHAP devolveu {importancia.shape[0]} valores para "
+                                   f"{len(nomes)} features — ranking descartado.")
+            return resultado
         ranking = sorted(zip(nomes, importancia.tolist()), key=lambda kv: kv[1], reverse=True)
         resultado.update({
             "disponivel": True,

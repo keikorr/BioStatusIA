@@ -51,8 +51,12 @@ src/biostatusia/static/runs/
 # Datasets de teste pesados (apenas o CSV pequeno fica versionado)
 dataset_teste/
 dataset_teste.zip
+dataset_teste_busi/
 dataset_benchmark_30/
 dataset_kaggle_reais/
+
+# Render screenshots temporários
+reports/render_*.png
 
 # HTMLs gerados em runtime (legado do main.py CLI)
 dashboard_inteligencia_medica.html
