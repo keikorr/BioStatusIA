@@ -67,3 +67,6 @@ relatorio_tecnico_biostatsia.html
 
 # Cache do KaggleHub (geralmente em ~/.cache/, mas por segurança)
 .kagglehub/
+
+# Repositórios clonados / submódulos locais
+BioStatusIA_MultiModal/
