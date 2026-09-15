@@ -1,169 +1,216 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html class="light" lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BioStatusIA — Análise Radiômica</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .drop-zone { border: 2px dashed #0d9488; transition: background .2s; }
-    .drop-zone.drag-over { background: #f0fdfa; }
-    #loading { display: none; }
-  </style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BioStatusIA — Upload e Detecção</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: { extend: {
+      colors: {
+        "surface-dim": "#cfdaf2", "on-secondary-container": "#266d68", "on-surface": "#111c2d",
+        "surface-container-high": "#dee8ff", "on-error": "#ffffff", "primary-fixed": "#9cf2e8",
+        "surface-container": "#e7eeff", "secondary": "#216963", "secondary-container": "#a8ece5",
+        "tertiary": "#7d4200", "tertiary-container": "#a15600", "on-tertiary": "#ffffff",
+        "surface-bright": "#f9f9ff", "on-secondary": "#ffffff", "primary": "#005c55",
+        "surface-container-low": "#f0f3ff", "surface": "#f9f9ff", "on-background": "#111c2d",
+        "primary-fixed-dim": "#80d5cb", "inverse-surface": "#263143", "surface-variant": "#d8e3fb",
+        "tertiary-fixed": "#ffdcc3", "surface-container-lowest": "#ffffff", "background": "#f9f9ff",
+        "outline": "#6e7977", "primary-container": "#0f766e", "inverse-primary": "#80d5cb",
+        "surface-container-highest": "#d8e3fb", "error": "#ba1a1a", "surface-tint": "#006a63",
+        "outline-variant": "#bdc9c6", "on-surface-variant": "#3e4947", "on-tertiary-fixed": "#2f1500",
+        "error-container": "#ffdad6", "on-error-container": "#93000a", "on-primary": "#ffffff",
+        "on-primary-container": "#a3faef", "on-tertiary-container": "#ffe6d5"
+      },
+      borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+      spacing: { "card-gap": "20px", "gutter": "16px", "container-padding": "24px" },
+      fontFamily: { "sans": ["Inter"] }
+    } }
+  }
+</script>
+<style>
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+  .drop-zone-active { background-color: rgba(15,118,110,.08); border-style: solid !important; transform: scale(1.01); }
+  #loading { display: none; }
+</style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans">
+<body class="bg-background text-on-background min-h-screen flex flex-col" style="font-family:Inter,sans-serif">
 
-  <!-- Header -->
-  <header class="bg-white border-b border-gray-100 px-8 py-5 flex items-center gap-3">
-    <div class="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
-      <span class="text-white text-sm font-bold">B</span>
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 bg-primary-container shadow-sm h-16">
+  <div class="flex items-center gap-8">
+    <span class="text-xl font-bold text-on-primary-container">🧬 BioStatusIA</span>
+    <div class="hidden md:flex items-center gap-6 text-sm">
+      <a class="text-on-primary-container font-bold border-b-2 border-on-primary-container pb-1" href="/">Dashboard</a>
+      <a class="text-on-primary-container/80 hover:text-on-primary-container transition-colors" href="/historico">Histórico</a>
     </div>
-    <div>
-      <h1 class="text-gray-900 font-bold text-lg leading-none">BioStatusIA</h1>
-      <p class="text-gray-400 text-xs">Sistema de Apoio à Decisão Clínica</p>
-    </div>
-  </header>
+  </div>
+  <div class="flex items-center gap-4 text-on-primary-container">
+    <button type="button" class="p-2 hover:bg-primary/10 rounded-full transition-all"><span class="material-symbols-outlined">notifications</span></button>
+    <button type="button" class="p-2 hover:bg-primary/10 rounded-full transition-all"><span class="material-symbols-outlined">account_circle</span></button>
+  </div>
+</nav>
 
-  <main class="max-w-3xl mx-auto px-6 py-14">
+<main class="flex-grow pt-24 pb-12 px-6">
+<div class="max-w-[900px] mx-auto">
 
-    <!-- Título -->
-    <div class="mb-10 text-center">
-      <h2 class="text-2xl font-bold text-gray-800">Iniciar Análise Radiômica</h2>
-      <p class="text-gray-500 mt-2 text-sm">
-        Envie qualquer tipo de dado — uma imagem, várias imagens ou um dataset completo.<br>
-        O sistema detecta automaticamente a estrutura e executa o pipeline adequado.
-      </p>
-    </div>
+  <!-- Ethical Banner -->
+  <div class="mb-10 p-4 bg-tertiary-fixed border border-tertiary-container rounded-lg flex gap-3 items-start shadow-sm">
+    <span class="material-symbols-outlined text-tertiary-container mt-0.5">warning</span>
+    <p class="text-on-tertiary-fixed text-sm">Esta é uma ferramenta de suporte à decisão baseada em IA e não substitui o diagnóstico clínico realizado por um médico. Use os resultados como apoio complementar.</p>
+  </div>
 
-    <!-- Modos suportados -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10 text-xs">
-      <div class="bg-white border border-gray-100 rounded-xl p-4">
-        <p class="font-bold text-gray-700 mb-1">Imagem Única</p>
-        <p class="text-gray-500">Biomarcadores + laudo IA.</p>
-      </div>
-      <div class="bg-white border border-gray-100 rounded-xl p-4">
-        <p class="font-bold text-gray-700 mb-1">Imagens Soltas</p>
-        <p class="text-gray-500">Análise estatística + laudo IA na primeira.</p>
-      </div>
-      <div class="bg-white border border-gray-100 rounded-xl p-4">
-        <p class="font-bold text-gray-700 mb-1">Dataset Rotulado</p>
-        <p class="text-gray-500">Pastas <code class="text-teal-600">benign/</code> + <code class="text-teal-600">malignant/</code> → SVM + RF.</p>
-      </div>
-      <div class="bg-white border border-gray-100 rounded-xl p-4">
-        <p class="font-bold text-gray-700 mb-1">Tabular / Multimodal</p>
-        <p class="text-gray-500"><code class="text-teal-600">.csv/.txt</code> com features clínicas, isolado ou com imagens.</p>
-      </div>
-    </div>
+  <!-- Page Header -->
+  <div class="mb-10 text-center">
+    <h1 class="text-3xl font-semibold text-primary mb-2 tracking-tight">Envie seus dados biomédicos</h1>
+    <p class="text-on-surface-variant text-base">Carregue exames ou séries temporais. Nossa IA detectará automaticamente a modalidade do sinal.</p>
+  </div>
 
-    <!-- Pipeline steps -->
-    <div class="flex items-center justify-center gap-1 mb-12 text-xs">
-      {% for etapa in ["Pré-processamento", "Segmentação", "Extração", "Classificador", "Relatório"] %}
-      <div class="flex items-center gap-1">
-        <div class="px-3 py-1.5 rounded-full bg-teal-50 text-teal-700 font-medium border border-teal-100">
-          {{ etapa }}
+  <!-- Main Interaction Card -->
+  <form id="form-analise" action="/analisar" method="POST" enctype="multipart/form-data"
+        class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 shadow-sm">
+
+    <!-- Drag & Drop Zone -->
+    <div class="relative group cursor-pointer border-2 border-dashed border-primary-container rounded-xl p-12 text-center transition-all duration-300 hover:bg-primary/5 mb-8" id="drop-zone"
+         onclick="document.getElementById('arquivo').click()">
+      <input id="arquivo" name="arquivo" type="file" class="absolute inset-0 opacity-0 cursor-pointer" onchange="mostrarNome(this)"
+             accept=".zip,.tar.gz,.png,.jpg,.jpeg,.bmp,.tif,.tiff,.csv,.txt,.tsv,.edf,.bdf,.dat,.hea,.mat,.dcm,.nii,.gz,.mha"/>
+      <div class="flex flex-col items-center pointer-events-none">
+        <div class="w-16 h-16 bg-primary-fixed rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined text-primary text-3xl">upload_file</span>
         </div>
-        {% if not loop.last %}
-        <span class="text-gray-300 font-bold">›</span>
-        {% endif %}
+        <h3 class="text-xl font-semibold text-on-surface mb-1">Arraste um arquivo, ZIP ou pasta aqui</h3>
+        <p class="text-on-surface-variant">ou clique para selecionar do seu computador</p>
+        <p id="nome-arquivo" class="text-primary text-sm mt-3 font-semibold hidden"></p>
       </div>
-      {% endfor %}
     </div>
 
-    <!-- Upload card -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-      <form id="form-analise" action="/analisar" method="POST" enctype="multipart/form-data">
-
-        <!-- Drop zone -->
-        <div id="drop-zone"
-             class="drop-zone rounded-xl p-10 text-center cursor-pointer mb-6"
-             onclick="document.getElementById('arquivo').click()">
-          <div class="text-4xl mb-3 text-teal-300">&#8679;</div>
-          <p class="text-gray-600 font-medium">Arraste o arquivo aqui ou clique para selecionar</p>
-          <p class="text-gray-400 text-xs mt-1">Aceita: imagem (.png/.jpg/.bmp/.tif), CSV/TXT tabular, ou ZIP misto</p>
-          <p id="nome-arquivo" class="text-teal-600 text-sm mt-3 font-medium hidden"></p>
-          <input id="arquivo" name="arquivo" type="file"
-                 accept=".zip,.tar.gz,.png,.jpg,.jpeg,.bmp,.tif,.tiff,.csv,.txt,.tsv"
-                 class="hidden" onchange="mostrarNome(this)" />
+    <!-- Input Fields Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-card-gap mb-8">
+      <!-- Local Path -->
+      <div class="flex flex-col gap-2">
+        <label class="text-xs font-semibold tracking-wider text-on-surface-variant uppercase">Caminho local da pasta</label>
+        <div class="flex">
+          <input name="caminho_manual" class="flex-grow bg-surface border border-outline-variant rounded-l-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none text-sm" placeholder="Ex: C:\Users\clinica\exames\hoje" type="text"/>
+          <button type="submit" class="bg-primary text-on-primary px-4 py-2 rounded-r-lg text-xs font-semibold hover:opacity-90 transition-opacity" onclick="mostrarLoading()">Usar caminho</button>
         </div>
-
-        <!-- Divider -->
-        <div class="flex items-center gap-3 mb-6">
-          <div class="flex-1 h-px bg-gray-100"></div>
-          <span class="text-gray-400 text-xs">ou informe o caminho local</span>
-          <div class="flex-1 h-px bg-gray-100"></div>
-        </div>
-
-        <!-- Manual path -->
-        <input type="text" name="caminho_manual"
-               placeholder="Ex: C:\Users\Kai\.cache\kagglehub\datasets\..."
-               class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-700
-                      focus:outline-none focus:ring-2 focus:ring-teal-300 mb-4" />
-
-        <!-- Divider -->
-        <div class="flex items-center gap-3 mb-4">
-          <div class="flex-1 h-px bg-gray-100"></div>
-          <span class="text-gray-400 text-xs">ou baixe qualquer base do Kaggle</span>
-          <div class="flex-1 h-px bg-gray-100"></div>
-        </div>
-
-        <!-- Kaggle Dataset ID -->
-        <input type="text" name="kaggle_id"
-               placeholder="Ex: paultimothymooney/chest-xray-pneumonia"
-               class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-700
-                      focus:outline-none focus:ring-2 focus:ring-teal-300 mb-8" />
-
-        <!-- Submit -->
-        <button type="submit" onclick="mostrarLoading()"
-                class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold
-                       py-3 rounded-xl transition-colors text-sm">
-          Iniciar Análise Completa
-        </button>
-
-      </form>
+      </div>
+      <!-- Signal Selector -->
+      <div class="flex flex-col gap-2">
+        <label class="text-xs font-semibold tracking-wider text-on-surface-variant uppercase">Tipo de sinal (para séries temporais)</label>
+        <select name="tipo_sinal" class="bg-surface border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none text-sm appearance-none">
+          <option value="auto">Auto-detecção (Recomendado)</option>
+          <option value="ECG">ECG - Eletrocardiograma</option>
+          <option value="EEG">EEG - Eletroencefalograma</option>
+          <option value="EMG">EMG - Eletromiografia</option>
+          <option value="EOG">EOG - Eletro-oculografia</option>
+          <option value="PPG">PPG - Fotopletismografia</option>
+          <option value="PA">PA - Pressão Arterial</option>
+          <option value="Espirometria">Espirometria</option>
+        </select>
+      </div>
     </div>
 
-    <!-- Loading overlay -->
-    <div id="loading" class="fixed inset-0 bg-white/80 backdrop-blur-sm flex flex-col
-                             items-center justify-center z-50">
-      <div class="w-14 h-14 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mb-6"></div>
-      <p class="text-gray-700 font-semibold text-lg">Analisando dataset...</p>
-      <p class="text-gray-400 text-sm mt-2">Pré-processamento → Segmentação → Extração → Classificador → Laudo IA</p>
-      <p class="text-gray-300 text-xs mt-4">Isso pode levar de 2 a 10 minutos dependendo do tamanho do dataset.</p>
+    <!-- Kaggle Integration -->
+    <div class="p-4 bg-surface-container rounded-lg mb-10 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-secondary">database</span>
+        <span class="text-sm text-on-surface">Ou usar dataset de exemplo (KaggleHub)</span>
+      </div>
+      <div class="flex flex-grow max-w-sm">
+        <input name="kaggle_id" class="flex-grow bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-secondary outline-none text-sm" placeholder="ID do dataset (ex: 'paultimothymooney/chest-xray-pneumonia')" type="text"/>
+      </div>
     </div>
 
-    <!-- Info -->
-    <p class="text-center text-xs text-gray-400 mt-8">
-      Processamento 100% local via Ollama &bull; Dados não saem da sua máquina &bull;
-      Laudo não substitui avaliação médica
-    </p>
+    <!-- Supported Types Badges -->
+    <div class="mb-10">
+      <h4 class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-4">Tipos suportados</h4>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="flex flex-col items-center p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors">
+          <span class="material-symbols-outlined text-primary mb-2">image</span>
+          <span class="text-[10px] font-semibold text-center leading-tight">Imagem<br/><span class="opacity-60">PNG/JPG/TIF</span></span>
+        </div>
+        <div class="flex flex-col items-center p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors">
+          <span class="material-symbols-outlined text-primary mb-2">table_chart</span>
+          <span class="text-[10px] font-semibold text-center leading-tight">Tabular<br/><span class="opacity-60">CSV/TXT/TSV</span></span>
+        </div>
+        <div class="flex flex-col items-center p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors">
+          <span class="material-symbols-outlined text-primary mb-2">vital_signs</span>
+          <span class="text-[10px] font-semibold text-center leading-tight">F1 — Sinais<br/><span class="opacity-60">EDF/MAT/HEA</span></span>
+        </div>
+        <div class="flex flex-col items-center p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors">
+          <span class="material-symbols-outlined text-primary mb-2">view_in_ar</span>
+          <span class="text-[10px] font-semibold text-center leading-tight">F3 — DICOM<br/><span class="opacity-60">2D Slices</span></span>
+        </div>
+        <div class="flex flex-col items-center p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors">
+          <span class="material-symbols-outlined text-primary mb-2">layers</span>
+          <span class="text-[10px] font-semibold text-center leading-tight">F4 — Volume<br/><span class="opacity-60">3D NIfTI</span></span>
+        </div>
+        <div class="flex flex-col items-center p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors">
+          <span class="material-symbols-outlined text-primary mb-2">account_tree</span>
+          <span class="text-[10px] font-semibold text-center leading-tight">Multimodal<br/><span class="opacity-60">Mixed Data</span></span>
+        </div>
+      </div>
+    </div>
 
-  </main>
+    <!-- Analysis Button -->
+    <button type="submit" onclick="mostrarLoading()"
+            class="w-full bg-primary-container text-on-primary-container text-xl font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all active:scale-100 flex items-center justify-center gap-3">
+      <span class="material-symbols-outlined">analytics</span> Analisar
+    </button>
+  </form>
 
-  <script>
-    function mostrarNome(input) {
-      const el = document.getElementById('nome-arquivo');
-      if (input.files && input.files[0]) {
-        el.textContent = input.files[0].name;
-        el.classList.remove('hidden');
-      }
-    }
+  <!-- History link -->
+  <div class="mt-12 text-center">
+    <a class="inline-flex items-center gap-2 text-primary text-sm font-medium hover:underline" href="/historico">
+      <span class="material-symbols-outlined">history</span> Ver histórico de análises recentes
+    </a>
+  </div>
+</div>
+</main>
 
-    function mostrarLoading() {
-      setTimeout(() => { document.getElementById('loading').style.display = 'flex'; }, 100);
-    }
+<!-- Loading overlay -->
+<div id="loading" class="fixed inset-0 bg-white/80 backdrop-blur-sm flex-col items-center justify-center z-[60]" style="display:none">
+  <div class="w-14 h-14 border-4 border-primary-fixed border-t-primary rounded-full animate-spin mb-6"></div>
+  <p class="text-on-surface font-semibold text-lg">Analisando dataset...</p>
+  <p class="text-on-surface-variant text-sm mt-2">Pré-processamento → Extração → AutoML → Laudo IA</p>
+  <p class="text-on-surface-variant/70 text-xs mt-4">Pode levar de 2 a 10 minutos dependendo do tamanho do dataset.</p>
+</div>
 
-    // Drag & drop
-    const zone = document.getElementById('drop-zone');
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-    zone.addEventListener('drop', e => {
-      e.preventDefault();
-      zone.classList.remove('drag-over');
-      const input = document.getElementById('arquivo');
-      input.files = e.dataTransfer.files;
-      mostrarNome(input);
-    });
-  </script>
+<!-- Footer -->
+<footer class="w-full mt-auto flex flex-col md:flex-row justify-between items-center px-8 bg-surface-container-low border-t border-outline-variant py-8">
+  <div class="flex flex-col items-center md:items-start mb-4 md:mb-0">
+    <span class="text-xs font-semibold text-on-surface-variant">🧬 BioStatusIA</span>
+    <span class="text-xs text-on-surface-variant">Projeto de mestrado — IA na Saúde · Fortaleza/CE</span>
+  </div>
+  <div class="flex gap-6 text-xs">
+    <a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Termos de Uso</a>
+    <a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Privacidade</a>
+    <a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Contato</a>
+  </div>
+</footer>
 
+<script>
+  function mostrarNome(input) {
+    const el = document.getElementById('nome-arquivo');
+    if (input.files && input.files[0]) { el.textContent = input.files[0].name; el.classList.remove('hidden'); }
+  }
+  function mostrarLoading() {
+    setTimeout(() => { document.getElementById('loading').style.display = 'flex'; }, 100);
+  }
+  const dropZone = document.getElementById('drop-zone');
+  ['dragenter','dragover','dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }, false));
+  ['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, () => dropZone.classList.add('drop-zone-active'), false));
+  ['dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, () => dropZone.classList.remove('drop-zone-active'), false));
+  dropZone.addEventListener('drop', e => {
+    const input = document.getElementById('arquivo');
+    input.files = e.dataTransfer.files;
+    mostrarNome(input);
+  }, false);
+</script>
 </body>
 </html>

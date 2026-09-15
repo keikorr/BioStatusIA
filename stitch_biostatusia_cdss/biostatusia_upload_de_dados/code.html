@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BioStatusIA — Upload e Detecção</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#cfdaf2",
+                    "on-secondary-container": "#266d68",
+                    "on-primary-fixed": "#00201d",
+                    "on-secondary-fixed-variant": "#00504b",
+                    "on-surface": "#111c2d",
+                    "tertiary-fixed-dim": "#ffb77d",
+                    "surface-container-high": "#dee8ff",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#9cf2e8",
+                    "surface-container": "#e7eeff",
+                    "secondary": "#216963",
+                    "secondary-container": "#a8ece5",
+                    "secondary-fixed": "#abefe8",
+                    "on-tertiary-container": "#ffe6d5",
+                    "tertiary": "#7d4200",
+                    "on-primary-fixed-variant": "#00504a",
+                    "tertiary-container": "#a15600",
+                    "on-tertiary": "#ffffff",
+                    "surface-bright": "#f9f9ff",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#6e3900",
+                    "primary": "#005c55",
+                    "surface-container-low": "#f0f3ff",
+                    "surface": "#f9f9ff",
+                    "on-background": "#111c2d",
+                    "primary-fixed-dim": "#80d5cb",
+                    "inverse-surface": "#263143",
+                    "surface-variant": "#d8e3fb",
+                    "tertiary-fixed": "#ffdcc3",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed": "#00201e",
+                    "background": "#f9f9ff",
+                    "outline": "#6e7977",
+                    "primary-container": "#0f766e",
+                    "inverse-primary": "#80d5cb",
+                    "secondary-fixed-dim": "#8fd3cc",
+                    "surface-container-highest": "#d8e3fb",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed": "#2f1500",
+                    "surface-tint": "#006a63",
+                    "outline-variant": "#bdc9c6",
+                    "on-surface-variant": "#3e4947",
+                    "inverse-on-surface": "#ecf1ff",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "on-primary": "#ffffff",
+                    "on-primary-container": "#a3faef"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "card-gap": "20px",
+                    "base": "4px",
+                    "gutter": "16px",
+                    "container-padding": "24px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "metric-md": ["Inter"],
+                    "headline-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "metric-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .zebra-table tr:nth-child(even) {
+            background-color: rgba(15, 118, 110, 0.03);
+        }
+        .drop-zone-active {
+            background-color: rgba(15, 118, 110, 0.08);
+            border-style: solid !important;
+            transform: scale(1.01);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #bdc9c6;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6e7977;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 bg-primary-container shadow-sm h-16">
+<div class="flex items-center gap-8">
+<span class="font-headline-sm text-headline-sm font-bold text-on-primary-container">🧬 BioStatusIA</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-on-primary-container font-bold border-b-2 border-on-primary-container pb-1 font-body-md text-body-md" href="#">Dashboard</a>
+<a class="text-on-primary-container/80 hover:text-on-primary-container transition-colors font-body-md text-body-md" href="#">Histórico</a>
+<a class="text-on-primary-container/80 hover:text-on-primary-container transition-colors font-body-md text-body-md" href="#">Pacientes</a>
+<a class="text-on-primary-container/80 hover:text-on-primary-container transition-colors font-body-md text-body-md" href="#">Relatórios</a>
+</div>
+</div>
+<div class="flex items-center gap-4 text-on-primary-container">
+<button class="p-2 hover:bg-primary/10 rounded-full transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:bg-primary/10 rounded-full transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</nav>
+<main class="flex-grow pt-24 pb-12 px-6">
+<div class="max-w-[900px] mx-auto">
+<!-- Ethical Banner -->
+<div class="mb-10 p-4 bg-tertiary-fixed border border-tertiary-container rounded-lg flex gap-3 items-start shadow-sm">
+<span class="material-symbols-outlined text-tertiary-container mt-0.5">warning</span>
+<p class="text-on-tertiary-fixed font-body-md text-body-md">
+                    Esta é uma ferramenta de suporte à decisão baseada em IA e não substitui o diagnóstico clínico realizado por um médico. Use os resultados como apoio complementar.
+                </p>
+</div>
+<!-- Page Header -->
+<div class="mb-10 text-center">
+<h1 class="font-display-lg text-display-lg text-primary mb-2">Envie seus dados biomédicos</h1>
+<p class="text-on-surface-variant font-body-lg text-body-lg">Carregue exames ou séries temporais. Nossa IA detectará automaticamente a modalidade do sinal.</p>
+</div>
+<!-- Main Interaction Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 shadow-sm">
+<!-- Drag & Drop Zone -->
+<div class="relative group cursor-pointer border-2 border-dashed border-primary-container rounded-xl p-12 text-center transition-all duration-300 hover:bg-primary/5 mb-8" id="drop-zone">
+<input class="absolute inset-0 opacity-0 cursor-pointer" multiple="" type="file"/>
+<div class="flex flex-col items-center">
+<div class="w-16 h-16 bg-primary-fixed rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl">upload_file</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">Arraste um arquivo, ZIP ou pasta aqui</h3>
+<p class="text-on-surface-variant">ou clique para selecionar do seu computador</p>
+</div>
+</div>
+<!-- Input Fields Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-card-gap mb-8">
+<!-- Local Path -->
+<div class="flex flex-col gap-2">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Caminho local da pasta</label>
+<div class="flex">
+<input class="flex-grow bg-surface border border-outline-variant rounded-l-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none text-body-md" placeholder="/Users/clinica/exames/hoje" type="text"/>
+<button class="bg-primary text-on-primary px-4 py-2 rounded-r-lg font-label-sm text-label-sm hover:opacity-90 transition-opacity">Usar caminho</button>
+</div>
+</div>
+<!-- Signal Selector -->
+<div class="flex flex-col gap-2">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Tipo de sinal (para séries temporais)</label>
+<select class="bg-surface border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none text-body-md appearance-none">
+<option>Auto-detecção (Recomendado)</option>
+<option>ECG - Eletrocardiograma</option>
+<option>EEG - Eletroencefalograma</option>
+<option>EMG - Eletromiografia</option>
+<option>EOG - Eletro-oculografia</option>
+<option>PPG - Fotopletismografia</option>
+<option>PA - Pressão Arterial</option>
+<option>Espirometria</option>
+</select>
+</div>
+</div>
+<!-- Kaggle Integration -->
+<div class="p-4 bg-surface-container rounded-lg mb-10 flex flex-wrap items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">database</span>
+<span class="font-body-md text-body-md text-on-surface">Ou usar dataset de exemplo (KaggleHub)</span>
+</div>
+<div class="flex flex-grow max-w-sm">
+<input class="flex-grow bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-secondary outline-none text-body-md" placeholder="ID do dataset (ex: 'vbmis/ecg-arrhythmia')" type="text"/>
+</div>
+</div>
+<!-- Supported Types Badges -->
+<div class="mb-10">
+<h4 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-4">Tipos suportados</h4>
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+<div class="flex flex-col items-center p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors cursor-default">
+<span class="material-symbols-outlined text-primary mb-2">image</span>
+<span class="font-label-sm text-[10px] text-center leading-tight">Imagem<br/><span class="opacity-60">PNG/JPG/TIF</span></span>
+</div>
+<div class="flex flex-col items-center p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors cursor-default">
+<span class="material-symbols-outlined text-primary mb-2">table_chart</span>
+<span class="font-label-sm text-[10px] text-center leading-tight">Tabular<br/><span class="opacity-60">CSV/TXT/TSV</span></span>
+</div>
+<div class="flex flex-col items-center p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors cursor-default">
+<span class="material-symbols-outlined text-primary mb-2">vital_signs</span>
+<span class="font-label-sm text-[10px] text-center leading-tight">F1 — Sinais<br/><span class="opacity-60">EDF/MAT/HEA</span></span>
+</div>
+<div class="flex flex-col items-center p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors cursor-default">
+<span class="material-symbols-outlined text-primary mb-2">view_in_ar</span>
+<span class="font-label-sm text-[10px] text-center leading-tight">F3 — DICOM<br/><span class="opacity-60">2D Slices</span></span>
+</div>
+<div class="flex flex-col items-center p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors cursor-default">
+<span class="material-symbols-outlined text-primary mb-2">layers</span>
+<span class="font-label-sm text-[10px] text-center leading-tight">F4 — Volume<br/><span class="opacity-60">3D NIfTI</span></span>
+</div>
+<div class="flex flex-col items-center p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 hover:border-primary transition-colors cursor-default">
+<span class="material-symbols-outlined text-primary mb-2">account_tree</span>
+<span class="font-label-sm text-[10px] text-center leading-tight">Multimodal<br/><span class="opacity-60">Mixed Data</span></span>
+</div>
+</div>
+</div>
+<!-- Analysis Button -->
+<button class="w-full bg-primary-container text-on-primary-container font-headline-sm text-headline-sm py-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all active:scale-100 flex items-center justify-center gap-3">
+<span class="material-symbols-outlined">analytics</span>
+                    Analisar
+                </button>
+</div>
+<!-- Analysis History Preview (Subtle Section) -->
+<div class="mt-12 text-center">
+<a class="inline-flex items-center gap-2 text-primary font-metric-md text-metric-md hover:underline" href="#">
+<span class="material-symbols-outlined">history</span>
+                    Ver histórico de análises recentes
+                </a>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-auto flex flex-col md:flex-row justify-between items-center px-8 bg-surface-container-low border-t border-outline-variant py-8">
+<div class="flex flex-col items-center md:items-start mb-4 md:mb-0">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface-variant">🧬 BioStatusIA</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Projeto de mestrado — IA na Saúde · Fortaleza/CE</span>
+</div>
+<div class="flex gap-6">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Termos de Uso</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Privacidade</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Contato</a>
+</div>
+</footer>
+<script>
+        const dropZone = document.getElementById('drop-zone');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('drop-zone-active'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drop-zone-active'), false);
+        });
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            console.log('Files dropped:', files);
+            // In a real app, this would trigger the upload process
+        }
+
+        // Floating particle effect for aesthetic clinical feel
+        function createParticles() {
+            const body = document.querySelector('body');
+            for(let i = 0; i < 8; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'fixed';
+                particle.style.width = Math.random() * 300 + 100 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.borderRadius = '50%';
+                particle.style.backgroundColor = 'rgba(15, 118, 110, 0.03)';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.zIndex = '-1';
+                particle.style.filter = 'blur(60px)';
+                particle.animate([
+                    { transform: 'translate(0, 0) scale(1)' },
+                    { transform: `translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) scale(1.1)` }
+                ], {
+                    duration: Math.random() * 5000 + 5000,
+                    iterations: Infinity,
+                    direction: 'alternate',
+                    easing: 'ease-in-out'
+                });
+                body.appendChild(particle);
+            }
+        }
+        createParticles();
+    </script>
+</body></html>

@@ -12,10 +12,8 @@ from .tools.extracao_tool import FerramentaExtrairBiomarcadores
 from .tools.tabular_tool import FerramentaAnaliseTabular
 from .tools.treino_tool import FerramentaTreinarClassificador
 from .tools.sinais_temporais_tool import FerramentaExtrairSinalTemporal
-from .tools.audio_biomedico_tool import FerramentaExtrairAudio
 from .tools.dicom_tool import FerramentaExtrairDICOM
 from .tools.volumetrico_tool import FerramentaExtrairVolume3D
-from .tools.video_medico_tool import FerramentaExtrairVideo
 
 
 def _llm() -> LLM:
@@ -107,7 +105,7 @@ class BioStatusIACrewTabular:
         return Agent(
             config=self.agents_config["bioestatistico"],
             tools=[FerramentaAnaliseTabular()],
-            llm=_llm(), verbose=True, max_iter=5, max_retry_limit=3,
+            llm=_llm(), verbose=True, max_iter=2, max_retry_limit=1,
             allow_delegation=False,
         )
 
@@ -124,17 +122,17 @@ class BioStatusIACrewTabular:
         )
 
 
-# ── Crew F1+F2: Sinais Temporais e Áudio ──────────────────────────────────────
+# ── Crew F1: Sinais Temporais ────────────────────────────────────────────────
 
 @CrewBase
 class BioStatusIACrewSinal:
-    """Equipe para sinais temporais (ECG/EEG/EMG/etc.) e áudio biomédico."""
+    """Equipe para sinais temporais fisiológicos (ECG/EEG/EMG/EOG/PPG/etc.)."""
 
     @agent
     def analista_sinais_fisiologicos(self) -> Agent:
         return Agent(
             config=self.agents_config["analista_sinais_fisiologicos"],
-            tools=[FerramentaExtrairSinalTemporal(), FerramentaExtrairAudio()],
+            tools=[FerramentaExtrairSinalTemporal()],
             llm=_llm(), verbose=True, max_iter=6, max_retry_limit=3,
             allow_delegation=False,
         )
@@ -212,52 +210,6 @@ class BioStatusIACrewImagem3D:
         return Crew(
             agents=[self.especialista_imagem_medica(), self.radiologista_ia()],
             tasks=[self.tarefa_extracao_imagem_medica(), self.tarefa_laudo_sinal()],
-            process=Process.sequential, verbose=True,
-        )
-
-
-# ── Crew F5: Vídeo Médico ──────────────────────────────────────────────────────
-
-@CrewBase
-class BioStatusIACrewVideo:
-    """Equipe para vídeo médico (Endoscopia, Ultrassom dinâmico)."""
-
-    @agent
-    def analista_video_medico(self) -> Agent:
-        return Agent(
-            config=self.agents_config["analista_video_medico"],
-            tools=[FerramentaExtrairVideo()],
-            llm=_llm(), verbose=True, max_iter=6, max_retry_limit=3,
-            allow_delegation=False,
-        )
-
-    @agent
-    def radiologista_ia(self) -> Agent:
-        return Agent(
-            config=self.agents_config["radiologista_ia"],
-            llm=_llm(), verbose=True, max_iter=5, max_retry_limit=3,
-            allow_delegation=False,
-        )
-
-    @task
-    def tarefa_extracao_video(self) -> Task:
-        return Task(
-            config=self.tasks_config["tarefa_extracao_video"],
-            agent=self.analista_video_medico(),
-        )
-
-    @task
-    def tarefa_laudo_sinal(self) -> Task:
-        return Task(
-            config=self.tasks_config["tarefa_laudo_sinal"],
-            agent=self.radiologista_ia(),
-        )
-
-    @crew
-    def crew(self) -> Crew:
-        return Crew(
-            agents=[self.analista_video_medico(), self.radiologista_ia()],
-            tasks=[self.tarefa_extracao_video(), self.tarefa_laudo_sinal()],
             process=Process.sequential, verbose=True,
         )
 

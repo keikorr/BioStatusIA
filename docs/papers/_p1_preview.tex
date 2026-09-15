@@ -1,0 +1,302 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[a4paper,margin=0.72in,columnsep=0.28in]{geometry}
+\usepackage{cite,amsmath,amssymb,amsfonts,graphicx,textcomp,xcolor,booktabs,url,times}
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\bfseries\scshape}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\itshape}{\thesubsection.}{0.5em}{}
+\providecommand{\IEEEoverridecommandlockouts}{}
+\newenvironment{IEEEkeywords}{\vspace{2pt}\noindent\small\textbf{Index Terms---}}{\par\vspace{4pt}}
+\providecommand{\BibTeX}{BibTeX}
+\begin{document}
+\twocolumn[\begin{center}{\Large\bfseries A Signal-Agnostic Ingestion and Radiomic Feature-Extraction Pipeline for a Multi-Family Clinical Decision-Support System\par}\vspace{6pt}{\normalsize First Author\textsuperscript{1}, Second Author\textsuperscript{2}\par}\vspace{3pt}{\small Graduate Program in Applied Informatics / Biomedical Engineering, University of Fortaleza, Fortaleza, Cear\'a, Brazil\par}{\small Email: ias.pesquisas2026@gmail.com\par}\vspace{12pt}\end{center}]
+
+\begin{abstract}
+Clinical decision-support systems (CDSS) are usually built around a single
+data modality, which forces institutions to maintain a separate software
+stack for every family of biomedical signal. We describe \emph{BioStatusIA},
+an open, modular pipeline that ingests heterogeneous biomedical data through a
+single entry point and adapts its processing to whatever is technically
+feasible. The system automatically classifies an arbitrary file or folder into
+one of nine operating modes and routes it to one of three physical signal
+families---one-dimensional physiological time series (F1: ECG, EEG, EMG, EOG,
+PPG, spirometry), two-dimensional DICOM images (F3: radiography, mammography,
+ultrasound), and three-dimensional volumes (F4: CT, MR, PET/SPECT)---plus a
+tabular branch for pre-computed clinical features. A single normalized data
+contract, \texttt{SinalNormalizado}, decouples the readers from the
+domain-specific feature extractors, so that morphological, textural (GLCM),
+spectral (Welch PSD) and radiomic biomarkers are computed through a uniform
+interface regardless of the input. We report the behaviour of the pipeline on
+a real breast-ultrasound dataset (780 images), a clinical tabular dataset, and
+synthetic exemplars of each family, and we critically discuss the engineering
+trade-offs of a signal-agnostic architecture. The pipeline is released as pure,
+side-effect-free functions to encourage reproducibility and reuse.
+\end{abstract}
+
+\begin{IEEEkeywords}
+clinical decision support, biomedical signal processing, radiomics, feature
+extraction, DICOM, medical imaging, software architecture, reproducibility.
+\end{IEEEkeywords}
+
+\section{Introduction}
+Modern clinical practice generates an unusually broad spectrum of digital
+signals: an electrocardiogram is a one-dimensional voltage series, a chest
+radiograph is a two-dimensional pixel array stored in DICOM, a computed-tomography
+study is a three-dimensional voxel volume, and a laboratory panel is a row of
+scalar features. Each of these modalities has, historically, its own analysis
+software, its own file formats, and its own community of tools
+\cite{gramfort2013,mason2011pydicom,brett2020nibabel}. For a small research
+group---such as a graduate laboratory building a proof-of-concept CDSS---this
+fragmentation is a serious obstacle: every new modality means a new ingestion
+path, a new set of dependencies, and a new opportunity for silent failure.
+
+The central engineering hypothesis of this work is that a large fraction of the
+early processing stages---file typing, reading, normalization, statistical
+characterization, and biomarker extraction---can be expressed \emph{once} behind
+a common data contract, and that the parts that genuinely differ between
+modalities can be isolated in thin, replaceable extractors. We call the
+resulting system \emph{BioStatusIA}. Its design principle is deliberately
+permissive: \emph{the system accepts any input in scope, always runs a
+statistical analysis on whatever it receives, and adapts the remainder of the
+pipeline to what is feasible}. Supervised model training is attempted only when
+labels and a sufficient number of examples are present; otherwise the system
+still returns a full descriptive characterization.
+
+This paper concentrates on the \emph{ingestion and feature-extraction}
+subsystem---the part of BioStatusIA that turns a raw, possibly unlabelled,
+possibly unknown file into a structured vector of biomarkers. The
+classification, model-selection and reporting layers are the subject of a
+companion paper. Our contributions are: (i) an automatic, filesystem-level
+modality detector with nine operating modes; (ii) a single normalized data
+contract that decouples readers from extractors across three physical signal
+families and a tabular branch; (iii) a set of domain-specific but uniformly
+exposed biomarker extractors; and (iv) an honest empirical and architectural
+evaluation, including the limitations that a signal-agnostic design imposes.
+
+\section{Related Work}
+Radiomics---the high-throughput extraction of quantitative descriptors from
+medical images---has become a standard bridge between raw pixels and machine
+learning \cite{gillies2016radiomics,haralick1973}. Mature libraries exist for
+individual modalities: MNE-Python and WFDB for physiological time series
+\cite{gramfort2013}, pydicom for DICOM \cite{mason2011pydicom}, and NiBabel and
+SimpleITK for volumetric formats \cite{brett2020nibabel}. General-purpose
+scientific stacks such as scikit-image and OpenCV provide the texture and
+morphology primitives \cite{vanderwalt2014skimage,pedregosa2011sklearn}.
+What is comparatively rare in the literature is an integration layer that treats
+these modalities as interchangeable inputs to a \emph{single} decision-support
+front end. Commercial PACS and vendor CDSS products are typically
+modality-locked, and open academic systems tend to target one signal family at
+a time. BioStatusIA occupies this gap: rather than proposing a new descriptor,
+it proposes an \emph{architecture} in which existing descriptors are exposed
+through one contract and one automatic dispatcher.
+
+\section{System Architecture}
+\subsection{Design constraints}
+The pipeline is written as a collection of \emph{pure functions}: each stage
+receives data and returns data, with no hidden input/output. All persistence
+(database writes, HTML rendering, file handling) is concentrated in the web
+layer, so the scientific core can be unit-tested and reused in isolation. This
+separation is the main reason the same extraction code can be driven both by an
+interactive web server and by a batch command-line entry point.
+
+\subsection{Automatic modality detection}
+The dispatcher, \texttt{detectar\_estrutura}, receives a path---which may be a
+single file, a folder, or an extracted archive---and returns one of nine
+in-scope operating modes. For a single file it tests, in order, the predicates
+for common images, tabular files, physiological time series, single-slice DICOM,
+and 3-D volumes. For a directory it recursively inventories the file types
+present and resolves multimodal combinations; folders whose sub-directories
+carry recognizable class names (e.g.\ \texttt{benign/}, \texttt{malignant/}) are
+promoted to a \emph{labelled dataset} mode. A folder of DICOM files is
+disambiguated by cardinality: ten or more slices are read as a 3-D series,
+fewer as a set of 2-D images. Inputs outside the supported scope resolve to an
+explicit \texttt{invalid} mode rather than failing silently. Table~\ref{tab:modes}
+summarizes the modes and the physical family each triggers.
+
+\begin{table}[t]
+\centering
+\caption{The nine in-scope operating modes and the family they route to.}
+\label{tab:modes}
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Mode & Trigger & Family \\
+\midrule
+\texttt{imagem\_unica}      & one raster image            & Image \\
+\texttt{imagens\_soltas}    & unlabelled image folder     & Image \\
+\texttt{dataset\_rotulado}  & \texttt{benign/}+\texttt{malignant/} & Image \\
+\texttt{tabular}            & CSV/TSV/TXT                 & Tabular \\
+\texttt{multimodal}         & images + tabular            & Image+Tab \\
+\texttt{sinal\_temporal}    & \texttt{.dat/.edf/.mat/...}  & F1 \\
+\texttt{imagem\_dicom\_2d}  & single \texttt{.dcm}        & F3 \\
+\texttt{volume\_3d}         & \texttt{.nii/.mha}, $\geq$10 \texttt{.dcm} & F4 \\
+\texttt{multimodal\_expandido} & mixed families           & F1+F3+F4+Tab \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The normalized data contract}
+The keystone of the design is a single dataclass, \texttt{SinalNormalizado},
+returned by every reader:
+\begin{quote}\small
+\texttt{familia}, \texttt{tipo}, \texttt{dados} (\emph{ndarray}),
+\texttt{taxa\_amostragem}, \texttt{canais}, \texttt{metadados},
+\texttt{caminho\_original}, \texttt{dados\_viz} (a downsampled trace of
+$\leq$2000 points for the browser).
+\end{quote}
+All reading passes through a universal dispatcher, \texttt{carregar\_sinal},
+which selects the correct reader by extension---WFDB for
+\texttt{.dat/.hea}, MNE for \texttt{.edf/.bdf}, SciPy for \texttt{.mat}, an XML
+parser for spirometry exports, pydicom for \texttt{.dcm}, and NiBabel/SimpleITK
+for volumes---and returns the same structure in every case. Because the
+extractors consume only \texttt{SinalNormalizado}, adding a new file format
+requires writing one reader and touching nothing downstream. This contract is
+therefore the explicit boundary between the ``read'' and ``understand'' halves
+of the system, and we treat it as inviolable.
+
+\section{Feature Extraction}
+Each physical family has a dedicated extractor that consumes the normalized
+signal and emits a dictionary of biomarkers grouped by domain.
+
+\subsection{F1 --- physiological time series}
+Time-domain descriptors (RMS, mean, standard deviation, skewness, kurtosis,
+peak-to-peak amplitude, SNR in dB) are complemented by frequency-domain
+descriptors obtained from a Welch power-spectral-density estimate: dominant
+frequency, spectral centroid, and normalized band powers. Signal-type-specific
+analyses are dispatched from the declared type: for ECG the extractor
+band-pass-filters the highest-variance channel (0.5--40~Hz, 4th-order
+zero-phase Butterworth), detects R-peaks with a physiologically motivated
+minimum inter-beat distance, and derives heart rate and the classical
+heart-rate-variability indices RMSSD, SDNN and pNN50; for EEG it computes
+relative delta/theta/alpha/beta/gamma band powers and the alpha/beta ratio; for
+EMG, envelope RMS and median frequency; for spirometry, FVC, FEV1, the
+FEV1/FVC ratio and PEF.
+
+\subsection{F3 --- 2-D DICOM}
+On single-slice DICOM the extractor computes nine imaging biomarkers---two
+morphological (circularity, solidity from the largest external contour), four
+textural from the gray-level co-occurrence matrix (contrast, homogeneity,
+energy and a histogram entropy), and three intensity descriptors (SNR,
+skewness, kurtosis)---augmented by DICOM-specific quantities such as the
+fraction of high-density pixels, mean gradient, modality tag and pixel spacing,
+with automatic Hounsfield windowing driven by the header's window
+centre/width.
+
+\subsection{F4 --- 3-D volumes}
+Volumes are re-oriented to an axial-first convention and characterized by global
+intensity statistics (mean, dispersion, median, skewness, kurtosis, 5th/95th
+percentiles, count of high-intensity voxels), GLCM texture computed
+independently on the three orthogonal planes, and 3-D morphology (lesion volume
+in mm\textsuperscript{3}, sphericity, bounding-box axes). A helper renders an
+arbitrary axial slice to base64 for visualization without exposing a separate
+image route.
+
+\subsection{Common image radiomics and the tabular branch}
+For ordinary rasters the same nine morphological/textural/intensity biomarkers
+as F3 are computed after an adaptive pre-processing stage that chooses denoising,
+normalization and equalization from a lightweight analysis of the base
+(intensity, contrast, outliers, normality and size consistency). The tabular
+branch parses arbitrary CSV/TSV/TXT files: it sniffs the delimiter, tolerates
+UTF-8 and Latin-1 encodings, and detects the label column either by name
+(\texttt{label}, \texttt{class}, \texttt{diagnosis}, \texttt{target}, \dots) or,
+failing that, as the last column with between two and ten distinct values;
+binary labels are mapped to $\{0,1\}$ through a keyword table.
+
+\section{Experimental Setup and Results}
+We exercised the pipeline on three kinds of input to characterize its behaviour
+rather than to claim state-of-the-art accuracy. All experiments use Python~3.11,
+scikit-learn, scikit-image, OpenCV, SciPy, MNE, pydicom and NiBabel; random
+seeds are fixed for reproducibility.
+
+\subsection{Real breast-ultrasound imaging (BUSI)}
+On the Breast Ultrasound Images dataset \cite{aldhabyani2020busi}, the pipeline
+autonomously analyzed the base of 780 images (estimated mean intensity 83.6,
+mean contrast 51.5, Shapiro $p{=}0.021$, inconsistent sizes) and selected a
+Gaussian-denoising / min--max-normalization / 256$\times$256 strategy. Biomarker
+extraction succeeded on all 780 images (570 benign, 210 malignant). The
+extraction stage is the load-bearing part evaluated here; the downstream
+six-model comparison (reported in full in the companion paper) yields, for the
+best model, an accuracy of 0.814 and an ROC-AUC of 0.800, with a recall of
+0.452 that transparently reflects the untreated class imbalance of this branch.
+We regard these realistic---not perfect---numbers as the honest operating point
+of the extraction pipeline on genuine clinical data.
+
+\subsection{Clinical tabular data}
+On a 50-row breast-cancer panel with 30 numerical features, the tabular parser
+correctly identified the \texttt{diagnosis} label, mapped B/M to $0/1$, produced
+a balanced 25/25 split and computed univariate statistics for all features
+(e.g.\ mean radius $15.32\pm3.90$, mean area $770.6\pm389.8$). The very small
+sample size makes any downstream accuracy figure optimistic, a point we
+emphasize rather than hide.
+
+\subsection{Synthetic exemplars of each family}
+To smoke-test the F1/F3/F4 readers and extractors end-to-end we generated small
+synthetic sets (14 exemplars each). The dispatcher correctly identified a
+MATLAB ECG signal and produced time and frequency feature groups; a synthetic CT
+DICOM produced morphological, GLCM, intensity and DICOM-radiomic groups
+(15-dimensional vector); and a synthetic NIfTI volume produced global, 3-D
+texture and 3-D morphology groups (13-dimensional vector). These runs confirm
+the plumbing of every family but, being synthetic and tiny, are explicitly
+\emph{not} evidence of diagnostic performance.
+
+\section{Discussion}
+The results support the architectural claim: a single contract and a single
+dispatcher are sufficient to carry four data families from raw file to
+structured biomarkers, and the pure-function decomposition makes each stage
+independently testable. The design also exposes clear limitations. First, a
+signal-agnostic front end trades depth for breadth: the GLCM descriptor is
+computed at a single distance and orientation and is therefore not
+rotation-invariant, and the physiological analyses use robust but basic
+estimators rather than modality-optimized toolchains. Second, the extractors
+emit vectors of heterogeneous dimensionality (nine to fifteen features across
+families), so cross-family model reuse requires an explicit alignment step.
+Third, the permissive philosophy that lets the system ``always run something''
+can mask degenerate inputs; the single-image smoke test, for instance, produces
+biomarkers that are individually valid but statistically meaningless. We view
+these not as defects to conceal but as the natural cost of generality, and as a
+roadmap: multi-orientation Haralick features, a per-family feature schema, and
+input-quality gating are concrete next steps.
+
+\section{Ethical Considerations}
+BioStatusIA is a decision-\emph{support} tool. Every visual output and every
+generated report carries a mandatory notice that its results do not replace
+assessment by a licensed physician. The extraction pipeline computes descriptive
+biomarkers only; it makes no autonomous clinical decision, and no result should
+be acted upon without professional review. Datasets used here are public and
+de-identified.
+
+\section{Conclusion}
+We presented the ingestion and feature-extraction core of BioStatusIA, a
+signal-agnostic CDSS pipeline that detects its input automatically, normalizes
+four data families behind one contract, and extracts domain-appropriate
+biomarkers through a uniform interface. Empirical runs on real imaging, real
+tabular data and synthetic signals demonstrate that the architecture is sound
+and reproducible, while an honest discussion of its limitations frames the path
+toward richer descriptors and stronger input validation. The companion paper
+builds the clinically-enriched AutoML and multi-agent reporting layers on top of
+this foundation.
+
+\begin{thebibliography}{00}
+\bibitem{gramfort2013} A. Gramfort \emph{et al.}, ``MEG and EEG data analysis
+with MNE-Python,'' \emph{Frontiers in Neuroscience}, vol.~7, art.~267, 2013.
+\bibitem{mason2011pydicom} D. Mason, ``SU-E-T-33: Pydicom: an open source DICOM
+library,'' \emph{Medical Physics}, vol.~38, no.~6, p.~3493, 2011.
+\bibitem{brett2020nibabel} M. Brett \emph{et al.}, ``nibabel: Access a
+multitude of neuroimaging data formats,'' Zenodo, 2020.
+\bibitem{gillies2016radiomics} R. J. Gillies, P. E. Kinahan, and H. Hricak,
+``Radiomics: images are more than pictures, they are data,'' \emph{Radiology},
+vol.~278, no.~2, pp.~563--577, 2016.
+\bibitem{haralick1973} R. M. Haralick, K. Shanmugam, and I. Dinstein,
+``Textural features for image classification,'' \emph{IEEE Trans. Syst., Man,
+Cybern.}, vol.~SMC-3, no.~6, pp.~610--621, 1973.
+\bibitem{vanderwalt2014skimage} S. van der Walt \emph{et al.},
+``scikit-image: image processing in Python,'' \emph{PeerJ}, vol.~2, p.~e453,
+2014.
+\bibitem{pedregosa2011sklearn} F. Pedregosa \emph{et al.}, ``Scikit-learn:
+Machine learning in Python,'' \emph{J. Mach. Learn. Res.}, vol.~12,
+pp.~2825--2830, 2011.
+\bibitem{aldhabyani2020busi} W. Al-Dhabyani, M. Gomaa, H. Khaled, and A. Fahmy,
+``Dataset of breast ultrasound images,'' \emph{Data in Brief}, vol.~28,
+p.~104863, 2020.
+\end{thebibliography}
+
+\end{document}

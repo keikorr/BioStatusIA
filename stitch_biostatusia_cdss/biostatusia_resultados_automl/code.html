@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BioStatusIA — Resultados da Análise AutoML</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#cfdaf2",
+                    "on-secondary-container": "#266d68",
+                    "on-primary-fixed": "#00201d",
+                    "on-secondary-fixed-variant": "#00504b",
+                    "on-surface": "#111c2d",
+                    "tertiary-fixed-dim": "#ffb77d",
+                    "surface-container-high": "#dee8ff",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#9cf2e8",
+                    "surface-container": "#e7eeff",
+                    "secondary": "#216963",
+                    "secondary-container": "#a8ece5",
+                    "secondary-fixed": "#abefe8",
+                    "on-tertiary-container": "#ffe6d5",
+                    "tertiary": "#7d4200",
+                    "on-primary-fixed-variant": "#00504a",
+                    "tertiary-container": "#a15600",
+                    "on-tertiary": "#ffffff",
+                    "surface-bright": "#f9f9ff",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#6e3900",
+                    "primary": "#005c55",
+                    "surface-container-low": "#f0f3ff",
+                    "surface": "#f9f9ff",
+                    "on-background": "#111c2d",
+                    "primary-fixed-dim": "#80d5cb",
+                    "inverse-surface": "#263143",
+                    "surface-variant": "#d8e3fb",
+                    "tertiary-fixed": "#ffdcc3",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed": "#00201e",
+                    "background": "#f9f9ff",
+                    "outline": "#6e7977",
+                    "primary-container": "#0f766e",
+                    "inverse-primary": "#80d5cb",
+                    "secondary-fixed-dim": "#8fd3cc",
+                    "surface-container-highest": "#d8e3fb",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed": "#2f1500",
+                    "surface-tint": "#006a63",
+                    "outline-variant": "#bdc9c6",
+                    "on-surface-variant": "#3e4947",
+                    "inverse-on-surface": "#ecf1ff",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "on-primary": "#ffffff",
+                    "on-primary-container": "#a3faef"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "card-gap": "20px",
+                    "base": "4px",
+                    "gutter": "16px",
+                    "container-padding": "24px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "metric-md": ["Inter"],
+                    "headline-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "metric-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .zebra-table tr:nth-child(even) { background-color: #f8fafc; }
+        .active-tab { border-bottom: 2px solid #005c55; color: #005c55; }
+        .radar-grid { background-image: radial-gradient(circle, #e2e8f0 1px, transparent 1px); background-size: 20px 20px; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.8); }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+<!-- TopAppBar from JSON -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 bg-primary-container shadow-sm h-16">
+<div class="flex items-center gap-4">
+<span class="font-headline-sm text-headline-sm font-bold text-on-primary-container">🧬 BioStatusIA</span>
+<nav class="hidden md:flex gap-6 ml-8">
+<a class="text-on-primary-container/80 hover:text-on-primary-container transition-colors font-body-md text-body-md" href="#">Dashboard</a>
+<a class="text-on-primary-container font-bold border-b-2 border-on-primary-container pb-1 font-body-md text-body-md" href="#">Histórico</a>
+<a class="text-on-primary-container/80 hover:text-on-primary-container transition-colors font-body-md text-body-md" href="#">Pacientes</a>
+<a class="text-on-primary-container/80 hover:text-on-primary-container transition-colors font-body-md text-body-md" href="#">Relatórios</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-primary-container hover:bg-primary/10 rounded-full transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-primary-container hover:bg-primary/10 rounded-full transition-all">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<main class="pt-24 pb-12 px-container-padding max-w-[1600px] mx-auto w-full flex-grow">
+<!-- Ethical Banner -->
+<div class="mb-8 w-full bg-tertiary-fixed border border-tertiary-container/30 rounded-lg p-4 flex items-center gap-3 shadow-sm">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">warning</span>
+<p class="font-body-md text-body-md text-on-tertiary-fixed-variant">
+                Esta é uma ferramenta de suporte à decisão baseada em IA e não substitui o diagnóstico clínico realizado por um médico.
+            </p>
+</div>
+<!-- Horizontal Tabs -->
+<div class="flex items-center gap-8 border-b border-outline-variant mb-8">
+<button class="pb-3 font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors">Estatísticas</button>
+<button class="pb-3 font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors">Pré-processamento</button>
+<button class="pb-3 font-body-md text-body-md font-bold active-tab">AutoML</button>
+<button class="pb-3 font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors">Laudo</button>
+</div>
+<!-- Dashboard Layout: Bento Grid -->
+<div class="grid grid-cols-12 gap-card-gap">
+<!-- Model Podium (Ranked Table) - Span 8 -->
+<section class="col-span-12 lg:col-span-8 glass-card rounded-xl overflow-hidden flex flex-col">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Pódio dos modelos</h2>
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full font-label-sm text-label-sm">Classificadores Binários</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left zebra-table">
+<thead class="bg-surface-container-low sticky top-0">
+<tr>
+<th class="px-6 py-4 font-label-sm text-label-sm uppercase text-on-surface-variant">Classificador</th>
+<th class="px-4 py-4 font-label-sm text-label-sm uppercase text-on-surface-variant">AUC</th>
+<th class="px-4 py-4 font-label-sm text-label-sm uppercase text-on-surface-variant">Sens.</th>
+<th class="px-4 py-4 font-label-sm text-label-sm uppercase text-on-surface-variant">Espec.</th>
+<th class="px-4 py-4 font-label-sm text-label-sm uppercase text-on-surface-variant">F1-Score</th>
+<th class="px-4 py-4 font-label-sm text-label-sm uppercase text-on-surface-variant">MCC</th>
+<th class="px-4 py-4 font-label-sm text-label-sm uppercase text-on-surface-variant text-right">Kappa</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="bg-primary/5">
+<td class="px-6 py-4 font-metric-md text-metric-md flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined text-amber-500" style="font-variation-settings: 'FILL' 1;">trophy</span>
+                                    RandomForestClassifier
+                                </td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.942</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.910</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.955</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.932</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.865</td>
+<td class="px-4 py-4 font-metric-md text-metric-md text-right">0.841</td>
+</tr>
+<tr>
+<td class="px-6 py-4 font-metric-md text-metric-md">LogisticRegression</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.921</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.885</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.930</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.907</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.812</td>
+<td class="px-4 py-4 font-metric-md text-metric-md text-right">0.795</td>
+</tr>
+<tr>
+<td class="px-6 py-4 font-metric-md text-metric-md">XGBClassifier</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.915</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.872</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.925</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.898</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.801</td>
+<td class="px-4 py-4 font-metric-md text-metric-md text-right">0.788</td>
+</tr>
+<tr>
+<td class="px-6 py-4 font-metric-md text-metric-md">SVC (Linear)</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.898</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.850</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.910</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.879</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.762</td>
+<td class="px-4 py-4 font-metric-md text-metric-md text-right">0.750</td>
+</tr>
+<tr>
+<td class="px-6 py-4 font-metric-md text-metric-md">GaussianNB</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.875</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.820</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.895</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.856</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.718</td>
+<td class="px-4 py-4 font-metric-md text-metric-md text-right">0.702</td>
+</tr>
+<tr>
+<td class="px-6 py-4 font-metric-md text-metric-md">KNeighborsClassifier</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.862</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.805</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.880</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.841</td>
+<td class="px-4 py-4 font-metric-md text-metric-md">0.692</td>
+<td class="px-4 py-4 font-metric-md text-metric-md text-right">0.675</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Comparative Radar - Span 4 -->
+<section class="col-span-12 lg:col-span-4 glass-card rounded-xl p-6 flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-4">Radar comparativo</h3>
+<div class="flex-grow flex items-center justify-center relative">
+<div class="w-full aspect-square max-w-[280px] radar-grid rounded-full border border-outline-variant flex items-center justify-center">
+<svg class="w-full h-full p-8 overflow-visible" viewbox="0 0 100 100">
+<!-- Axis -->
+<line stroke="#cbd5e1" stroke-dasharray="2" x1="50" x2="50" y1="0" y2="100"></line>
+<line stroke="#cbd5e1" stroke-dasharray="2" x1="0" x2="100" y1="50" y2="50"></line>
+<!-- Data Shape Winner -->
+<polygon fill="rgba(0, 92, 85, 0.2)" points="50,10 90,50 50,95 10,50" stroke="#005c55" stroke-width="2"></polygon>
+<!-- Labels -->
+<text fill="#64748b" font-size="6" text-anchor="middle" x="50" y="-5">Precisão</text>
+<text fill="#64748b" font-size="6" text-anchor="start" x="105" y="52">Espec.</text>
+<text fill="#64748b" font-size="6" text-anchor="middle" x="50" y="108">F1</text>
+<text fill="#64748b" font-size="6" text-anchor="end" x="-5" y="52">Sens.</text>
+</svg>
+</div>
+</div>
+<div class="mt-4 flex flex-wrap gap-4 justify-center">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Top Model (RF)</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Média Baseline</span>
+</div>
+</div>
+</section>
+<!-- ROC Curve - Span 6 -->
+<section class="col-span-12 md:col-span-6 glass-card rounded-xl p-6">
+<div class="flex justify-between items-start mb-6">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Curva ROC</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">fullscreen</span>
+</button>
+</div>
+<div class="h-64 relative bg-surface-container-low rounded-lg overflow-hidden p-6 border border-outline-variant/30">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 400 240">
+<!-- Grid Lines -->
+<line stroke="#cbd5e1" stroke-dasharray="4" x1="0" x2="400" y1="240" y2="0"></line>
+<path d="M 0 240 Q 20 20 400 0" fill="none" stroke="#005c55" stroke-width="3"></path>
+<path d="M 0 240 Q 60 80 400 0" fill="none" stroke="#216963" stroke-opacity="0.5" stroke-width="2"></path>
+</svg>
+<div class="absolute bottom-2 left-1/2 -translate-x-1/2 font-label-sm text-label-sm text-on-surface-variant">Taxa de Falsos Positivos (1-Esp)</div>
+<div class="absolute top-1/2 left-2 -translate-y-1/2 rotate-270 font-label-sm text-label-sm text-on-surface-variant" style="writing-mode: vertical-rl; transform: rotate(180deg);">Taxa de Verdadeiros Positivos (Sens)</div>
+</div>
+<div class="mt-4 flex gap-4 text-label-sm font-label-sm">
+<span class="text-primary">RF AUC: 0.942</span>
+<span class="text-on-surface-variant opacity-60">LogReg AUC: 0.921</span>
+</div>
+</section>
+<!-- Confusion Matrix - Span 3 -->
+<section class="col-span-12 md:col-span-3 glass-card rounded-xl p-6 flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Matriz de confusão</h3>
+<div class="flex-grow grid grid-cols-2 grid-rows-2 gap-2 aspect-square max-w-[200px] mx-auto w-full">
+<div class="bg-primary flex flex-col items-center justify-center rounded text-on-primary">
+<span class="font-headline-sm">142</span>
+<span class="font-label-sm opacity-80 uppercase">VN</span>
+</div>
+<div class="bg-primary/10 flex flex-col items-center justify-center rounded text-primary border border-primary/20">
+<span class="font-headline-sm">8</span>
+<span class="font-label-sm opacity-80 uppercase">FP</span>
+</div>
+<div class="bg-primary/20 flex flex-col items-center justify-center rounded text-primary border border-primary/30">
+<span class="font-headline-sm">12</span>
+<span class="font-label-sm opacity-80 uppercase">FN</span>
+</div>
+<div class="bg-primary/80 flex flex-col items-center justify-center rounded text-on-primary">
+<span class="font-headline-sm">118</span>
+<span class="font-label-sm opacity-80 uppercase">VP</span>
+</div>
+</div>
+<div class="mt-6 space-y-2">
+<div class="flex justify-between font-label-sm text-label-sm">
+<span class="text-on-surface-variant">Acurácia:</span>
+<span class="font-bold text-on-surface">92.8%</span>
+</div>
+<div class="w-full bg-outline-variant h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 92.8%"></div>
+</div>
+</div>
+</section>
+<!-- McNemar Test A/B - Span 3 -->
+<section class="col-span-12 md:col-span-3 glass-card rounded-xl p-6 flex flex-col">
+<div class="flex items-center gap-2 mb-4">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Teste A/B</h3>
+<span class="material-symbols-outlined text-primary text-sm">science</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-6">Comparação estatística entre RF e LogisticRegression.</p>
+<div class="bg-surface-container rounded-lg p-4 mb-4">
+<div class="flex justify-between mb-2">
+<span class="font-label-sm text-label-sm uppercase text-on-surface-variant">Chi-Square</span>
+<span class="font-metric-md text-metric-md text-on-surface">4.12</span>
+</div>
+<div class="flex justify-between">
+<span class="font-label-sm text-label-sm uppercase text-on-surface-variant">P-Value</span>
+<span class="font-metric-md text-metric-md text-on-surface font-bold">0.042*</span>
+</div>
+</div>
+<div class="mt-auto p-3 border border-secondary/20 bg-secondary/5 rounded-lg flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">verified</span>
+<div>
+<div class="font-label-sm text-label-sm font-bold text-secondary uppercase">Significativo</div>
+<div class="font-body-md text-[10px] text-on-surface-variant leading-tight">O modelo vencedor apresenta diferença estatisticamente superior (p &lt; 0.05).</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Secondary metrics / footer insights section -->
+<div class="mt-card-gap grid grid-cols-1 md:grid-cols-4 gap-card-gap">
+<div class="glass-card p-4 rounded-xl">
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Log-Loss</div>
+<div class="font-headline-sm text-headline-sm text-on-surface">0.241</div>
+<div class="text-xs text-primary font-bold">Excelente</div>
+</div>
+<div class="glass-card p-4 rounded-xl">
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Gini Coefficient</div>
+<div class="font-headline-sm text-headline-sm text-on-surface">0.884</div>
+<div class="text-xs text-primary font-bold">Alto Poder Discrim.</div>
+</div>
+<div class="glass-card p-4 rounded-xl">
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Brier Score</div>
+<div class="font-headline-sm text-headline-sm text-on-surface">0.082</div>
+<div class="text-xs text-primary font-bold">Bem Calibrado</div>
+</div>
+<div class="glass-card p-4 rounded-xl">
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Execução AutoML</div>
+<div class="font-headline-sm text-headline-sm text-on-surface">14.2s</div>
+<div class="text-xs text-on-surface-variant">10-fold CV</div>
+</div>
+</div>
+</main>
+<!-- Footer from JSON -->
+<footer class="w-full mt-auto flex flex-col md:flex-row justify-between items-center px-8 bg-surface-container-low py-8 border-t border-outline-variant">
+<div class="flex flex-col gap-1 items-center md:items-start">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface-variant">🧬 BioStatusIA</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Projeto de mestrado — IA na Saúde · Fortaleza/CE</p>
+</div>
+<div class="flex gap-6 mt-4 md:mt-0">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Termos de Uso</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Privacidade</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Contato</a>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-4 md:mt-0 opacity-60">© 2024 BioStatusIA</p>
+</footer>
+<script>
+        // Micro-interactions for the table rows
+        document.querySelectorAll('.zebra-table tbody tr').forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                row.classList.add('transition-all', 'bg-primary/10', 'cursor-pointer');
+            });
+            row.addEventListener('mouseleave', () => {
+                row.classList.remove('bg-primary/10');
+            });
+        });
+    </script>
+</body></html>

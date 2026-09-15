@@ -1,0 +1,134 @@
+\section{Methodology}
+\label{sec:metodologia}
+
+\subsection{Pipeline architecture overview}
+The proposed pipeline processes raw biomedical inputs through a sequential chain of deterministic stages, as illustrated conceptually in Fig. \ref{fig:pipeline_flow}. When an arbitrary input (file, directory, or compressed archive) is submitted to the system, the architecture executes the following operations:
+(1) structural detection determines the physical organization of the input;
+(2) schema validation verifies file readability and header integrity;
+(3) a family-specific reader ingests the raw data and instantiates a standardized \texttt{SinalNormalizado} data contract;
+(4) an adaptive preprocessing engine computes data-driven transformations;
+(5) multi-domain feature extractors calculate mathematical descriptors; and
+(6) a consolidated feature vector is assembled for downstream analysis.
+
+\begin{figure}[htbp]
+\centering
+\fbox{\parbox{0.92\linewidth}{
+\centering
+\vspace{2mm}
+\textbf{Raw Input} (File, Directory, or Archive) \\
+$\Downarrow$ \\
+\textbf{Structure Detection} (9 Deterministic Modes) \\
+$\Downarrow$ \\
+\textbf{Schema Validation} (Pydantic Model Constraints) \\
+$\Downarrow$ \\
+\textbf{Family Dispatcher} (F1, F3, F4, Tabular, 2D Image) \\
+$\Downarrow$ \\
+\textbf{Unified Data Contract} (\texttt{SinalNormalizado}) \\
+$\Downarrow$ \\
+\textbf{Adaptive Preprocessing} (Signal/Image Transformations) \\
+$\Downarrow$ \\
+\textbf{Multi-Domain Feature Extraction} (Temporal, GLCM, 3D Radiomics) \\
+$\Downarrow$ \\
+\textbf{Consolidated Feature Vector} $\mathbf{x} \in \mathbb{R}^d$ \\
+\vspace{2mm}
+}}
+\caption{Block diagram of the BioStatusIA ingestion and feature engineering architecture, illustrating the progression from arbitrary raw inputs to consolidated feature vectors.}
+\label{fig:pipeline_flow}
+\end{figure}
+
+\subsection{Automatic input-structure detection}
+The detection module inspects the physical layout of the submission without assuming prior knowledge of clinical provenance. The system evaluates nine mutually exclusive operational modes:
+\begin{enumerate}
+    \item \texttt{imagem\_unica}: Single 2D image file with extensions \texttt{.png}, \texttt{.jpg}, \texttt{.bmp}, or \texttt{.tif}.
+    \item \texttt{imagens\_soltas}: Directory or archive containing multiple 2D images without labeled subfolders.
+    \item \texttt{dataset\_rotulado}: Directory containing labeled subdirectories identified via recursive search matching standard diagnostic terms (such as \texttt{benign}, \texttt{malignant}, \texttt{normal}, \texttt{abnormal}, \texttt{0}, or \texttt{1}).
+    \item \texttt{tabular}: Single CSV, TXT, or TSV file, or a directory containing exclusively tabular records.
+    \item \texttt{multimodal}: Directory containing both tabular records and 2D images.
+    \item \texttt{sinal\_temporal}: Physiological time-series files formatted as \texttt{.dat/.hea} (WFDB), \texttt{.edf/.bdf}, \texttt{.mat}, \texttt{.xml}, or \texttt{.c3d}.
+    \item \texttt{imagem\_dicom\_2d}: Single DICOM file (\texttt{.dcm}) representing 2D modalities such as chest radiography or mammography.
+    \item \texttt{volume\_3d}: Volumetric neuroimaging or radiological scans formatted as \texttt{.nii}, \texttt{.nii.gz}, \texttt{.mha}, or a directory containing ten or more sequential DICOM slices.
+    \item \texttt{multimodal\_expandido}: Heterogeneous mixture combining physiological time series, volumetric imaging, and tabular records.
+\end{enumerate}
+
+\subsection{Schema validation and tabular inference}
+Upon detecting the structural mode, input files undergo validation using Pydantic schema models to ensure file completeness and format compliance \cite{polyzotis2018data}. For tabular inputs, column schemas and delimiters are inferred automatically. The target label is identified by matching standard column headers (such as \texttt{label}, \texttt{class}, \texttt{diagnosis}, \texttt{target}, \texttt{outcome}, or \texttt{y}); when no matching header is present, the parser selects the rightmost column containing between 2 and 10 unique categorical values. Delimiters are resolved among comma, semicolon, tab, and pipe characters, with UTF-8 encoding attempted first and Latin-1 used as fallback.
+
+\subsection{Unified data contract: SinalNormalizado}
+A core design principle of the pipeline is the strict decoupling of data readers from downstream feature extractors. All family-specific readers must return an instance of the \texttt{SinalNormalizado} dataclass, defined by the fields listed in Table \ref{tab:contrato_dados}.
+
+\begin{table}[htbp]
+\caption{Specification of the Unified Data Contract (\texttt{SinalNormalizado})}
+\label{tab:contrato_dados}
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Description} \\ \midrule
+\texttt{familia} & \texttt{str} & Data family identifier (\texttt{"F1"}, \texttt{"F3"}, or \texttt{"F4"}) \\
+\texttt{tipo} & \texttt{str} & Modality tag (e.g., \texttt{"ECG"}, \texttt{"EEG"}, \texttt{"TC"}, \texttt{"RM"}) \\
+\texttt{dados} & \texttt{np.ndarray} & Raw multidimensional numerical array \\
+\texttt{taxa\_amostragem} & \texttt{float} & Sampling frequency in Hz ($0.0$ for static images) \\
+\texttt{canais} & \texttt{list[str]} & Channel or lead labels \\
+\texttt{metadados} & \texttt{dict} & Source header metadata and acquisition parameters \\
+\texttt{caminho\_original} & \texttt{str} & File system provenance path \\
+\texttt{dados\_viz} & \texttt{list} & Downsampled sequence ($\le 2000$ points) for visualization \\ \bottomrule
+\end{tabular}
+\end{table}
+
+This contract enforces an architectural invariant: extractors depend solely on the standardized fields of \texttt{SinalNormalizado}, eliminating direct dependencies on low-level file readers.
+
+\subsection{Family-specific data ingestion}
+Ingestion is managed by a centralized dispatcher that routes inputs to specialized reader libraries:
+\begin{itemize}
+    \item \textbf{Temporal signals (F1):} Multi-channel electrophysiological records are read using \texttt{mne} \cite{gramfort2013mne} for European Data Format (\texttt{.edf}) and BioSemi (\texttt{.bdf}) containers, \texttt{wfdb} \cite{goldberger2000physionet} for PhysioNet annotations, \texttt{scipy.io} for MATLAB matrices, and \texttt{xml.etree} for structured spirometric curves.
+    \item \textbf{2D DICOM imaging (F3):} Radiographic studies are decoded with \texttt{pydicom}, extracting photometric interpretation, pixel spacing, window center, and window width attributes \cite{dicom2023standard}.
+    \item \textbf{3D volumetric imaging (F4):} Volumetric series are ingested using \texttt{nibabel} for NIfTI containers and \texttt{SimpleITK} \cite{lowekamp2013simpleitk} for MetaImage (\texttt{.mha}) archives, preserving voxel spacing and affine spatial transformations.
+    \item \textbf{Plain 2D images and tabular data:} Read through OpenCV and custom delimited file parsers, respectively.
+\end{itemize}
+
+\subsection{Adaptive preprocessing}
+Following ingestion, the pipeline applies data-driven preprocessing based on measured signal characteristics:
+\begin{itemize}
+    \item \textbf{Electrophysiological signals:} Baseline wander is removed using high-pass Butterworth filtering ($f_c = 0.5\text{ Hz}$ for ECG), and power-line interference is suppressed via notch filtering at 50 or 60 Hz.
+    \item \textbf{Radiological images:} Grayscale intensity is normalized using min-max scaling or contrast-limited adaptive histogram equalization (CLAHE) when local contrast falls below empirical thresholds.
+    \item \textbf{Volumetric scans:} Intensities are clipped to predefined Hounsfield Unit (HU) windows (such as brain, soft tissue, or lung windows) followed by isotropic spatial resampling.
+    \item \textbf{Tabular variables:} Missing values are imputed using median replacement for continuous attributes and mode replacement for categorical variables, followed by robust standard scaling.
+\end{itemize}
+
+\subsection{Multi-domain feature extraction}
+The feature extraction stage computes mathematical biomarkers across physical domains:
+
+\subsubsection{Temporal and electrophysiological descriptors (F1)}
+For continuous signals, Root Mean Square (RMS) energy is calculated as:
+\begin{equation}
+\mathrm{RMS} = \sqrt{\frac{1}{N}\sum_{i=1}^{N}x_i^{2}}
+\end{equation}
+Spectral power distribution is computed via Welch's periodogram method. For EEG records, relative power in standard physiological bands (delta, theta, alpha, beta, gamma) is evaluated as:
+\begin{equation}
+P_b = \frac{\int_{f_1}^{f_2} S(f)\,df}{\int_{f_{\min}}^{f_{\max}} S(f)\,df}
+\end{equation}
+where $S(f)$ is the estimated Power Spectral Density (PSD). For cardiac signals, Heart Rate Variability (HRV) metrics are derived from detected R-peak intervals \cite{taskforce1996hrv, albuquerque2018ecg}:
+\begin{equation}
+\mathrm{RMSSD} = \sqrt{\frac{1}{N-1}\sum_{i=1}^{N-1}(RR_{i+1} - RR_i)^2}
+\end{equation}
+alongside the standard deviation of RR intervals (SDNN) and the proportion of successive differences exceeding 50 ms (pNN50).
+
+\subsubsection{Radiomic and textural descriptors (F3 and F4)}
+Texture characteristics are quantified using Gray-Level Co-occurrence Matrix (GLCM) statistics \cite{haralick1973glcm, lambin2012radiomics, vanGriethuysen2017pyradiomics}:
+\begin{align}
+\text{GLCM Entropy} & = -\sum_{i}\sum_{j} P(i,j) \log_2 P(i,j) \\
+\text{GLCM Homogeneity} & = \sum_{i}\sum_{j} \frac{P(i,j)}{1 + |i - j|} \\
+\text{GLCM Contrast} & = \sum_{i}\sum_{j} (i - j)^2 P(i,j) \\
+\text{GLCM Energy} & = \sum_{i}\sum_{j} P(i,j)^2
+\end{align}
+where $P(i,j)$ is the normalized spatial co-occurrence probability at specified pixel offsets.
+
+\subsubsection{Morphological and 3D volumetric attributes}
+Two-dimensional shape properties include Circularity ($4\pi A / P^2$) and Solidity ($A / A_{\text{hull}}$), where $A$ is area and $P$ is perimeter. For 3D volumetric regions (F4), Sphericity is formulated as:
+\begin{equation}
+\Psi = \frac{\pi^{1/3}(6V)^{2/3}}{S}
+\end{equation}
+where $V$ represents the segmented volume and $S$ denotes surface area. Signal-to-Noise Ratio (SNR) is expressed in decibels as:
+\begin{equation}
+\mathrm{SNR}_{\text{dB}} = 10 \log_{10}\left(\frac{P_{\text{signal}}}{P_{\text{noise}}}\right)
+\end{equation}
+For spirometric waveforms, the clinical obstruction ratio $\text{FEV}_1/\text{FVC}$ is computed directly from volume-time curves.

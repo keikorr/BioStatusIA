@@ -1,0 +1,28 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+% --- Configurações e Pacotes ---
+\input{config/preambulo.tex}
+\input{config/dados.tex}
+
+% Caminho padrão para as figuras
+\graphicspath{{figuras/}}
+
+\begin{document}
+
+\maketitle
+
+% --- RESUMO E KEYWORDS ---
+\imprimirresumo
+
+% --- SEÇÕES TEXTUAIS DO ARTIGO ---
+\input{secoes/01-introducao.tex}
+\input{secoes/03-metodologia.tex}
+\input{secoes/04-resultados.tex}
+\input{secoes/05-conclusao.tex}
+
+% --- REFERÊNCIAS BIBLIOGRÁFICAS ---
+\bibliographystyle{IEEEtran}
+\bibliography{referencias/referencias}
+
+\end{document}

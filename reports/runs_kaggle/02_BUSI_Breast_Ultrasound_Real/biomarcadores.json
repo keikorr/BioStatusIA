@@ -1,0 +1,662 @@
+[
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_0.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0302,
+        "solidez": 0.86
+      },
+      "textura_glcm": {
+        "contraste": 22.4659,
+        "homogeneidade": 0.336,
+        "energia": 0.0231,
+        "entropia": 7.6359
+      },
+      "distribuicao_intensidade": {
+        "snr": 2.3674,
+        "assimetria": -0.32,
+        "curtose": -0.7982
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_1.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 5.356,
+        "homogeneidade": 0.9958,
+        "energia": 0.9933,
+        "entropia": 0.0915
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.066,
+        "assimetria": 16.207,
+        "curtose": 268.0038
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_10.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 20.928,
+        "homogeneidade": 0.9852,
+        "energia": 0.9426,
+        "entropia": 0.4777
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.2313,
+        "assimetria": 4.1827,
+        "curtose": 15.6484
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_11.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0294,
+        "solidez": 0.8149
+      },
+      "textura_glcm": {
+        "contraste": 17.4488,
+        "homogeneidade": 0.3481,
+        "energia": 0.0301,
+        "entropia": 7.5717
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.6546,
+        "assimetria": 0.0571,
+        "curtose": -1.0022
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_12.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 32.2488,
+        "homogeneidade": 0.9777,
+        "energia": 0.8804,
+        "entropia": 0.7999
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.3577,
+        "assimetria": 2.4824,
+        "curtose": 4.2137
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_13.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0177,
+        "solidez": 0.7979
+      },
+      "textura_glcm": {
+        "contraste": 20.7158,
+        "homogeneidade": 0.3056,
+        "energia": 0.0221,
+        "entropia": 7.6323
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.8124,
+        "assimetria": 0.226,
+        "curtose": -0.8683
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_14.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 9.915,
+        "homogeneidade": 0.9937,
+        "energia": 0.9871,
+        "entropia": 0.1539
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.0981,
+        "assimetria": 10.5739,
+        "curtose": 111.7584
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_2.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0115,
+        "solidez": 0.5928
+      },
+      "textura_glcm": {
+        "contraste": 23.9993,
+        "homogeneidade": 0.3372,
+        "energia": 0.0427,
+        "entropia": 7.6348
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.8172,
+        "assimetria": 0.1503,
+        "curtose": -0.4181
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_3.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 37.6948,
+        "homogeneidade": 0.979,
+        "energia": 0.9078,
+        "entropia": 0.6699
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.3043,
+        "assimetria": 3.0381,
+        "curtose": 7.3051
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_4.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0129,
+        "solidez": 0.7789
+      },
+      "textura_glcm": {
+        "contraste": 6.4919,
+        "homogeneidade": 0.4745,
+        "energia": 0.0441,
+        "entropia": 7.4208
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.3476,
+        "assimetria": 0.6537,
+        "curtose": -0.9444
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_5.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 19.6416,
+        "homogeneidade": 0.985,
+        "energia": 0.9449,
+        "entropia": 0.4664
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.2254,
+        "assimetria": 4.3116,
+        "curtose": 16.7671
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_6.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 9.5028,
+        "homogeneidade": 0.9908,
+        "energia": 0.9747,
+        "entropia": 0.2683
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.1444,
+        "assimetria": 7.017,
+        "curtose": 47.892
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_7.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0195,
+        "solidez": 0.8048
+      },
+      "textura_glcm": {
+        "contraste": 18.8769,
+        "homogeneidade": 0.3287,
+        "energia": 0.0238,
+        "entropia": 7.6046
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.8576,
+        "assimetria": -0.075,
+        "curtose": -0.9232
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_8.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 10.738,
+        "homogeneidade": 0.992,
+        "energia": 0.9789,
+        "entropia": 0.2279
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.1308,
+        "assimetria": 7.7809,
+        "curtose": 59.3583
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\benign\\real_b_9.png",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0166,
+        "solidez": 0.7974
+      },
+      "textura_glcm": {
+        "contraste": 7.7993,
+        "homogeneidade": 0.4369,
+        "energia": 0.0372,
+        "entropia": 6.9769
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.5339,
+        "assimetria": 0.8237,
+        "curtose": 0.0249
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_0.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0102,
+        "solidez": 0.7632
+      },
+      "textura_glcm": {
+        "contraste": 8.4616,
+        "homogeneidade": 0.3889,
+        "energia": 0.0244,
+        "entropia": 7.701
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.9748,
+        "assimetria": 0.3802,
+        "curtose": -1.0779
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_1.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.4191,
+        "solidez": 0.7417
+      },
+      "textura_glcm": {
+        "contraste": 55.0535,
+        "homogeneidade": 0.9554,
+        "energia": 0.7041,
+        "entropia": 1.5341
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.7258,
+        "assimetria": 0.6806,
+        "curtose": -1.5149
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_10.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0294,
+        "solidez": 0.8617
+      },
+      "textura_glcm": {
+        "contraste": 12.2503,
+        "homogeneidade": 0.3727,
+        "energia": 0.0263,
+        "entropia": 7.7307
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.5396,
+        "assimetria": -0.066,
+        "curtose": -1.4578
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_11.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 70.8435,
+        "homogeneidade": 0.9615,
+        "energia": 0.7976,
+        "entropia": 1.2173
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.5031,
+        "assimetria": 1.5223,
+        "curtose": 0.3521
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_12.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0132,
+        "solidez": 0.7678
+      },
+      "textura_glcm": {
+        "contraste": 12.8747,
+        "homogeneidade": 0.3418,
+        "energia": 0.0237,
+        "entropia": 7.7267
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.7294,
+        "assimetria": -0.0472,
+        "curtose": -1.1527
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_13.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 68.4892,
+        "homogeneidade": 0.9562,
+        "energia": 0.8127,
+        "entropia": 1.218
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.4671,
+        "assimetria": 1.7237,
+        "curtose": 1.0194
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_14.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.016,
+        "solidez": 0.7711
+      },
+      "textura_glcm": {
+        "contraste": 18.9105,
+        "homogeneidade": 0.3265,
+        "energia": 0.0238,
+        "entropia": 7.5418
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.7043,
+        "assimetria": 0.1459,
+        "curtose": -0.7979
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_2.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0079,
+        "solidez": 0.6551
+      },
+      "textura_glcm": {
+        "contraste": 23.635,
+        "homogeneidade": 0.3215,
+        "energia": 0.024,
+        "entropia": 7.4452
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.9591,
+        "assimetria": 0.4128,
+        "curtose": -0.4157
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_3.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 21.1964,
+        "homogeneidade": 0.985,
+        "energia": 0.9614,
+        "entropia": 0.3756
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.1816,
+        "assimetria": 5.4879,
+        "curtose": 28.4769
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_4.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0343,
+        "solidez": 0.7858
+      },
+      "textura_glcm": {
+        "contraste": 12.9156,
+        "homogeneidade": 0.3916,
+        "energia": 0.0277,
+        "entropia": 7.6323
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.6626,
+        "assimetria": 0.3106,
+        "curtose": -1.1349
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_5.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 24.5585,
+        "homogeneidade": 0.977,
+        "energia": 0.9276,
+        "entropia": 0.6147
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.2588,
+        "assimetria": 3.7029,
+        "curtose": 11.8651
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_6.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0813,
+        "solidez": 0.9206
+      },
+      "textura_glcm": {
+        "contraste": 14.7619,
+        "homogeneidade": 0.3995,
+        "energia": 0.0536,
+        "entropia": 6.8953
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.6259,
+        "assimetria": 0.4022,
+        "curtose": -0.0138
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_7.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 68.0401,
+        "homogeneidade": 0.958,
+        "energia": 0.845,
+        "entropia": 1.0746
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.4097,
+        "assimetria": 2.0878,
+        "curtose": 2.4198
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_8.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0889,
+        "solidez": 0.9337
+      },
+      "textura_glcm": {
+        "contraste": 18.9339,
+        "homogeneidade": 0.3923,
+        "energia": 0.059,
+        "entropia": 6.7954
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.5672,
+        "assimetria": 0.4385,
+        "curtose": -0.4289
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\02_BUSI_Breast_Ultrasound_Real\\malignant\\real_m_9.png",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 70.9813,
+        "homogeneidade": 0.9631,
+        "energia": 0.8591,
+        "entropia": 0.9744
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.3876,
+        "assimetria": 2.2479,
+        "curtose": 3.1145
+      }
+    }
+  }
+]

@@ -1,0 +1,64 @@
+\section{Results and Discussion}
+\label{sec:resultados}
+
+\subsection{Benchmark composition}
+To assess ingestion robustness and feature extraction consistency, the pipeline was evaluated on a benchmark comprising 30 authentic biomedical datasets. As summarized in Table \ref{tab:benchmark_30}, the benchmark includes six datasets for each of the five primary modalities in scope: temporal physiological signals (F1), two-dimensional DICOM studies (F3), three-dimensional volumetric scans (F4), tabular clinical records, and standard two-dimensional images.
+
+\begin{table*}[htbp]
+\caption{Empirical Ingestion and Feature Extraction Benchmark Across 30 Authentic Biomedical Datasets}
+\label{tab:benchmark_30}
+\centering
+\begin{tabular}{@{}rlllc@{}}
+\toprule
+\textbf{\#} & \textbf{Dataset Name} & \textbf{Target Family} & \textbf{Detected Structural Mode} & \textbf{Feature Count} \\ \midrule
+01 & PTB\_XL\_ECG & F1 (Temporal) & \texttt{sinal\_temporal} & 18 \\
+02 & MIT\_BIH\_Arrhythmia & F1 (Temporal) & \texttt{sinal\_temporal} & 18 \\
+03 & CHB\_MIT\_EEG & F1 (Temporal) & \texttt{sinal\_temporal} & 18 \\
+04 & EMG\_Physical\_Action & F1 (Temporal) & \texttt{tabular} & 18 \\
+05 & CAP\_Sleep\_PSG & F1 (Temporal) & \texttt{sinal\_temporal} & 18 \\
+06 & Spirometry\_COPD & F1 (Temporal) & \texttt{tabular} & 18 \\ \midrule
+07 & NIH\_ChestXray14 & F3 (2D DICOM) & \texttt{imagem\_dicom\_2d} & 14 \\
+08 & CBIS\_DDSM\_Mammography & F3 (2D DICOM) & \texttt{imagem\_dicom\_2d} & 14 \\
+09 & CheXpert\_Chest & F3 (2D DICOM) & \texttt{imagem\_dicom\_2d} & 14 \\
+10 & RSNA\_Pneumonia & F3 (2D DICOM) & \texttt{imagem\_dicom\_2d} & 14 \\
+11 & INbreast\_Mammography & F3 (2D DICOM) & \texttt{imagem\_dicom\_2d} & 14 \\
+12 & VinDr\_CXR & F3 (2D DICOM) & \texttt{imagem\_dicom\_2d} & 14 \\ \midrule
+13 & BraTS\_Brain\_MRI\_3D & F4 (3D Volume) & \texttt{volume\_3d} & 22 \\
+14 & LIDC\_IDRI\_Lung\_CT\_3D & F4 (3D Volume) & \texttt{volume\_3d} & 22 \\
+15 & LiTS\_Liver\_CT\_3D & F4 (3D Volume) & \texttt{volume\_3d} & 22 \\
+16 & IXI\_Brain\_MRI\_3D & F4 (3D Volume) & \texttt{volume\_3d} & 22 \\
+17 & OASIS3\_Brain\_PET\_3D & F4 (3D Volume) & \texttt{volume\_3d} & 22 \\
+18 & ProstateX\_MRI\_3D & F4 (3D Volume) & \texttt{volume\_3d} & 22 \\ \midrule
+19 & UCI\_Heart\_Disease & Tabular & \texttt{tabular} & 6 \\
+20 & Breast\_Cancer\_Wisconsin & Tabular & \texttt{tabular} & 30 \\
+21 & PIMA\_Diabetes & Tabular & \texttt{tabular} & 6 \\
+22 & Parkinsons\_Biomarkers & Tabular & \texttt{tabular} & 16 \\
+23 & Chronic\_Kidney\_Disease & Tabular & \texttt{tabular} & 5 \\
+24 & Stroke\_Prediction & Tabular & \texttt{tabular} & 5 \\ \midrule
+25 & BUSI\_Breast\_Ultrasound & 2D Image & \texttt{dataset\_rotulado} & 12 \\
+26 & HAM10000\_Dermatology & 2D Image & \texttt{dataset\_rotulado} & 12 \\
+27 & BreakHis\_Histopathology & 2D Image & \texttt{dataset\_rotulado} & 12 \\
+28 & DRIVE\_Retinal\_Fundus & 2D Image & \texttt{imagens\_soltas} & 12 \\
+29 & BCCD\_Blood\_Cells & 2D Image & \texttt{dataset\_rotulado} & 12 \\
+30 & COVID19\_Radiography & 2D Image & \texttt{dataset\_rotulado} & 12 \\ \bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Ingestion robustness and structural detection analysis}
+All 30 benchmark datasets were processed without encountering unhandled runtime exceptions. Across the evaluated modalities, the automatic detection engine accurately identified the physical organization of the incoming directories and archives.
+
+Regarding the detected operational modes, the structural detector operates strictly on the physical layout and file format of the input rather than on declared clinical semantics. This distinction is clearly illustrated in datasets 04 (\texttt{EMG\_Physical\_Action}) and 06 (\texttt{Spirometry\_COPD}); although both represent physiological signals (Family F1) from a clinical perspective, they are distributed as CSV matrices. Consequently, the detector classified them as \texttt{tabular} at the ingestion stage, successfully passing the numerical tables to the feature extraction modules.
+
+Similarly, dataset 28 (\texttt{DRIVE\_Retinal\_Fundus}) was classified as \texttt{imagens\_soltas} rather than \texttt{dataset\_rotulado} because the source archive contains images in a flat folder hierarchy without subdirectories designated for binary classes. The pipeline processed the flat structure correctly, verifying that lack of directory categorization does not cause pipeline failure.
+
+\subsection{Feature coverage and dimensional consistency}
+A critical empirical finding is that the dimensionality of the generated feature vector is constant within each signal family across heterogeneous sources:
+\begin{itemize}
+    \item \textbf{Temporal signals (F1):} Yielded exactly 18 descriptors across all six benchmark datasets, encompassing statistical moments, RMS amplitude, frequency-band power distributions, and HRV indices.
+    \item \textbf{2D DICOM studies (F3):} Produced 14 descriptors across all six radiological cohorts, combining GLCM textural parameters, morphological geometry, and DICOM-specific metadata attributes.
+    \item \textbf{3D volumetric scans (F4):} Generated 22 descriptors across all six MRI, CT, and PET datasets, integrating 3D GLCM texture matrices, volumetric sphericity, and spatial intensity histograms.
+    \item \textbf{Plain 2D images:} Consistently produced 12 descriptors covering 2D GLCM textures, edge density, and shape solidity.
+    \item \textbf{Tabular cohorts:} Feature dimensionality ranged from 5 to 30 variables, reflecting the intrinsic schema of each clinical registry.
+\end{itemize}
+
+This structural invariance supports the validity of the unified data contract (\texttt{SinalNormalizado}); by mapping heterogeneous inputs into family-specific representations, the system ensures that downstream machine learning models receive consistent input dimensions regardless of the original file format.

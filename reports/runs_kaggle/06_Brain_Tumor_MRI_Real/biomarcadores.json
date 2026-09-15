@@ -1,0 +1,662 @@
+[
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_0.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.8688,
+        "solidez": 0.9923
+      },
+      "textura_glcm": {
+        "contraste": 107.6957,
+        "homogeneidade": 0.4023,
+        "energia": 0.0714,
+        "entropia": 6.9345
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.4289,
+        "assimetria": 0.3979,
+        "curtose": 0.2061
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_1.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.1256,
+        "solidez": 0.4655
+      },
+      "textura_glcm": {
+        "contraste": 184.9305,
+        "homogeneidade": 0.537,
+        "energia": 0.4418,
+        "entropia": 5.2275
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.8337,
+        "assimetria": 0.8434,
+        "curtose": -0.5501
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_10.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 48.5823,
+        "homogeneidade": 0.6221,
+        "energia": 0.229,
+        "entropia": 5.2668
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.9014,
+        "assimetria": 0.9861,
+        "curtose": 0.7489
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_11.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.4466,
+        "solidez": 0.9655
+      },
+      "textura_glcm": {
+        "contraste": 102.6012,
+        "homogeneidade": 0.4913,
+        "energia": 0.3659,
+        "entropia": 5.8116
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.9837,
+        "assimetria": 0.4091,
+        "curtose": -1.3491
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_12.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.8657,
+        "solidez": 0.9925
+      },
+      "textura_glcm": {
+        "contraste": 161.2806,
+        "homogeneidade": 0.3727,
+        "energia": 0.1023,
+        "entropia": 6.9789
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.2489,
+        "assimetria": 0.5392,
+        "curtose": -0.2546
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_13.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7381,
+        "solidez": 0.991
+      },
+      "textura_glcm": {
+        "contraste": 120.4758,
+        "homogeneidade": 0.6497,
+        "energia": 0.4242,
+        "entropia": 4.5427
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.6801,
+        "assimetria": 1.3667,
+        "curtose": 1.1526
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_14.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 56.1214,
+        "homogeneidade": 0.672,
+        "energia": 0.5545,
+        "entropia": 3.9669
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.7749,
+        "assimetria": 0.7097,
+        "curtose": -1.1302
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_2.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 108.5452,
+        "homogeneidade": 0.6175,
+        "energia": 0.2693,
+        "entropia": 5.2116
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.1153,
+        "assimetria": 1.2411,
+        "curtose": 1.4316
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_3.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.121,
+        "solidez": 0.9019
+      },
+      "textura_glcm": {
+        "contraste": 62.5175,
+        "homogeneidade": 0.518,
+        "energia": 0.2633,
+        "entropia": 5.5619
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.0411,
+        "assimetria": 0.883,
+        "curtose": 0.9491
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_4.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.019,
+        "solidez": 0.7641
+      },
+      "textura_glcm": {
+        "contraste": 333.4036,
+        "homogeneidade": 0.433,
+        "energia": 0.3483,
+        "entropia": 5.8905
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.9733,
+        "assimetria": 0.6265,
+        "curtose": -0.6493
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_5.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 51.2933,
+        "homogeneidade": 0.6631,
+        "energia": 0.5253,
+        "entropia": 4.1494
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.781,
+        "assimetria": 0.6999,
+        "curtose": -1.1498
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_6.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7501,
+        "solidez": 0.9912
+      },
+      "textura_glcm": {
+        "contraste": 109.7021,
+        "homogeneidade": 0.5734,
+        "energia": 0.3329,
+        "entropia": 5.1883
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.8561,
+        "assimetria": 1.0027,
+        "curtose": 0.7595
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_7.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 79.7295,
+        "homogeneidade": 0.6283,
+        "energia": 0.4327,
+        "entropia": 4.855
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.6869,
+        "assimetria": 1.0946,
+        "curtose": -0.3818
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_8.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.8577,
+        "solidez": 0.99
+      },
+      "textura_glcm": {
+        "contraste": 280.8099,
+        "homogeneidade": 0.3244,
+        "energia": 0.1334,
+        "entropia": 7.0879
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.124,
+        "assimetria": 0.4924,
+        "curtose": -0.7652
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\benign\\real_b_9.jpg",
+    "label": 0,
+    "categoria": "BENIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 136.4669,
+        "homogeneidade": 0.5116,
+        "energia": 0.3093,
+        "entropia": 5.7653
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.8811,
+        "assimetria": 0.5829,
+        "curtose": -1.2684
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_0.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 105.3512,
+        "homogeneidade": 0.5246,
+        "energia": 0.2777,
+        "entropia": 5.7744
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.1573,
+        "assimetria": 0.5283,
+        "curtose": -0.0943
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_1.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 36.524,
+        "homogeneidade": 0.6885,
+        "energia": 0.3351,
+        "entropia": 4.8353
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.8456,
+        "assimetria": 1.0227,
+        "curtose": 0.6749
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_10.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.3964,
+        "solidez": 0.984
+      },
+      "textura_glcm": {
+        "contraste": 48.3559,
+        "homogeneidade": 0.4972,
+        "energia": 0.0978,
+        "entropia": 6.4006
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.2662,
+        "assimetria": 0.4431,
+        "curtose": -0.2635
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_11.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.4699,
+        "solidez": 0.9646
+      },
+      "textura_glcm": {
+        "contraste": 41.7002,
+        "homogeneidade": 0.5,
+        "energia": 0.1465,
+        "entropia": 6.2815
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.967,
+        "assimetria": 1.7366,
+        "curtose": 4.4807
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_12.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.344,
+        "solidez": 0.9546
+      },
+      "textura_glcm": {
+        "contraste": 53.3884,
+        "homogeneidade": 0.5756,
+        "energia": 0.193,
+        "entropia": 5.8409
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.027,
+        "assimetria": 0.8125,
+        "curtose": 0.2957
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_13.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.1215,
+        "solidez": 0.423
+      },
+      "textura_glcm": {
+        "contraste": 47.233,
+        "homogeneidade": 0.5596,
+        "energia": 0.1678,
+        "entropia": 6.0154
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.9627,
+        "assimetria": 0.8708,
+        "curtose": 0.0344
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_14.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 30.5462,
+        "homogeneidade": 0.6959,
+        "energia": 0.3347,
+        "entropia": 4.74
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.8255,
+        "assimetria": 1.0436,
+        "curtose": 0.5977
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_2.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 23.4049,
+        "homogeneidade": 0.685,
+        "energia": 0.3256,
+        "entropia": 4.7543
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.8713,
+        "assimetria": 0.7529,
+        "curtose": -0.4035
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_3.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.5954,
+        "solidez": 0.9418
+      },
+      "textura_glcm": {
+        "contraste": 52.5095,
+        "homogeneidade": 0.4362,
+        "energia": 0.0688,
+        "entropia": 6.9438
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.2923,
+        "assimetria": 0.5015,
+        "curtose": -0.2579
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_4.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.4264,
+        "solidez": 0.9527
+      },
+      "textura_glcm": {
+        "contraste": 46.4689,
+        "homogeneidade": 0.4645,
+        "energia": 0.0955,
+        "entropia": 6.3795
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.7319,
+        "assimetria": 0.2595,
+        "curtose": 0.0839
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_5.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.0856,
+        "solidez": 0.8778
+      },
+      "textura_glcm": {
+        "contraste": 83.779,
+        "homogeneidade": 0.4148,
+        "energia": 0.0636,
+        "entropia": 6.7504
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.5449,
+        "assimetria": 1.4709,
+        "curtose": 3.5506
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_6.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.4196,
+        "solidez": 0.9543
+      },
+      "textura_glcm": {
+        "contraste": 50.0607,
+        "homogeneidade": 0.5556,
+        "energia": 0.1857,
+        "entropia": 6.0004
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.932,
+        "assimetria": 0.8037,
+        "curtose": -0.3666
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_7.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.5594,
+        "solidez": 0.9944
+      },
+      "textura_glcm": {
+        "contraste": 28.4584,
+        "homogeneidade": 0.602,
+        "energia": 0.1612,
+        "entropia": 5.7015
+      },
+      "distribuicao_intensidade": {
+        "snr": 1.0474,
+        "assimetria": 0.7276,
+        "curtose": -0.1356
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_8.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.7854,
+        "solidez": 1.0
+      },
+      "textura_glcm": {
+        "contraste": 51.0131,
+        "homogeneidade": 0.6043,
+        "energia": 0.3893,
+        "entropia": 5.0067
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.8118,
+        "assimetria": 1.4489,
+        "curtose": 1.8726
+      }
+    }
+  },
+  {
+    "caminho": "C:\\Users\\ADM\\.gemini\\antigravity-ide\\scratch\\BioStatusIA\\dataset_kaggle_reais\\06_Brain_Tumor_MRI_Real\\malignant\\real_m_9.jpg",
+    "label": 1,
+    "categoria": "MALIGNO",
+    "biomarcadores": {
+      "morfologia": {
+        "circularidade": 0.1704,
+        "solidez": 0.4838
+      },
+      "textura_glcm": {
+        "contraste": 51.6992,
+        "homogeneidade": 0.6454,
+        "energia": 0.2215,
+        "entropia": 5.5151
+      },
+      "distribuicao_intensidade": {
+        "snr": 0.9036,
+        "assimetria": 0.9527,
+        "curtose": 0.2762
+      }
+    }
+  }
+]

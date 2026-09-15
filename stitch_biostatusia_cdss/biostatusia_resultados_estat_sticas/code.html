@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BioStatusIA — Resultados da Análise</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .zebra-table tr:nth-child(even) {
+            background-color: #f0f3ff;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #bdc9c6;
+            border-radius: 10px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#cfdaf2",
+                        "on-secondary-container": "#266d68",
+                        "on-primary-fixed": "#00201d",
+                        "on-secondary-fixed-variant": "#00504b",
+                        "on-surface": "#111c2d",
+                        "tertiary-fixed-dim": "#ffb77d",
+                        "surface-container-high": "#dee8ff",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#9cf2e8",
+                        "surface-container": "#e7eeff",
+                        "secondary": "#216963",
+                        "secondary-container": "#a8ece5",
+                        "secondary-fixed": "#abefe8",
+                        "on-tertiary-container": "#ffe6d5",
+                        "tertiary": "#7d4200",
+                        "on-primary-fixed-variant": "#00504a",
+                        "tertiary-container": "#a15600",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f9f9ff",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "primary": "#005c55",
+                        "surface-container-low": "#f0f3ff",
+                        "surface": "#f9f9ff",
+                        "on-background": "#111c2d",
+                        "primary-fixed-dim": "#80d5cb",
+                        "inverse-surface": "#263143",
+                        "surface-variant": "#d8e3fb",
+                        "tertiary-fixed": "#ffdcc3",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#00201e",
+                        "background": "#f9f9ff",
+                        "outline": "#6e7977",
+                        "primary-container": "#0f766e",
+                        "inverse-primary": "#80d5cb",
+                        "secondary-fixed-dim": "#8fd3cc",
+                        "surface-container-highest": "#d8e3fb",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#2f1500",
+                        "surface-tint": "#006a63",
+                        "outline-variant": "#bdc9c6",
+                        "on-surface-variant": "#3e4947",
+                        "inverse-on-surface": "#ecf1ff",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "on-primary-container": "#a3faef"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "card-gap": "20px",
+                        "base": "4px",
+                        "gutter": "16px",
+                        "container-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "metric-md": ["Inter"],
+                        "headline-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "metric-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 bg-primary-container shadow-sm h-16">
+<div class="flex items-center gap-8">
+<span class="font-headline-sm text-headline-sm font-bold text-on-primary-container">🧬 BioStatusIA</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-on-primary-container/80 hover:text-on-primary-container transition-colors font-body-md text-body-md" href="#">Dashboard</a>
+<a class="text-on-primary-container font-bold border-b-2 border-on-primary-container pb-1 font-body-md text-body-md" href="#">Histórico</a>
+<a class="text-on-primary-container/80 hover:text-on-primary-container transition-colors font-body-md text-body-md" href="#">Pacientes</a>
+<a class="text-on-primary-container/80 hover:text-on-primary-container transition-colors font-body-md text-body-md" href="#">Relatórios</a>
+</nav>
+</div>
+<div class="flex items-center gap-4 text-on-primary-container">
+<button class="p-2 hover:bg-primary/10 rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 hover:bg-primary/10 rounded-full transition-all flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="text-label-sm font-label-sm">Dr. Silva</span>
+</button>
+</div>
+</header>
+<main class="mt-16 flex-grow container mx-auto px-6 py-8">
+<!-- Ethical Banner -->
+<div class="mb-6 bg-tertiary-fixed text-on-tertiary-fixed border border-tertiary-container/30 rounded-lg p-4 flex items-center gap-4 shadow-sm">
+<span class="material-symbols-outlined text-tertiary" data-icon="warning">warning</span>
+<p class="font-body-md text-body-md">
+                Esta é uma ferramenta de suporte à decisão baseada em IA e não substitui o diagnóstico clínico realizado por um médico.
+            </p>
+</div>
+<!-- Context Header -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 mb-8 shadow-sm">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<h1 class="font-headline-md text-headline-md text-on-surface mb-2">Dataset: HepatoCell_Morphology_V4</h1>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-label-sm font-bold">F1-SCORE: 0.94</span>
+<span class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-label-sm font-bold">F3/F4</span>
+<span class="px-3 py-1 rounded-full bg-surface-container-highest text-on-surface-variant text-label-sm font-bold">TABULAR</span>
+</div>
+</div>
+<div class="grid grid-cols-2 md:flex gap-6 items-center">
+<div class="text-center md:text-left">
+<p class="text-on-surface-variant text-label-sm uppercase tracking-wider">Modo</p>
+<p class="font-headline-sm text-headline-sm text-primary">Diagnóstico</p>
+</div>
+<div class="h-10 w-px bg-outline-variant hidden md:block"></div>
+<div class="text-center md:text-left">
+<p class="text-on-surface-variant text-label-sm uppercase tracking-wider">Amostras</p>
+<p class="font-headline-sm text-headline-sm text-on-surface">1,248</p>
+</div>
+<div class="bg-primary-fixed p-4 rounded-lg border border-primary/20 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="auto_awesome">auto_awesome</span>
+<div>
+<p class="text-on-primary-fixed-variant text-label-sm font-semibold">Melhor Modelo</p>
+<p class="text-on-primary-fixed font-bold">Random Forest</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Horizontal Tabs -->
+<nav class="flex gap-8 border-b border-outline-variant mb-8 overflow-x-auto custom-scrollbar">
+<button class="pb-3 border-b-2 border-primary text-primary font-bold whitespace-nowrap">Estatísticas &amp; Biomarcadores</button>
+<button class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap">Pré-processamento</button>
+<button class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap">AutoML</button>
+<button class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap">Laudo</button>
+</nav>
+<!-- Bento Grid Layout for Content -->
+<div class="grid grid-cols-12 gap-card-gap">
+<!-- Card: Biomarcadores por amostra (Table) -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm flex flex-col">
+<div class="p-5 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
+<h3 class="font-headline-sm text-headline-sm">Biomarcadores por Amostra</h3>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-container-high rounded transition-colors">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto custom-scrollbar flex-grow">
+<table class="w-full text-left border-collapse zebra-table">
+<thead class="sticky top-0 bg-surface-container-high z-10">
+<tr>
+<th class="p-4 font-label-sm text-on-surface-variant border-b border-outline-variant">ID Amostra</th>
+<th class="p-4 font-label-sm text-on-surface-variant border-b border-outline-variant">Circularidade</th>
+<th class="p-4 font-label-sm text-on-surface-variant border-b border-outline-variant">Solidez</th>
+<th class="p-4 font-label-sm text-on-surface-variant border-b border-outline-variant">Área (μm²)</th>
+<th class="p-4 font-label-sm text-on-surface-variant border-b border-outline-variant">Perímetro</th>
+<th class="p-4 font-label-sm text-on-surface-variant border-b border-outline-variant">Status</th>
+</tr>
+</thead>
+<tbody class="text-body-md">
+<tr>
+<td class="p-4 font-bold">#HC-8902</td>
+<td class="p-4">0.82</td>
+<td class="p-4">0.95</td>
+<td class="p-4">421.4</td>
+<td class="p-4">12.5</td>
+<td class="p-4">
+<span class="px-2 py-1 rounded bg-error/10 text-error text-[10px] font-bold uppercase tracking-widest">Maligno</span>
+</td>
+</tr>
+<tr>
+<td class="p-4 font-bold">#HC-8903</td>
+<td class="p-4">0.94</td>
+<td class="p-4">0.99</td>
+<td class="p-4">310.2</td>
+<td class="p-4">8.4</td>
+<td class="p-4">
+<span class="px-2 py-1 rounded bg-secondary/10 text-secondary text-[10px] font-bold uppercase tracking-widest">Benigno</span>
+</td>
+</tr>
+<tr>
+<td class="p-4 font-bold">#HC-8904</td>
+<td class="p-4">0.78</td>
+<td class="p-4">0.92</td>
+<td class="p-4">502.1</td>
+<td class="p-4">15.2</td>
+<td class="p-4">
+<span class="px-2 py-1 rounded bg-error/10 text-error text-[10px] font-bold uppercase tracking-widest">Maligno</span>
+</td>
+</tr>
+<tr>
+<td class="p-4 font-bold">#HC-8905</td>
+<td class="p-4">0.96</td>
+<td class="p-4">0.98</td>
+<td class="p-4">295.7</td>
+<td class="p-4">7.9</td>
+<td class="p-4">
+<span class="px-2 py-1 rounded bg-secondary/10 text-secondary text-[10px] font-bold uppercase tracking-widest">Benigno</span>
+</td>
+</tr>
+<tr>
+<td class="p-4 font-bold">#HC-8906</td>
+<td class="p-4">0.85</td>
+<td class="p-4">0.94</td>
+<td class="p-4">380.0</td>
+<td class="p-4">11.1</td>
+<td class="p-4">
+<span class="px-2 py-1 rounded bg-secondary/10 text-secondary text-[10px] font-bold uppercase tracking-widest">Benigno</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Card: Distribuição por classe (Chart) -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col h-[400px]">
+<div class="mb-6">
+<h3 class="font-headline-sm text-headline-sm">Distribuição por Classe</h3>
+<p class="text-on-surface-variant text-body-md">Métrica: Circularidade</p>
+</div>
+<div class="flex-grow flex items-end justify-around pb-4 gap-8">
+<!-- BoxPlot Visual Representation -->
+<div class="w-24 flex flex-col items-center">
+<div class="w-1 h-12 bg-outline-variant"></div>
+<div class="w-16 h-32 bg-secondary/20 border-2 border-secondary relative rounded-sm">
+<div class="absolute top-1/2 left-0 w-full h-0.5 bg-secondary"></div>
+</div>
+<div class="w-1 h-12 bg-outline-variant"></div>
+<p class="mt-4 font-bold text-secondary">Benigno</p>
+</div>
+<div class="w-24 flex flex-col items-center">
+<div class="w-1 h-16 bg-outline-variant"></div>
+<div class="w-16 h-20 bg-error/20 border-2 border-error relative rounded-sm">
+<div class="absolute top-1/2 left-0 w-full h-0.5 bg-error"></div>
+</div>
+<div class="w-1 h-16 bg-outline-variant"></div>
+<p class="mt-4 font-bold text-error">Maligno</p>
+</div>
+</div>
+</div>
+<!-- Card: Schema Tabular -->
+<div class="col-span-12 md:col-span-6 lg:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary" data-icon="schema">schema</span>
+<h3 class="font-headline-sm text-headline-sm">Schema Tabular</h3>
+</div>
+<ul class="space-y-4">
+<li class="flex justify-between items-center border-b border-outline-variant pb-2">
+<span class="text-on-surface-variant">Variáveis Preditoras</span>
+<span class="font-bold">14 Colunas</span>
+</li>
+<li class="flex justify-between items-center border-b border-outline-variant pb-2">
+<span class="text-on-surface-variant">Total de Entradas</span>
+<span class="font-bold">17,472 Células</span>
+</li>
+<li class="flex justify-between items-center border-b border-outline-variant pb-2">
+<span class="text-on-surface-variant">Coluna Alvo (Label)</span>
+<span class="px-2 py-1 bg-primary/10 text-primary font-bold rounded">diagnosis_class</span>
+</li>
+<li class="flex justify-between items-center">
+<span class="text-on-surface-variant">Tipo de Dados</span>
+<span class="font-bold">Float64, Int64</span>
+</li>
+</ul>
+</div>
+<!-- Card: Métricas Univariadas & Correlações -->
+<div class="col-span-12 md:col-span-6 lg:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm">
+<div class="grid md:grid-cols-2 gap-8">
+<div>
+<h3 class="font-headline-sm text-headline-sm mb-6">Métricas Univariadas (Geral)</h3>
+<div class="bg-surface-container-low rounded-lg p-4">
+<div class="grid grid-cols-2 gap-4">
+<div>
+<p class="text-label-sm text-on-surface-variant">Média Global</p>
+<p class="font-metric-md text-metric-md">0.842</p>
+</div>
+<div>
+<p class="text-label-sm text-on-surface-variant">Mediana</p>
+<p class="font-metric-md text-metric-md">0.819</p>
+</div>
+<div>
+<p class="text-label-sm text-on-surface-variant">Desvio Padrão</p>
+<p class="font-metric-md text-metric-md">0.104</p>
+</div>
+<div>
+<p class="text-label-sm text-on-surface-variant">Kurtosis</p>
+<p class="font-metric-md text-metric-md">1.22</p>
+</div>
+</div>
+</div>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm mb-6">Fortes Correlações (|r| ≥ 0.7)</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3">
+<span class="w-12 h-1 bg-primary rounded"></span>
+<p class="text-body-md flex-grow">Área ↔ Perímetro</p>
+<span class="font-bold text-primary">0.98</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-8 h-1 bg-primary/70 rounded"></span>
+<p class="text-body-md flex-grow">Circularidade ↔ Solidez</p>
+<span class="font-bold text-primary">0.84</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-6 h-1 bg-primary/50 rounded"></span>
+<p class="text-body-md flex-grow">Simetria ↔ Circularidade</p>
+<span class="font-bold text-primary">0.72</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-auto flex flex-col md:flex-row justify-between items-center px-8 bg-surface-container-low py-8 border-t border-outline-variant">
+<div class="mb-4 md:mb-0">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface-variant uppercase tracking-tighter">🧬 BioStatusIA</span>
+<p class="text-on-surface-variant font-label-sm text-label-sm mt-1">Projeto de mestrado — IA na Saúde · Fortaleza/CE</p>
+</div>
+<div class="flex gap-6">
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#">Termos de Uso</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#">Privacidade</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#">Contato</a>
+</div>
+<div class="mt-4 md:mt-0 text-on-surface-variant/60 text-[10px]">
+            © 2024 BioStatusIA. Todos os direitos reservados.
+        </div>
+</footer>
+<script>
+        // Simple micro-interaction for active states
+        document.querySelectorAll('nav a, nav button').forEach(el => {
+            el.addEventListener('click', (e) => {
+                if(e.target.tagName === 'BUTTON') {
+                    document.querySelectorAll('nav button').forEach(b => {
+                        b.classList.remove('border-primary', 'text-primary', 'font-bold');
+                        b.classList.add('border-transparent', 'text-on-surface-variant');
+                    });
+                    e.target.classList.add('border-primary', 'text-primary', 'font-bold');
+                    e.target.classList.remove('border-transparent', 'text-on-surface-variant');
+                }
+            });
+        });
+    </script>
+</body></html>

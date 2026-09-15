@@ -93,17 +93,6 @@ tarefa_extracao_temporal:
     features principais extraídas (RMS, frequência dominante, HRV se ECG, bandas EEG
     se EEG) e métricas do classificador quando disponível.
 
-tarefa_extracao_audio:
-  description: >
-    Extraia biomarcadores acústicos de sinais de áudio biomédico em {caminho_dataset}.
-    Use a ferramenta ferramenta_extrair_audio_biomedico passando:
-      - caminho_dataset: {caminho_dataset}
-      - pasta_run: {pasta_run}
-    A ferramenta extrairá MFCCs, espectrograma mel, ZCR e energia por banda.
-  expected_output: >
-    Relatório com: tipo de áudio (Fonocardiograma/Sons Pulmonares), número de arquivos,
-    centroide espectral médio, ZCR e top-5 MFCCs de exemplo.
-
 tarefa_extracao_imagem_medica:
   description: >
     Extraia biomarcadores de imagens médicas DICOM/3D em {caminho_dataset}.
@@ -116,27 +105,13 @@ tarefa_extracao_imagem_medica:
     biomarcadores principais (solidez, entropia, volume de lesão para 3D) e métricas
     de classificador quando disponível.
 
-tarefa_extracao_video:
-  description: >
-    Extraia biomarcadores de vídeo médico em {caminho_dataset}.
-    Use a ferramenta ferramenta_extrair_video_medico passando:
-      - caminho_dataset: {caminho_dataset}
-      - pasta_run: {pasta_run}
-    A ferramenta amostará frames, calculará motion index, textura do keyframe e
-    detecção de frames com alta variação.
-  expected_output: >
-    Relatório com: tipo de vídeo, número de frames analisados, motion index médio,
-    entropia do keyframe e percentual de frames com alta variação.
-
 tarefa_laudo_sinal:
   description: >
     Com base nos relatórios técnicos dos agentes de extração de sinais, redija o laudo
     clínico preliminar. Contextualize os achados de acordo com o tipo de sinal:
     - ECG: interpretar FC, HRV, morfologia de onda
     - EEG: interpretar bandas de frequência e ratio alfa/beta
-    - Áudio: interpretar espectro e MFCCs em relação a patologias cardiopulmonares
     - DICOM/3D: interpretar morfologia e textura radiômica
-    - Vídeo: interpretar motion index e entropia de frames
     Tom obrigatório: profissional, ético e cauteloso.
     AVISO ÉTICO OBRIGATÓRIO: este laudo é de suporte e NÃO substitui avaliação médica.
   expected_output: >

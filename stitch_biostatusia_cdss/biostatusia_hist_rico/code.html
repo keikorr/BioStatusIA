@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Histórico de Análises — BioStatusIA</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#cfdaf2",
+                    "on-secondary-container": "#266d68",
+                    "on-primary-fixed": "#00201d",
+                    "on-secondary-fixed-variant": "#00504b",
+                    "on-surface": "#111c2d",
+                    "tertiary-fixed-dim": "#ffb77d",
+                    "surface-container-high": "#dee8ff",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#9cf2e8",
+                    "surface-container": "#e7eeff",
+                    "secondary": "#216963",
+                    "secondary-container": "#a8ece5",
+                    "secondary-fixed": "#abefe8",
+                    "on-tertiary-container": "#ffe6d5",
+                    "tertiary": "#7d4200",
+                    "on-primary-fixed-variant": "#00504a",
+                    "tertiary-container": "#a15600",
+                    "on-tertiary": "#ffffff",
+                    "surface-bright": "#f9f9ff",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#6e3900",
+                    "primary": "#005c55",
+                    "surface-container-low": "#f0f3ff",
+                    "surface": "#f9f9ff",
+                    "on-background": "#111c2d",
+                    "primary-fixed-dim": "#80d5cb",
+                    "inverse-surface": "#263143",
+                    "surface-variant": "#d8e3fb",
+                    "tertiary-fixed": "#ffdcc3",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed": "#00201e",
+                    "background": "#f9f9ff",
+                    "outline": "#6e7977",
+                    "primary-container": "#0f766e",
+                    "inverse-primary": "#80d5cb",
+                    "secondary-fixed-dim": "#8fd3cc",
+                    "surface-container-highest": "#d8e3fb",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed": "#2f1500",
+                    "surface-tint": "#006a63",
+                    "outline-variant": "#bdc9c6",
+                    "on-surface-variant": "#3e4947",
+                    "inverse-on-surface": "#ecf1ff",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "on-primary": "#ffffff",
+                    "on-primary-container": "#a3faef"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "card-gap": "20px",
+                    "base": "4px",
+                    "gutter": "16px",
+                    "container-padding": "24px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "metric-md": ["Inter"],
+                    "headline-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "metric-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        /* Custom scrollbar for clinical feel */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #bdc9c6; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6e7977; }
+        
+        .zebra-table tr:nth-child(even) { background-color: #f0f3ff; }
+        .zebra-table tr:hover { background-color: #e7eeff; cursor: pointer; transition: background-color 0.2s ease; }
+        
+        .ethical-banner {
+            background-color: #fff9eb;
+            border: 1px solid #ffcc00;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 bg-primary-container shadow-sm h-16">
+<div class="flex items-center gap-8">
+<span class="font-headline-sm text-headline-sm font-bold text-on-primary-container whitespace-nowrap">🧬 BioStatusIA</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="font-body-md text-body-md text-on-primary-container/80 hover:text-on-primary-container transition-colors" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-on-primary-container font-bold border-b-2 border-on-primary-container pb-1" href="#">Histórico</a>
+<a class="font-body-md text-body-md text-on-primary-container/80 hover:text-on-primary-container transition-colors" href="#">Pacientes</a>
+<a class="font-body-md text-body-md text-on-primary-container/80 hover:text-on-primary-container transition-colors" href="#">Relatórios</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-primary-container hover:bg-primary/10 rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-primary-container hover:bg-primary/10 rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow pt-24 px-6 pb-12 max-w-[1440px] mx-auto w-full">
+<!-- Ethical Banner -->
+<div class="ethical-banner p-4 mb-8 rounded-lg flex items-center gap-3 shadow-sm">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">warning</span>
+<p class="font-body-md text-body-md text-tertiary-container font-medium">
+                Esta é uma ferramenta de suporte à decisão baseada em IA e não substitui o diagnóstico clínico realizado por um médico.
+            </p>
+</div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+<h1 class="font-display-lg text-display-lg text-on-surface">Histórico de Análises</h1>
+<!-- Search Bar -->
+<div class="relative w-full md:w-96">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-body-md text-body-md" placeholder="Buscar por ID, Dataset ou Família..." type="text"/>
+</div>
+</div>
+<!-- Data Table Section -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse zebra-table">
+<thead class="bg-surface-container sticky top-0 z-10 border-b border-outline-variant">
+<tr>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">ID da Análise</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Data</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Dataset</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Nº Amostras</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Família</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Melhor Modelo</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-center">Categoria</th>
+<th class="px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Ações</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant font-body-md text-body-md text-on-surface">
+<!-- Row 1 -->
+<tr class="transition-all">
+<td class="px-6 py-4 font-medium">#BIO-9821</td>
+<td class="px-6 py-4">12 Out 2023, 14:30</td>
+<td class="px-6 py-4">OncoGenome_v4</td>
+<td class="px-6 py-4">1,240</td>
+<td class="px-6 py-4">Carcinoma</td>
+<td class="px-6 py-4 text-primary font-semibold">XGBoost (Acc: 0.98)</td>
+<td class="px-6 py-4 text-center">
+<span class="bg-primary-fixed text-on-primary-fixed-variant px-3 py-1 rounded-full font-label-sm text-[10px] uppercase font-bold">Concluída</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary/10 p-1 rounded transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="transition-all">
+<td class="px-6 py-4 font-medium">#BIO-9755</td>
+<td class="px-6 py-4">11 Out 2023, 09:15</td>
+<td class="px-6 py-4">BloodMetabolics_23</td>
+<td class="px-6 py-4">450</td>
+<td class="px-6 py-4">Metabolismo</td>
+<td class="px-6 py-4 text-primary font-semibold">Random Forest (Acc: 0.94)</td>
+<td class="px-6 py-4 text-center">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-[10px] uppercase font-bold">Validada</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary/10 p-1 rounded transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="transition-all">
+<td class="px-6 py-4 font-medium">#BIO-9610</td>
+<td class="px-6 py-4">10 Out 2023, 16:45</td>
+<td class="px-6 py-4">NeuroProteins_Alpha</td>
+<td class="px-6 py-4">2,100</td>
+<td class="px-6 py-4">Neurologia</td>
+<td class="px-6 py-4 text-primary font-semibold">LightGBM (Acc: 0.91)</td>
+<td class="px-6 py-4 text-center">
+<span class="bg-surface-variant text-on-surface-variant px-3 py-1 rounded-full font-label-sm text-[10px] uppercase font-bold">Rascunho</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary/10 p-1 rounded transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="transition-all">
+<td class="px-6 py-4 font-medium">#BIO-9544</td>
+<td class="px-6 py-4">08 Out 2023, 11:20</td>
+<td class="px-6 py-4">ViralStrain_RNA</td>
+<td class="px-6 py-4">88</td>
+<td class="px-6 py-4">Infectologia</td>
+<td class="px-6 py-4 text-primary font-semibold">SVM (Acc: 0.89)</td>
+<td class="px-6 py-4 text-center">
+<span class="bg-error-container text-on-error-container px-3 py-1 rounded-full font-label-sm text-[10px] uppercase font-bold">Alerta</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary/10 p-1 rounded transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="transition-all">
+<td class="px-6 py-4 font-medium">#BIO-9488</td>
+<td class="px-6 py-4">07 Out 2023, 14:00</td>
+<td class="px-6 py-4">OncoGenome_v4</td>
+<td class="px-6 py-4">312</td>
+<td class="px-6 py-4">Carcinoma</td>
+<td class="px-6 py-4 text-primary font-semibold">XGBoost (Acc: 0.97)</td>
+<td class="px-6 py-4 text-center">
+<span class="bg-primary-fixed text-on-primary-fixed-variant px-3 py-1 rounded-full font-label-sm text-[10px] uppercase font-bold">Concluída</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary/10 p-1 rounded transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 flex items-center justify-between bg-surface-container-lowest border-t border-outline-variant">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Mostrando 1-5 de 124 análises</span>
+<div class="flex gap-2">
+<button class="px-4 py-1.5 border border-outline-variant rounded-lg font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span> Anterior
+                    </button>
+<button class="px-4 py-1.5 border border-primary text-primary rounded-lg font-label-sm text-label-sm hover:bg-primary/5 transition-colors flex items-center gap-1">
+                        Próximo <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Quick Stats Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-card-gap mt-8">
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Total Mensal</span>
+<span class="material-symbols-outlined text-primary" data-icon="analytics">analytics</span>
+</div>
+<div class="font-display-lg text-display-lg text-on-surface">42</div>
+<p class="text-primary font-metric-md text-metric-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">trending_up</span> +12% vs mês anterior
+                </p>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Acurácia Média</span>
+<span class="material-symbols-outlined text-secondary" data-icon="verified_user">verified_user</span>
+</div>
+<div class="font-display-lg text-display-lg text-on-surface">94.8%</div>
+<p class="text-secondary font-metric-md text-metric-md">Consistência Clinical Grade</p>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Modelos Ativos</span>
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="psychology">psychology</span>
+</div>
+<div class="font-display-lg text-display-lg text-on-surface">08</div>
+<p class="text-on-surface-variant font-metric-md text-metric-md">Sintonizados p/ Dataset</p>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Espaço Utilizado</span>
+<span class="material-symbols-outlined text-tertiary" data-icon="database">database</span>
+</div>
+<div class="font-display-lg text-display-lg text-on-surface">1.2 TB</div>
+<p class="text-on-surface-variant font-metric-md text-metric-md">84% da cota contratada</p>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-auto flex flex-col md:flex-row justify-between items-center px-8 bg-surface-container-low py-8 border-t border-outline-variant">
+<div class="flex flex-col md:flex-row items-center gap-4">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface-variant">🧬 BioStatusIA</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant opacity-60">Projeto de mestrado — IA na Saúde · Fortaleza/CE</span>
+</div>
+<div class="flex gap-6 mt-4 md:mt-0">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Termos de Uso</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacidade</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Contato</a>
+</div>
+</footer>
+<script>
+        // Micro-interaction for rows
+        document.querySelectorAll('.zebra-table tbody tr').forEach(row => {
+            row.addEventListener('click', () => {
+                const id = row.cells[0].innerText;
+                console.log(`Abrindo detalhes da análise: ${id}`);
+                // Simple feedback effect
+                row.classList.add('bg-primary-container/20');
+                setTimeout(() => row.classList.remove('bg-primary-container/20'), 200);
+            });
+        });
+
+        // Simple search filtering simulation
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('.zebra-table tbody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+    </script>
+</body></html>
