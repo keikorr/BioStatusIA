@@ -14,7 +14,8 @@ class TreinoInput(BaseModel):
 class FerramentaTreinarClassificador(BaseTool):
     name: str = "ferramenta_treinar_classificador"
     description: str = (
-        "Treina SVM (RBF) e RandomForest (100 árvores) com os biomarcadores extraídos. "
+        "Compara 6 classificadores (LR, KNN, SVM, RandomForest, GradientBoosting, MLP) com os "
+        "biomarcadores extraídos; seleção por validação cruzada interna com piso de sensibilidade. "
         "Requer dataset rotulado (BENIGNO + MALIGNO, mínimo 10 amostras com 2 classes). "
         "Persiste métricas, ROC e matriz de confusão em metricas.json e retorna resumo."
     )
@@ -52,20 +53,32 @@ class FerramentaTreinarClassificador(BaseTool):
         with open(pasta / "metricas.json", "w", encoding="utf-8") as f:
             json.dump(resultado, f, indent=2)
 
+        if "melhor_modelo" not in resultado:
+            return resultado.get("aviso", "Treino não executado.")
+
         melhor = resultado["melhor_modelo"]
         metricas = resultado["metricas"]
         linhas = [
-            f"Treino concluído sobre {len(registros_treino)} amostras (test_size=0.2).",
+            f"Treino concluído: {resultado['n_treino']} amostras de treino, "
+            f"{resultado['n_teste']} de teste (split estratificado 80/20).",
             "",
-            f"Melhor modelo: **{melhor}** (selecionado por maior AUC-ROC).",
+            f"Modelo selecionado: **{melhor}** — escolhido pelo score interno na validação "
+            f"cruzada do treino (AUROC, MCC, ECE e piso de sensibilidade 0,80); o teste não "
+            f"participa da escolha.",
+        ]
+        if not resultado.get("piso_sensibilidade_atingido", True):
+            linhas += ["", f"ATENÇÃO: {resultado['aviso_piso_sensibilidade']}"]
+        linhas += [
             "",
-            "| Modelo | Acurácia | Precisão | Recall | F1 | AUC |",
-            "|---|---|---|---|---|---|",
+            "Métricas no conjunto de teste:",
+            "",
+            "| Modelo | Acurácia | Sensibilidade | Especificidade | AUC | MCC | ECE |",
+            "|---|---|---|---|---|---|---|",
         ]
         for nome, m in metricas.items():
             linhas.append(
-                f"| {nome} | {m['acuracia']} | {m['precisao']} | "
-                f"{m['recall']} | {m['f1']} | {m['auc']} |"
+                f"| {nome} | {m['acuracia']} | {m['sensibilidade']} | {m['especificidade']} | "
+                f"{m['auc']} | {m['mcc']} | {m['ece']} |"
             )
         linhas.append("")
         linhas.append("Resultado completo persistido em metricas.json.")

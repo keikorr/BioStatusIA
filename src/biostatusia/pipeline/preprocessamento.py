@@ -42,6 +42,9 @@ def preprocessar_adaptativo(caminho: str, estrategia: dict) -> np.ndarray | None
         clipped = np.clip(img, p1, p99).astype(np.float32)
         normalizada = (clipped - p1) / ((p99 - p1) + 1e-8)
     else:
-        normalizada = img.astype(np.float32) / 255.0
+        # min-max por imagem: [min, max] da própria imagem -> [0, 1]
+        img_f = img.astype(np.float32)
+        minimo, maximo = float(img_f.min()), float(img_f.max())
+        normalizada = (img_f - minimo) / ((maximo - minimo) + 1e-8)
 
     return normalizada

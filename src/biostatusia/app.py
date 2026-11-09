@@ -225,7 +225,7 @@ def analisar():
     from biostatusia.pipeline.classificador import treinar_vetores
     from biostatusia.pipeline.dados_tabulares import (
         analisar_tabular, carregar_csv, detectar_schema, extrair_features,
-        decidir_estrategia_tabular, preprocessar_tabular_amostras,
+        decidir_estrategia_tabular, extrair_grupos, resumo_automl_texto,
     )
 
     # 1. Resolver caminho do dataset
@@ -277,23 +277,15 @@ def analisar():
         csv_path = encontrar_csv(base_path)
         if not csv_path:
             return "Nenhum arquivo CSV/TXT encontrado.", 400
-        try:
-            crew_out = BioStatusIACrewTabular().crew().kickoff(
-                inputs={"caminho_csv": str(csv_path)}
-            )
-            laudo = str(crew_out)
-        except Exception as e:
-            laudo = f"Erro no agente bioestatístico: {e}"
-
         resultado_csv = carregar_csv(str(csv_path))
         if not resultado_csv:
             return "Falha ao ler o arquivo tabular.", 400
         header, data = resultado_csv
         schema = detectar_schema(header, data)
         X_raw, y, label_map = extrair_features(data, schema)
+        grupos = extrair_grupos(data, schema)
         stats_tab = analisar_tabular(X_raw, y, schema)
         estrategia = decidir_estrategia_tabular(stats_tab)
-        X_preproc = preprocessar_tabular_amostras(X_raw, estrategia)
 
         pipeline_data: dict = {
             "modo": "tabular", "familia": "tabular",
@@ -303,18 +295,34 @@ def analisar():
             "tabular_stats": stats_tab, "estrategia_preproc": estrategia,
         }
         melhor = "N/A"
-        if y is not None and len(set(y.tolist())) >= 2 and len(X_preproc) >= 10:
+        n_classes_y = len(set(y.tolist())) if y is not None else 0
+        # O AutoML roda ANTES do laudo, para que o agente descreva os resultados
+        # reais. X_raw vai com NaN: a imputação é ajustada dentro de cada fold.
+        if y is not None and n_classes_y >= 2 and len(X_raw) >= 10:
             try:
-                res_clf = treinar_vetores(X_preproc, y, scaling=estrategia["escalamento"])
+                res_clf = treinar_vetores(
+                    X_raw, y, scaling=estrategia["escalamento"],
+                    imputacao="mean" if estrategia.get("imputacao") == "mean" else "median",
+                    grupos=grupos, feature_names=schema.get("feature_names"),
+                    label_map=label_map, familia="tabular", persistir=False,
+                )
                 pipeline_data.update(res_clf)
-                melhor = res_clf["melhor_modelo"]
+                melhor = res_clf.get("melhor_modelo", "N/A")
             except Exception as e:
                 pipeline_data["erro_classificador"] = str(e)
         else:
             pipeline_data["aviso_classificador"] = (
-                f"Treino não executado: {len(X_preproc)} amostras, "
-                f"{len(set(y.tolist())) if y is not None else 0} classes."
+                f"Treino não executado: {len(X_raw)} amostras, {n_classes_y} classes."
             )
+
+        try:
+            crew_out = BioStatusIACrewTabular().crew().kickoff(inputs={
+                "caminho_csv": str(csv_path),
+                "resumo_automl": resumo_automl_texto(pipeline_data),
+            })
+            laudo = str(crew_out)
+        except Exception as e:
+            laudo = f"Erro no agente bioestatístico: {e}"
 
         analise_id = salvar(str(csv_path), "TABULAR", laudo)
         resultado_id = salvar_resultado(
@@ -465,11 +473,17 @@ def analisar():
                     pipeline_data["arquivo_tabular"] = str(csv_path)
                     if y_t is not None and len(set(y_t.tolist())) >= 2 and len(X_t) >= 10:
                         try:
-                            res_tab = treinar_vetores(X_t, y_t)
+                            res_tab = treinar_vetores(
+                                X_t, y_t, grupos=extrair_grupos(data_t, schema_t),
+                                feature_names=schema_t.get("feature_names"),
+                                label_map=label_map_t, familia="tabular", persistir=False,
+                            )
                             pipeline_data["metricas_tabular"] = res_tab["metricas"]
                             pipeline_data["roc_data_tabular"] = res_tab["roc_data"]
                             pipeline_data["cm_tabular"] = res_tab["confusion_matrix"]
                             pipeline_data["melhor_modelo_tabular"] = res_tab["melhor_modelo"]
+                            pipeline_data["criterio_selecao_tabular"] = res_tab.get("criterio_selecao")
+                            pipeline_data["aviso_piso_sensibilidade_tabular"] = res_tab.get("aviso_piso_sensibilidade")
                         except Exception as e:
                             pipeline_data["erro_classificador_tabular"] = str(e)
 

@@ -49,8 +49,54 @@ def carregar_csv(caminho: str) -> tuple[list[str], list[list[str]]] | None:
     return header, data
 
 
+TOKENS_AUSENTES = {"", "?", "nan", "null", "none", "na", "n/a", "-", "#n/a"}
+NOMES_IDENTIFICADORES = {
+    "id", "index", "unnamed: 0", "patient", "patient_id", "paciente", "id_paciente",
+    "subject", "subject_id", "sujeito", "record", "record_id", "name", "nome", "codigo",
+}
+LIMITE_CARDINALIDADE_ONEHOT = 20
+FRACAO_MINIMA_NUMERICA = 0.95
+
+
+def _chave_sujeito(valor: str) -> str:
+    """Remove o sufixo de repetição (ex.: 'phon_R01_S01_3' -> 'phon_R01_S01'),
+    para agrupar gravações/registros do mesmo sujeito."""
+    import re
+    return re.sub(r"[_\-.]\d+$", "", valor.strip())
+
+
+def _ausente(valor: str) -> bool:
+    return valor.strip().lower() in TOKENS_AUSENTES
+
+
+def _valores_coluna(data: list[list[str]], idx: int) -> list[str]:
+    return [row[idx].strip() for row in data if idx < len(row) and not _ausente(row[idx])]
+
+
+def _eh_numerica(valores: list[str]) -> bool:
+    if not valores:
+        return False
+    ok = 0
+    for v in valores:
+        try:
+            float(v.replace(",", "."))
+            ok += 1
+        except ValueError:
+            pass
+    return ok / len(valores) >= FRACAO_MINIMA_NUMERICA
+
+
 def detectar_schema(header: list[str], data: list[list[str]]) -> dict:
-    """Identifica coluna-rótulo e colunas numéricas."""
+    """Identifica coluna-rótulo, colunas identificadoras, numéricas e
+    categóricas de baixa cardinalidade, olhando a base inteira.
+
+    - Numérica: >= 95% dos valores não ausentes convertem para número; tokens
+      de ausência (ex.: "N/A", "?") viram NaN em vez de descartar a coluna.
+    - Identificadores (id, patient_id, name...) nunca entram como feature; se
+      algum se repete entre linhas, é usado como grupo de sujeito no split.
+    - Categóricas com 2 a 20 valores entram via one-hot; as demais colunas
+      descartadas ficam listadas em `colunas_descartadas`.
+    """
     n_cols = len(header)
 
     label_idx = None
@@ -58,79 +104,106 @@ def detectar_schema(header: list[str], data: list[list[str]]) -> dict:
         if name.lower().strip() in LABEL_KEYWORDS:
             label_idx = i
             break
-
     if label_idx is None and n_cols > 1:
-        ultimos = [row[-1].strip() for row in data[:50] if len(row) >= n_cols]
-        unicos = set(ultimos)
-        if 2 <= len(unicos) <= 10:
-            label_idx = n_cols - 1
+        for idx in (n_cols - 1, 0):
+            if 2 <= len(set(_valores_coluna(data, idx))) <= 10:
+                label_idx = idx
+                break
 
-    numeric_cols: list[int] = []
+    id_cols = [i for i, h in enumerate(header)
+               if i != label_idx and h.strip().lower() in NOMES_IDENTIFICADORES]
+
+    numeric_cols, categorical_cols, descartadas = [], [], []
+    categorias: dict[int, list[str]] = {}
     for i in range(n_cols):
-        if i == label_idx:
+        if i == label_idx or i in id_cols:
             continue
-        eh_numerica = True
-        amostras_parseadas = 0
-        for row in data[:30]:
-            if i < len(row) and row[i].strip():
-                try:
-                    float(row[i].replace(",", "."))
-                    amostras_parseadas += 1
-                except ValueError:
-                    eh_numerica = False
-                    break
-        if eh_numerica and amostras_parseadas > 0:
+        valores = _valores_coluna(data, i)
+        if _eh_numerica(valores):
             numeric_cols.append(i)
+            continue
+        unicos = sorted(set(valores))
+        if 2 <= len(unicos) <= LIMITE_CARDINALIDADE_ONEHOT:
+            categorical_cols.append(i)
+            categorias[i] = unicos
+        else:
+            descartadas.append(header[i])
 
+    grupo_idx, grupo_derivado = None, False
+    for i in id_cols:
+        valores = _valores_coluna(data, i)
+        if not valores:
+            continue
+        if len(set(valores)) < len(valores):
+            grupo_idx = i
+            break
+        derivados = [_chave_sujeito(v) for v in valores]
+        if len(set(derivados)) < len(derivados):
+            grupo_idx, grupo_derivado = i, True
+            break
+
+    onehot_names = [f"{header[i]}={c}" for i in categorical_cols for c in categorias[i]]
     return {
         "label_idx": label_idx,
         "label_name": header[label_idx] if label_idx is not None else None,
         "feature_indices": numeric_cols,
-        "feature_names": [header[i] for i in numeric_cols],
-        "n_features": len(numeric_cols),
+        "categorical_indices": categorical_cols,
+        "categorical_categorias": {str(k): v for k, v in categorias.items()},
+        "feature_names": [header[i] for i in numeric_cols] + onehot_names,
+        "n_features": len(numeric_cols) + len(onehot_names),
         "n_amostras": len(data),
+        "colunas_identificadoras": [header[i] for i in id_cols],
+        "coluna_grupo": header[grupo_idx] if grupo_idx is not None else None,
+        "grupo_idx": grupo_idx,
+        "grupo_derivado_de_sufixo": grupo_derivado,
+        "colunas_descartadas": descartadas,
     }
 
 
-def extrair_features(data: list[list[str]], schema: dict) -> tuple[np.ndarray, np.ndarray | None, dict]:
-    """Converte data em (X, y, label_map) preservando valores ausentes como NaN."""
-    feature_idx = schema["feature_indices"]
+def _linhas_rotuladas(data: list[list[str]], schema: dict) -> list[list[str]]:
     label_idx = schema["label_idx"]
+    if label_idx is None:
+        return data
+    return [row for row in data if label_idx < len(row) and row[label_idx].strip()]
+
+
+def extrair_features(data: list[list[str]], schema: dict) -> tuple[np.ndarray, np.ndarray | None, dict]:
+    """Converte data em (X, y, label_map). Ausentes viram NaN (imputados depois,
+    dentro de cada fold); categóricas entram em one-hot após as numéricas."""
+    feature_idx = schema["feature_indices"]
+    cat_idx = schema.get("categorical_indices", [])
+    categorias = schema.get("categorical_categorias", {})
+    label_idx = schema["label_idx"]
+    linhas = _linhas_rotuladas(data, schema)
 
     X_rows: list[list[float]] = []
-    y_raw: list[str] = []
-
-    for row in data:
+    for row in linhas:
         features = []
         for i in feature_idx:
             val = row[i].strip() if i < len(row) else ""
-            if not val or val.lower() in ["?", "nan", "null", "none", "na", "-"]:
+            if _ausente(val):
                 features.append(np.nan)
-            else:
-                try:
-                    features.append(float(val.replace(",", ".")))
-                except ValueError:
-                    features.append(np.nan)
-        
-        # Só adiciona se o rótulo for válido (se aplicável)
-        if label_idx is not None:
-            lbl = row[label_idx].strip() if label_idx < len(row) else ""
-            if lbl:
-                X_rows.append(features)
-                y_raw.append(lbl)
-        else:
-            X_rows.append(features)
+                continue
+            try:
+                features.append(float(val.replace(",", ".")))
+            except ValueError:
+                features.append(np.nan)
+        for i in cat_idx:
+            val = row[i].strip() if i < len(row) else ""
+            for c in categorias.get(str(i), []):
+                features.append(1.0 if val == c else 0.0)
+        X_rows.append(features)
 
-    X = np.array(X_rows, dtype=np.float64)
-    label_map: dict = {}
+    X = np.array(X_rows, dtype=np.float64).reshape(len(X_rows), schema["n_features"])
+    if label_idx is None or not linhas:
+        return X, None, {}
 
-    if label_idx is None or not y_raw:
-        return X, None, label_map
-
+    y_raw = [row[label_idx].strip() for row in linhas]
     unique_labels = sorted(set(y_raw))
+    label_map: dict = {}
     if len(unique_labels) == 2:
         for lbl in unique_labels:
-            label_map[lbl] = 1 if lbl.lower().strip() in MALIGNANT_KEYWORDS else 0
+            label_map[lbl] = 1 if lbl.lower() in MALIGNANT_KEYWORDS else 0
         if len(set(label_map.values())) == 1:
             label_map = {unique_labels[0]: 0, unique_labels[1]: 1}
     else:
@@ -138,6 +211,37 @@ def extrair_features(data: list[list[str]], schema: dict) -> tuple[np.ndarray, n
 
     y = np.array([label_map[lbl] for lbl in y_raw], dtype=np.int64)
     return X, y, label_map
+
+
+def extrair_grupos(data: list[list[str]], schema: dict) -> np.ndarray | None:
+    """Identificador de sujeito por linha (mesma ordem de `extrair_features`),
+    ou None quando a base tem um registro por sujeito / sem identificador."""
+    gi = schema.get("grupo_idx")
+    if gi is None:
+        return None
+    brutos = [row[gi].strip() if gi < len(row) else "" for row in _linhas_rotuladas(data, schema)]
+    if schema.get("grupo_derivado_de_sufixo"):
+        brutos = [_chave_sujeito(v) for v in brutos]
+    return np.array(brutos)
+
+
+def resumo_automl_texto(resultado: dict) -> str:
+    """Resumo factual do AutoML para o agente que redige o laudo."""
+    if "melhor_modelo" not in resultado:
+        return resultado.get("aviso_classificador") or resultado.get("aviso") or (
+            "AutoML não executado.")
+    melhor = resultado["melhor_modelo"]
+    m = resultado["metricas"][melhor]
+    linhas = [
+        f"Modelo selecionado: {melhor} ({resultado.get('criterio_selecao', '')}).",
+        f"Teste ({resultado.get('n_teste')} amostras): acurácia {m['acuracia']}, "
+        f"sensibilidade {m['sensibilidade']}, especificidade {m['especificidade']}, "
+        f"AUC {m['auc']}, MCC {m['mcc']}, ECE {m['ece']}.",
+        f"Protocolo: {resultado.get('protocolo_validacao', {}).get('split_externo', '')}.",
+    ]
+    if not resultado.get("piso_sensibilidade_atingido", True):
+        linhas.append("AVISO: " + resultado["aviso_piso_sensibilidade"])
+    return " ".join(linhas)
 
 
 def analisar_tabular(X: np.ndarray, y: np.ndarray | None, schema: dict) -> dict:
@@ -402,14 +506,16 @@ def decidir_estrategia_tabular(analise: dict) -> dict:
     if tem_nulos:
         estrategia["imputacao"] = "median"
         estrategia["justificativas"].append(
-            "Células vazias ou com caracteres de nulo detectadas na base -> Aplicada Imputação por Mediana."
+            "Células vazias ou com caracteres de nulo detectadas -> imputação por mediana, "
+            "ajustada só no treino de cada fold."
         )
     else:
         estrategia["justificativas"].append(
             "Nenhum valor nulo ou vazio detectado na base de dados -> Imputação desnecessária."
         )
 
-    # Se mais de 10% da base total acumulada for de outliers ou se poucas colunas forem normais
+    # Regra fixa (não decidida por LLM): RobustScaler se > 8% das células forem outliers
+    # IQR ou se menos de metade das features passar no Shapiro-Wilk (p > 0.05).
     pct_outliers = (outliers_globais / (n_total * n_features + 1e-8))
     tamanho_insuficiente = (shapiro_normais / (n_features + 1e-8)) < 0.5
     
@@ -428,7 +534,9 @@ def decidir_estrategia_tabular(analise: dict) -> dict:
 
 
 def preprocessar_tabular_amostras(X: np.ndarray, estrategia: dict) -> np.ndarray:
-    """Aplica a imputação de nulos decidida na estratégia."""
+    """Imputação na base inteira — SOMENTE para estatística descritiva. Não
+    usar como entrada de treino: o imputer veria o conjunto de teste. O treino
+    imputa dentro de cada fold (ver `avaliacao_modelos.montar_pipeline`)."""
     from sklearn.impute import SimpleImputer
     
     X_preproc = X.copy()

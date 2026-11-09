@@ -2,7 +2,7 @@
 
 > Sistema de Apoio à Decisão Clínica (CDSS) para análise automatizada de **18 tipos de sinais biomédicos** em 5 famílias, com IA Multi-Agente local, AutoML de 6 modelos e Laudo Interativo por seleção de ROI.
 
-Pipeline 100% orquestrado por agentes CrewAI rodando sobre LLM local (Ollama), com classificação AutoML (6 modelos, 5-fold CV, métricas enriquecidas) e interface web Flask com 4 abas.
+Pipeline 100% orquestrado por agentes CrewAI rodando sobre LLM local (Ollama), com classificação AutoML (6 modelos, CV repetida 5x3 sem vazamento, métricas enriquecidas) e interface web Flask com 4 abas.
 
 Projeto acadêmico de mestrado em IA na Saúde — Fortaleza, CE.
 
@@ -104,22 +104,24 @@ Os agentes se comunicam via JSONs em `static/runs/<id>/` — o LLM recebe resumo
 
 ## AutoML — 6 Modelos Concorrentes
 
-`pipeline/avaliacao_modelos.py` treina em 5-fold StratifiedKFold:
+`pipeline/avaliacao_modelos.py` separa primeiro um conjunto de teste externo (split estratificado e, quando há coluna de sujeito/grupo, por grupo). Dentro do treino, a seleção usa validação cruzada repetida 5x3 (`RepeatedStratifiedKFold`, ou `StratifiedGroupKFold` com grupos), com imputação, padronização e modelo dentro de um `Pipeline` ajustado a cada fold (sem vazamento).
 
 | Modelo | Tipo |
 |---|---|
-| Regressão Logística | Linear |
+| Regressão Logística (`max_iter=2000`) | Linear |
 | KNN | Baseado em distância |
 | SVM RBF | Kernel não-linear |
 | Random Forest | Ensemble (100 árvores) |
 | Gradient Boosting | Boosting (100 estimadores) |
-| MLP Neural Network | Rede neural (64×32) |
+| MLP (64×32, `max_iter=2000`) | Rede neural |
 
-**Métricas por modelo:** acurácia, sensibilidade, especificidade, precisão, recall, F1, AUC, ECE (Expected Calibration Error), latência de inferência (ms), tempo de treino (s).
+**Métricas por modelo:** acurácia, sensibilidade, especificidade, precisão, recall, F1, AUC, MCC, ECE (10 bins, último bin fechado), Brier, latência de inferência (ms), tempo de treino (s).
 
-**Teste de McNemar** entre os 2 melhores modelos — chi², p-value, significância estatística.
+**Teste de McNemar** entre o vencedor e o segundo colocado, no conjunto de teste — descritivo (chi², p-value); não é correção para comparações múltiplas.
 
-**Critério de seleção:** maior AUC, com preferência por sensibilidade ≥ 0.80 (minimiza falso-negativo).
+**Critério de seleção (apenas na validação cruzada interna, nunca no teste):** piso rígido de sensibilidade ≥ 0.80; entre os elegíveis, maior score = 0,4·AUC + 0,4·(MCC+1)/2 − 0,2·ECE − penalidade por déficit de sensibilidade. Se nenhum modelo atinge o piso, o resultado é sinalizado como tal.
+
+**Limites:** as métricas descrevem o desempenho em dados do próprio dataset; não constituem validação clínica nem externa, e a divisão por paciente só ocorre se houver identificador de sujeito.
 
 ---
 
@@ -320,7 +322,7 @@ BioStatusIA/
     │   ├── extracao.py                # extrair_todos (imagens, com estratégia)
     │   ├── classificador.py           # treinar() + treinar_vetores()
     │   ├── dados_tabulares.py         # CSV/TXT: schema, features, stats
-    │   ├── avaliacao_modelos.py       # 6 modelos, 5-fold CV, ECE, McNemar
+    │   ├── avaliacao_modelos.py       # 6 modelos, CV repetida, ECE, McNemar
     │   ├── leitura_temporal.py        # Lê .dat/.edf/.mat/.xml/.c3d
     │   ├── leitura_audio.py           # Lê .wav/.flac/.mp3
     │   ├── leitura_dicom.py           # Lê .dcm único ou série

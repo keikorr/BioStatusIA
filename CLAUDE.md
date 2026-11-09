@@ -115,7 +115,7 @@ Toda leitura passa por `pipeline/io_sinais.py::carregar_sinal()` que despacha pa
         │
         ▼
 [avaliacao_modelos.py]   ←── quando há rótulos e ≥10 amostras
-  6 classificadores, 5-fold CV, métricas enriquecidas, McNemar A/B
+  6 classificadores, CV repetida 5x3, métricas enriquecidas, McNemar A/B
         │
         ▼
 [Persistência]  ←── database.py
@@ -189,7 +189,7 @@ BioStatusIA/
     │   ├── extracao.py               # extrair_todos (imagens + estratégia)
     │   ├── classificador.py          # treinar() + treinar_vetores()
     │   ├── dados_tabulares.py        # CSV/TXT: schema, features, stats
-    │   ├── avaliacao_modelos.py      # 6 modelos, 5-fold CV, ECE, McNemar
+    │   ├── avaliacao_modelos.py      # 6 modelos, CV repetida 5x3, ECE, McNemar
     │   ├── leitura_temporal.py       # Lê .dat/.edf/.mat/.xml/.c3d → SinalNormalizado
     │   ├── leitura_audio.py          # Lê .wav/.flac/.mp3 → SinalNormalizado
     │   ├── leitura_dicom.py          # Lê .dcm único ou série → SinalNormalizado
@@ -292,29 +292,34 @@ Rotas novas em `app.py`:
 
 | Modelo | Parâmetros |
 |---|---|
-| `LogisticRegression` | `max_iter=1000` |
+| `LogisticRegression` | `max_iter=2000` |
 | `KNeighborsClassifier` | `n_neighbors=5` |
 | `SVC` (RBF) | `probability=True` |
 | `RandomForestClassifier` | `n_estimators=100, random_state=42` |
 | `GradientBoostingClassifier` | `n_estimators=100, random_state=42` |
-| `MLPClassifier` | `hidden_layer_sizes=(64,32), max_iter=500` |
+| `MLPClassifier` | `hidden_layer_sizes=(64,32), max_iter=2000` |
 
 ### Métricas enriquecidas por fold
 
 - `acuracia`, `sensibilidade` (recall positivo), `especificidade` (recall negativo)
 - `precisao`, `recall`, `f1`, `auc`
-- `ece` — Expected Calibration Error (10 bins)
+- `mcc`, `brier`
+- `ece` — Expected Calibration Error (10 bins, último bin fechado)
 - `latencia_inferencia_ms` — tempo médio por predição
 - `tempo_treino_s` — tempo de treino
 
+### Protocolo
+
+- Split externo de teste (por grupo quando há coluna de sujeito); seleção só no treino via CV repetida 5x3.
+- Imputação + scaler + modelo dentro de `Pipeline` por fold (sem vazamento).
+
 ### Teste de McNemar (A/B)
 
-- Compara os dois melhores modelos (maior AUC)
-- Retorna: chi², p-value, `diferenca_significativa` (p < 0.05)
+- Compara vencedor × segundo colocado no teste; descritivo (chi², p-value, `diferenca_significativa` p < 0.05), sem correção de múltiplas comparações.
 
 ### Critério de seleção
 
-Melhor modelo = maior AUC, com preferência por `sensibilidade ≥ 0.8` (minimiza falso-negativo em contexto clínico).
+Piso rígido de sensibilidade ≥ 0.80 na CV interna; entre elegíveis, maior score `0.4·AUC + 0.4·(MCC+1)/2 − 0.2·ECE − déficit^1.5`. Nunca selecionar pelo teste. Sem alegações de desempenho clínico.
 
 ---
 

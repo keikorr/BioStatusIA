@@ -46,16 +46,8 @@ def _extrair_morfologia(gray_u8: np.ndarray) -> dict:
 
 
 def _extrair_glcm(gray_u8: np.ndarray) -> dict:
-    glcm = graycomatrix(gray_u8, [1], [0], 256, symmetric=True, normed=True)
-    hist = cv2.calcHist([gray_u8], [0], None, [256], [0, 256])
-    p = hist / (hist.sum() + 1e-10)
-    entropia = float(-np.sum(p * np.log2(p + 1e-10)))
-    return {
-        "contraste": round(float(graycoprops(glcm, "contrast")[0, 0]), 4),
-        "homogeneidade": round(float(graycoprops(glcm, "homogeneity")[0, 0]), 4),
-        "energia": round(float(graycoprops(glcm, "energy")[0, 0]), 4),
-        "entropia": round(entropia, 4),
-    }
+    from biostatusia.pipeline.extracao import extrair_glcm
+    return extrair_glcm(gray_u8)
 
 
 def _extrair_intensidade(arr: np.ndarray) -> dict:

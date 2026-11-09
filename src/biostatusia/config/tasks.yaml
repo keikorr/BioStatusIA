@@ -28,17 +28,19 @@ tarefa_extracao:
 
 tarefa_treinar_classificador:
   description: >
-    Treine os classificadores SVM e RandomForest sobre os biomarcadores extraídos.
+    Compare os seis classificadores do pipeline sobre os biomarcadores extraídos.
     Use a ferramenta ferramenta_treinar_classificador passando:
       - pasta_run: {pasta_run}
-    A ferramenta lê biomarcadores.json e treina os modelos com split estratificado 80/20.
+    A ferramenta lê biomarcadores.json, separa 20% para teste (estratificado), escolhe o
+    modelo pela validação cruzada interna do treino e só então avalia no teste.
     Se houver menos de 10 amostras rotuladas ou apenas 1 classe, a ferramenta reportará
     e o treino não será executado. Persiste métricas, ROC e confusion matrix em
     metricas.json.
   expected_output: >
-    Tabela em Markdown com as métricas (Acurácia, Precisão, Recall, F1, AUC) de cada
-    modelo, identificação do melhor modelo (maior AUC) e comentário sobre o tamanho
-    amostral.
+    Tabela em Markdown com as métricas de teste (Acurácia, Sensibilidade,
+    Especificidade, AUC, MCC, ECE) de cada modelo, o modelo selecionado pelo score
+    interno (repita o aviso se o piso de sensibilidade não foi atingido) e comentário
+    sobre o tamanho amostral.
 
 tarefa_laudo:
   description: >
@@ -63,12 +65,16 @@ tarefa_laudo_tabular:
     Analise os dados tabulares localizados em {caminho_csv} usando a ferramenta
     ferramenta_analise_tabular. A ferramenta retornará um resumo com a coluna-rótulo,
     distribuição de classes e estatísticas (média, mediana, desvio, min, max) das
-    features numéricas. Sua tarefa:
+    features numéricas. Resultado do AutoML já executado sobre este arquivo
+    (use somente estes números ao falar de classificadores):
+    {resumo_automl}
+    Sua tarefa:
     1. Identifique as 3-5 features mais discriminativas entre as classes (maior
        diferença de média relativa ao desvio entre os grupos).
     2. Comente o equilíbrio do dataset (balanceado ou desbalanceado).
-    3. Sugira correlação clínica preliminar — sem afirmar diagnóstico.
-    4. Mantenha tom profissional, ético e cauteloso.
+    3. Resuma o resultado do AutoML acima sem acrescentar números que não estejam nele.
+    4. Sugira correlação clínica preliminar — sem afirmar diagnóstico.
+    5. Mantenha tom profissional, ético e cauteloso.
     AVISO ÉTICO OBRIGATÓRIO ao final.
   expected_output: >
     Laudo preliminar em Markdown contendo: cabeçalho com nome do dataset, N amostras
