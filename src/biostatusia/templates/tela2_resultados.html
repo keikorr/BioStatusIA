@@ -725,9 +725,9 @@
         <div class="flex flex-col lg:flex-row items-center gap-8 mb-8 border-b border-slate-100 pb-8">
           <div class="w-20 h-20 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center text-4xl shadow-md shadow-teal-500/5 select-none animate-pulse">🏆</div>
           <div class="flex-1 text-center lg:text-left">
-            <p class="text-[10px] text-teal-600 uppercase tracking-widest font-extrabold mb-1">Vencedor por maior AUC-ROC</p>
+            <p class="text-[10px] text-teal-600 uppercase tracking-widest font-extrabold mb-1">Modelo selecionado (score interno na CV)</p>
             <p class="text-3xl font-black text-slate-900 leading-none" id="melhor-modelo-titulo">{{ pipeline.melhor_modelo }}</p>
-            <p class="text-xs text-slate-400 mt-2">6 classificadores scikit-learn, 5-fold StratifiedKFold. Vencedor selecionado por AUC com prioridade a Sensibilidade ≥ 0.80.</p>
+            <p class="text-xs text-slate-400 mt-2">6 classificadores scikit-learn. Seleção por validação cruzada repetida dentro do treino (até 5 folds × 3), com score de AUROC, MCC e ECE e piso rígido de sensibilidade ≥ 0,80; o conjunto de teste (20%) só é usado para reportar.</p>
           </div>
           <div class="grid grid-cols-3 gap-4 text-center">
             <div class="bg-slate-50 px-4 py-3 rounded-xl border border-slate-100">
@@ -814,7 +814,7 @@
             </p>
           </div>
         </div>
-        <p class="text-[10px] text-slate-400 mt-3">O teste de McNemar avalia se a diferença de desempenho entre os dois melhores modelos é estatisticamente significativa, levando em conta os casos em que um acerta e o outro erra.</p>
+        <p class="text-[10px] text-slate-400 mt-3">O teste de McNemar compara, no conjunto de teste, o modelo selecionado com o segundo colocado pelo score interno, contando os casos em que um acerta e o outro erra. É descritivo: não participa da seleção.</p>
       </div>
       {% endif %}
 
@@ -1214,26 +1214,37 @@
         { label: 'Sensibilidade', val: mv.sensibilidade, tip: 'TP / (TP + FN) — detectar positivos' },
         { label: 'Especificidade', val: mv.especificidade, tip: 'TN / (TN + FP) — evitar falsos positivos' },
         { label: 'Precisão (VPP)', val: mv.precisao, tip: 'Valor Preditivo Positivo' },
-        { label: 'Recall (VPN proxy)', val: mv.recall, tip: 'Recall no conjunto de teste' },
+        { label: 'VPN', val: mv.vpn, tip: 'Valor Preditivo Negativo — TN / (TN + FN); só em tarefas binárias' },
+        { label: 'MCC', val: mv.mcc, tip: 'Coeficiente de correlação de Matthews (-1 a 1)', num: true },
         { label: 'F1-Score', val: mv.f1, tip: 'Média harmônica precisão/recall' },
         { label: 'AUC-ROC', val: mv.auc, tip: 'Área sob a curva ROC' },
         { label: 'ECE (Calibração)', val: mv.ece, tip: 'Expected Calibration Error — menor é melhor' },
-        { label: 'Latência (ms)', val: mv.latencia_inferencia_ms, tip: 'Tempo por amostra', raw: true },
+        { label: 'Latência (ms)', val: mv.latencia_inferencia_ms, tip: 'Tempo de predição por amostra no teste', raw: true },
       ];
       tabVencedor.innerHTML = clinicas.map(c => {
-        const pct = c.raw ? `${c.val} ms` : ((c.val ?? 0) * 100).toFixed(1) + '%';
+        const pct = (c.val === null || c.val === undefined) ? '—'
+          : c.raw ? `${c.val} ms` : c.num ? Number(c.val).toFixed(3) : (c.val * 100).toFixed(1) + '%';
         const color = (!c.raw && c.val >= 0.8) ? 'text-emerald-700' : (!c.raw && c.val < 0.6) ? 'text-rose-600' : 'text-slate-800';
         return `<div class="bg-slate-50 rounded-xl p-3 border border-slate-100 hover:border-teal-200 transition-colors" title="${c.tip}">
           <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">${c.label}</p>
           <p class="text-lg font-extrabold font-mono ${color}">${pct}</p>
         </div>`;
       }).join('');
+      const notas = [];
+      if (pipeline.piso_sensibilidade_atingido === false && pipeline.aviso_piso_sensibilidade) {
+        notas.push(`<div class="col-span-full rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">⚠ ${pipeline.aviso_piso_sensibilidade}</div>`);
+      }
+      if (pipeline.criterio_selecao) {
+        notas.push(`<div class="col-span-full text-[11px] text-slate-500">Seleção: ${pipeline.criterio_selecao}. Métricas acima: conjunto de teste, não usado na seleção.</div>`);
+      }
+      tabVencedor.insertAdjacentHTML('beforeend', notas.join(''));
     }
 
-    // --- Ranking cards de todos os modelos ---
+    // --- Ranking cards de todos os modelos (ordem = score interno da CV, critério real de seleção) ---
     const cardsRanking = document.getElementById('cards-ranking');
     if (cardsRanking && Object.keys(metricas).length) {
-      const ordenados = Object.entries(metricas).sort((a, b) => b[1].auc - a[1].auc);
+      const ordenados = Object.entries(metricas).sort((a, b) =>
+        ((b[1].score_clinico_cv ?? b[1].auc) - (a[1].score_clinico_cv ?? a[1].auc)));
       const medalhas = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣'];
       cardsRanking.innerHTML = ordenados.map(([nome, m], i) => {
         const isWinner = nome === melhor;

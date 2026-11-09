@@ -1,0 +1,5 @@
+# Versions used to produce the outputs cited in the revised manuscript
+numpy==2.5.3
+scipy==1.18.1
+matplotlib==3.11.2
+scikit-learn==1.9.1   # only for the stratified-split check in script 01

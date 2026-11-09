@@ -63,6 +63,12 @@ class FerramentaExtrairVideo(BaseTool):
                 "roc_data": metricas_clf.get("roc_data", {}),
                 "confusion_matrix": metricas_clf.get("confusion_matrix", {}),
                 "melhor_modelo": metricas_clf.get("melhor_modelo", "N/A"),
+                "comparacao_ab": metricas_clf.get("comparacao_ab", {}),
+                "metricas_cv": metricas_clf.get("metricas_cv", {}),
+                "criterio_selecao": metricas_clf.get("criterio_selecao"),
+                "piso_sensibilidade_atingido": metricas_clf.get("piso_sensibilidade_atingido"),
+                "aviso_piso_sensibilidade": metricas_clf.get("aviso_piso_sensibilidade"),
+                "protocolo_validacao": metricas_clf.get("protocolo_validacao", {}),
             })
 
         with open(pasta / "biomarcadores_video.json", "w", encoding="utf-8") as f:

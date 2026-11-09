@@ -38,16 +38,26 @@ def extrair_intensidade(img: np.ndarray) -> dict:
     }
 
 
+ANGULOS_GLCM = [0, np.pi / 4, np.pi / 2, 3 * np.pi / 4]
+
+
 def extrair_glcm(gray_u8: np.ndarray) -> dict:
-    glcm = graycomatrix(gray_u8, [1], [0], 256, symmetric=True, normed=True)
-    hist = cv2.calcHist([gray_u8], [0], None, [256], [0, 256])
-    p = hist / (hist.sum() + 1e-10)
-    entropia = float(-np.sum(p * np.log2(p + 1e-10)))
+    """Textura de Haralick a partir da GLCM (distância 1, média dos ângulos
+    0/45/90/135 graus, 256 níveis). A entropia é a da própria GLCM; a
+    entropia de primeira ordem (histograma) fica em `entropia_histograma`."""
+    glcm = graycomatrix(gray_u8, [1], ANGULOS_GLCM, 256, symmetric=True, normed=True)
+    p = glcm[:, :, 0, :]
+    entropia_glcm = float(np.mean([-np.sum(p[:, :, a][p[:, :, a] > 0] * np.log2(p[:, :, a][p[:, :, a] > 0]))
+                                   for a in range(p.shape[2])]))
+    hist = cv2.calcHist([gray_u8], [0], None, [256], [0, 256]).ravel()
+    ph = hist / (hist.sum() + 1e-10)
+    entropia_hist = float(-np.sum(ph[ph > 0] * np.log2(ph[ph > 0])))
     return {
-        "contraste": round(float(graycoprops(glcm, "contrast")[0, 0]), 4),
-        "homogeneidade": round(float(graycoprops(glcm, "homogeneity")[0, 0]), 4),
-        "energia": round(float(graycoprops(glcm, "energy")[0, 0]), 4),
-        "entropia": round(entropia, 4),
+        "contraste": round(float(graycoprops(glcm, "contrast").mean()), 4),
+        "homogeneidade": round(float(graycoprops(glcm, "homogeneity").mean()), 4),
+        "energia": round(float(graycoprops(glcm, "energy").mean()), 4),
+        "entropia": round(entropia_glcm, 4),
+        "entropia_histograma": round(entropia_hist, 4) + 0.0,
     }
 
 

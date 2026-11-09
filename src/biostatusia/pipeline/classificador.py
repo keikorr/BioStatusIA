@@ -2,26 +2,16 @@ import pickle
 from pathlib import Path
 
 import numpy as np
-import warnings
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.metrics import (
-    accuracy_score,
-    confusion_matrix,
-    f1_score,
-    precision_score,
-    recall_score,
-    roc_auc_score,
-    roc_curve,
-)
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, RobustScaler
-from sklearn.svm import SVC
+
+from biostatusia.pipeline.avaliacao_modelos import avaliar_e_treinar
 
 MODEL_DIR = Path(__file__).parent.parent.parent.parent / "models"
+ARQUIVO_VENCEDOR = "modelo_vencedor.pkl"
+
+NOMES_BIOMARCADORES_IMAGEM = [
+    "circularidade", "solidez", "contraste", "homogeneidade", "energia",
+    "entropia", "snr", "assimetria", "curtose",
+]
 
 
 def _vetor(biomarcadores: dict) -> list[float]:
@@ -43,80 +33,51 @@ def _vetor(biomarcadores: dict) -> list[float]:
 
 def treinar(registros: list[dict]) -> dict:
     """
-    registros: [{"biomarcadores": dict, "label": 0|1}, ...]
-    Treina SVM e RandomForest, retorna métricas completas para os gráficos.
+    registros: [{"biomarcadores": dict, "label": int}, ...]
+    Compara os 6 classificadores pelo protocolo de `avaliacao_modelos`.
     """
-    X = np.array([_vetor(r["biomarcadores"]) for r in registros])
+    X = np.array([_vetor(r["biomarcadores"]) for r in registros], dtype=float)
     y = np.array([r["label"] for r in registros])
-    return treinar_vetores(X, y)
+    return treinar_vetores(X, y, feature_names=NOMES_BIOMARCADORES_IMAGEM, familia="imagem")
 
 
-def treinar_vetores(X: np.ndarray, y: np.ndarray, scaling: str = "standard") -> dict:
-    """Versão genérica com escalamento dinâmico baseado na estratégia decidida."""
-    if scaling == "robust":
-        scaler = RobustScaler()
-    elif scaling == "standard":
-        scaler = StandardScaler()
-    else:
-        scaler = None
-
-    X_scaled = scaler.fit_transform(X) if scaler is not None else X
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_scaled, y, test_size=0.2, random_state=42, stratify=y
+def treinar_vetores(X: np.ndarray, y: np.ndarray, scaling: str = "standard",
+                    imputacao: str = "median", grupos: np.ndarray | None = None,
+                    feature_names: list[str] | None = None, label_map: dict | None = None,
+                    familia: str = "", persistir: bool = True) -> dict:
+    """Treina e avalia os 6 candidatos sem vazamento (imputação e escala
+    ajustadas só no treino de cada fold) e persiste o vencedor."""
+    resultado, treinados = avaliar_e_treinar(
+        X, y, familia=familia, scaling=scaling, imputacao=imputacao, grupos=grupos,
     )
+    if not treinados or not persistir:
+        return resultado
 
-    modelos = {
-        "LogisticRegression": LogisticRegression(random_state=42, max_iter=2000),
-        "KNN": KNeighborsClassifier(n_neighbors=5),
-        "SVM": SVC(kernel="rbf", probability=True, random_state=42),
-        "RandomForest": RandomForestClassifier(n_estimators=100, random_state=42),
-        "GradientBoosting": GradientBoostingClassifier(n_estimators=100, random_state=42),
-        "MLP": MLPClassifier(hidden_layer_sizes=(64, 32), max_iter=2000, random_state=42),
-    }
-
-    resultado: dict = {"metricas": {}, "roc_data": {}, "confusion_matrix": {}}
-
+    melhor = resultado["melhor_modelo"]
     MODEL_DIR.mkdir(exist_ok=True)
-
-    for nome, modelo in modelos.items():
-        modelo.fit(X_train, y_train)
-        y_pred = modelo.predict(X_test)
-        y_prob = modelo.predict_proba(X_test)[:, 1]
-        fpr, tpr, _ = roc_curve(y_test, y_prob)
-        cm = confusion_matrix(y_test, y_pred)
-
-        resultado["metricas"][nome] = {
-            "acuracia": round(float(accuracy_score(y_test, y_pred)), 4),
-            "precisao": round(float(precision_score(y_test, y_pred, zero_division=0)), 4),
-            "recall": round(float(recall_score(y_test, y_pred, zero_division=0)), 4),
-            "f1": round(float(f1_score(y_test, y_pred, zero_division=0)), 4),
-            "auc": round(float(roc_auc_score(y_test, y_prob)), 4),
-        }
-        resultado["roc_data"][nome] = {"fpr": fpr.tolist(), "tpr": tpr.tolist()}
-        resultado["confusion_matrix"][nome] = cm.tolist()
-
-        with open(MODEL_DIR / f"modelo_{nome.lower()}.pkl", "wb") as f:
-            pickle.dump({"modelo": modelo, "scaler": scaler}, f)
-
-    resultado["melhor_modelo"] = max(
-        resultado["metricas"], key=lambda k: resultado["metricas"][k]["auc"]
-    )
+    with open(MODEL_DIR / ARQUIVO_VENCEDOR, "wb") as f:
+        pickle.dump({
+            "nome": melhor,
+            "pipeline": treinados[melhor],
+            "feature_names": feature_names,
+            "classes": resultado["classes"],
+            "label_map": label_map,
+            "piso_sensibilidade_atingido": resultado["piso_sensibilidade_atingido"],
+        }, f)
+    resultado["modelo_persistido"] = str(MODEL_DIR / ARQUIVO_VENCEDOR)
     return resultado
 
 
 def classificar(biomarcadores: dict) -> tuple[str, float]:
-    """Classifica usando o melhor modelo salvo em disco. Retorna (categoria, probabilidade)."""
-    nomes_possiveis = [
-        "logisticregression", "knn", "svm", "randomforest", "gradientboosting", "mlp"
-    ]
-    for nome in nomes_possiveis:
-        caminho = MODEL_DIR / f"modelo_{nome}.pkl"
-        if caminho.exists():
-            with open(caminho, "rb") as f:
-                salvo = pickle.load(f)
-            X = np.array([_vetor(biomarcadores)])
-            X_scaled = salvo["scaler"].transform(X) if salvo.get("scaler") is not None else X
-            prob = float(salvo["modelo"].predict_proba(X_scaled)[0][1])
-            return ("MALIGNO" if prob > 0.5 else "BENIGNO"), round(prob, 4)
-    return "INDEFINIDO", 0.0
+    """Classifica uma imagem com o modelo vencedor salvo por `treinar`.
+    Retorna (categoria, probabilidade da classe positiva)."""
+    caminho = MODEL_DIR / ARQUIVO_VENCEDOR
+    if not caminho.exists():
+        return "INDEFINIDO", 0.0
+    with open(caminho, "rb") as f:
+        salvo = pickle.load(f)
+    if salvo.get("feature_names") != NOMES_BIOMARCADORES_IMAGEM or len(salvo["classes"]) != 2:
+        return "INDEFINIDO", 0.0
+    X = np.array([_vetor(biomarcadores)], dtype=float)
+    prob = float(salvo["pipeline"].predict_proba(X)[0][1])
+    return ("MALIGNO" if prob > 0.5 else "BENIGNO"), round(prob, 4)

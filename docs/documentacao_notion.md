@@ -13,7 +13,7 @@ O **BioStatusIA v2** expande o CDSS original (focado em ultrassom mamário) para
 1. **Aceitar qualquer tipo de dado biomédico** — imagem, sinal temporal, áudio, DICOM, volume 3D ou vídeo médico
 2. **Auto-detecção do tipo de entrada** — 10 modos identificados automaticamente
 3. **Pipeline agentificado especializado por família** — 6 crews, 11 agentes, 10 tools
-4. **AutoML rigoroso** — 6 modelos, 5-fold CV, métricas clínicas enriquecidas, teste de McNemar
+4. **AutoML rigoroso** — 6 modelos, CV repetida 5x3, métricas clínicas enriquecidas, teste de McNemar
 5. **Laudo Interativo** — o médico seleciona um trecho/ROI e recebe laudo focado exclusivamente naquele recorte
 
 ---
@@ -26,7 +26,7 @@ O **BioStatusIA v2** expande o CDSS original (focado em ultrassom mamário) para
 *   **RF-02 (SinalNormalizado):** Toda leitura de sinal deve produzir um `SinalNormalizado` — dataclass unificada com família, tipo, dados, taxa de amostragem, canais, metadados e dados de visualização (≤2000 pontos para Plotly).
 *   **RF-03 (Análise Estatística Cega):** Calcular métricas sobre os dados brutos antes de qualquer limpeza, para evitar viés de seleção.
 *   **RF-04 (Pré-Processamento Adaptativo):** Pipeline determinístico de decisão baseado em estatísticas detectadas (ruído, contraste, outliers, tamanho).
-*   **RF-05 (AutoML Enriquecido):** 6 classificadores concorrentes, 5-fold StratifiedKFold, ECE, latência de inferência, teste de McNemar, seleção por AUC com preferência por sensibilidade ≥ 0.80.
+*   **RF-05 (AutoML Enriquecido):** 6 classificadores concorrentes, CV repetida 5x3, ECE, latência de inferência, teste de McNemar descritivo, seleção apenas na CV interna com piso rígido de sensibilidade ≥ 0.80.
 *   **RF-06 (Laudo IA Especializado):** Cada família de sinal tem agente e task específicos — `radiologista_ia` interpreta achados considerando o contexto clínico do tipo de sinal.
 *   **RF-07 (Laudo Interativo):** Endpoint `POST /laudo_interativo` recebe seleção (ROI / trecho temporal / frame) e retorna laudo focado com 5 seções obrigatórias.
 *   **RF-08 (Interface em 4 Abas):** Estatísticas/Biomarcadores, Pré-processamento, AutoML/Laudo, Laudo Interativo.
@@ -206,16 +206,14 @@ Cada tool persiste o JSON completo → retorna resumo em texto ao LLM → próxi
 
 ```
 Dataset com rótulos e ≥10 amostras
-  ├── StandardScaler (fit apenas no treino)
-  ├── 5-fold StratifiedKFold (random_state=42)
-  │     Para cada fold × cada modelo:
-  │       - treino + inferência cronometrados
-  │       - predict_proba → AUC, ECE
-  │       - classification_report → sensibilidade, especificidade, F1
-  └── Holdout 20% (test set)
-        - ROC curve (FPR, TPR)
-        - confusion_matrix
-        - McNemar test (top-2 modelos)
+  ├── Split externo de teste (20%, estratificado; por grupo se houver sujeito)
+  └── Treino
+        ├── CV repetida 5x3 (RepeatedStratifiedKFold / StratifiedGroupKFold)
+        │     Pipeline(imputação + StandardScaler + modelo) ajustado por fold
+        ├── Seleção: piso de sensibilidade >= 0.80 + score composto (só CV)
+        └── Refit do vencedor no treino -> avaliação única no teste
+              - ROC, matriz de confusão, ECE, Brier
+              - McNemar vencedor x segundo (descritivo)
 ```
 
 ### Métricas Clínicas (além das padrão)
@@ -231,13 +229,12 @@ Dataset com rótulos e ≥10 amostras
 ### Critério de Seleção do Vencedor
 
 ```python
-# Prefere modelo com sensibilidade >= 0.80
-candidatos = [m for m in modelos if m["sensibilidade"] >= 0.80]
-if candidatos:
-    vencedor = max(candidatos, key=lambda m: m["auc"])
-else:
-    vencedor = max(modelos, key=lambda m: m["auc"])
+elegiveis = [m for m in modelos if m["sensibilidade_cv"] >= S_MIN]  # S_MIN = 0.80
+pool = elegiveis or modelos          # sem elegíveis: resultado sinalizado
+vencedor = max(pool, key=score_clinico)  # 0.4*AUC + 0.4*(MCC+1)/2 - 0.2*ECE - déficit**1.5
 ```
+
+Os valores descrevem desempenho no dataset utilizado; não constituem validação clínica.
 
 ---
 
@@ -471,7 +468,7 @@ detectar_estrutura()   ←── app.py
       │
       ▼
 avaliacao_modelos.py    ←── se há rótulos + ≥10 amostras
-      │   6 modelos × 5-fold CV
+      │   6 modelos × CV repetida 5x3
       │   ECE + McNemar + latência
       ▼
 database.py::salvar_resultado()

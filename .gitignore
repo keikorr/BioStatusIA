@@ -61,3 +61,8 @@ relatorio_tecnico_biostatsia.html
 
 # Cache do KaggleHub (geralmente em ~/.cache/, mas por segurança)
 .kagglehub/
+
+# Saídas geradas pelo CLI (main.py)
+/dashboard_inteligencia_medica.html
+/relatorio_tecnico_biostatsia.html
+models/

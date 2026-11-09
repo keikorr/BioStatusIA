@@ -70,6 +70,9 @@ class FerramentaExtrairSinalTemporal(BaseTool):
             payload["confusion_matrix"] = metricas_clf.get("confusion_matrix", {})
             payload["melhor_modelo"] = metricas_clf.get("melhor_modelo", "N/A")
             payload["comparacao_ab"] = metricas_clf.get("comparacao_ab", {})
+            for chave in ("criterio_selecao", "piso_sensibilidade_atingido",
+                          "aviso_piso_sensibilidade", "protocolo_validacao"):
+                payload[chave] = metricas_clf.get(chave)
 
         with open(pasta / "biomarcadores_temporal.json", "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2, ensure_ascii=False)
